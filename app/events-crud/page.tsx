@@ -4,9 +4,9 @@ import { EventForm } from "@/components/events/event-form";
 import { hasPermission } from "@/lib/permissions";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function EventsCrudPage() {
+function EventsCrudContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const session = useSession();
@@ -86,5 +86,19 @@ export default function EventsCrudPage() {
         <EventForm event={event} onSave={handleSave} onCancel={handleCancel} />
       </div>
     </div>
+  );
+}
+
+export default function EventsCrudPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black p-6 flex items-center justify-center">
+          <div className="text-white">Chargement...</div>
+        </div>
+      }
+    >
+      <EventsCrudContent />
+    </Suspense>
   );
 }
