@@ -1,0 +1,378 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  pseudo       String?
+  password     String
+  role         Role     @default(MEMBER) // Rôle administratif (ADMIN/MEMBER)
+  allianceRole String? // Rôle d'alliance depuis le référentiel (optionnel)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Member {
+  id              String           @id @default(cuid())
+  pseudo          String           @unique
+  level           Int              @default(1)
+  power           BigInt           @default(0)
+  kills           Int              @default(0)
+  specialty       String?
+  allianceRole    AllianceRole     @default(MEMBER)
+  status          Status           @default(ACTIVE)
+  tags            String[]
+  notes           String?
+  lastActive      DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  conductsTrains  TrainSlot[]      @relation("TrainConductor")
+  trainPassengers TrainPassenger[] @relation("TrainPassengers")
+}
+
+model TrainSlot {
+  id            String           @id @default(cuid())
+  day           String // "monday", "tuesday", etc.
+  departureTime String // "08:00", "14:00", "20:00" - heure choisie par le conducteur
+  conductorId   String? // Un seul conducteur par jour
+  conductor     Member?          @relation("TrainConductor", fields: [conductorId], references: [id])
+  isValidated   Boolean          @default(false) // Changements validés par l'admin
+  validatedBy   String? // ID de l'admin qui a validé
+  validatedAt   DateTime? // Date de validation
+  passengers    TrainPassenger[]
+  history       TrainHistory[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([day]) // Un seul train par jour
+}
+
+model TrainPassenger {
+  id          String    @id @default(cuid())
+  trainSlotId String
+  trainSlot   TrainSlot @relation(fields: [trainSlotId], references: [id], onDelete: Cascade)
+  passengerId String
+  passenger   Member    @relation("TrainPassengers", fields: [passengerId], references: [id])
+  joinedAt    DateTime  @default(now())
+
+  @@unique([trainSlotId, passengerId]) // Un passager ne peut pas être deux fois sur le même train
+}
+
+model TrainHistory {
+  id           String      @id @default(cuid())
+  trainSlotId  String
+  trainSlot    TrainSlot   @relation(fields: [trainSlotId], references: [id], onDelete: Cascade)
+  action       TrainAction
+  actorId      String? // L'utilisateur qui a fait l'action (null si système)
+  actorPseudo  String? // Pseudo sauvegardé au moment de l'action
+  targetId     String? // ID du membre affecté (conducteur/passager)
+  targetPseudo String? // Pseudo du membre affecté
+  details      String? // Détails additionnels (ancien horaire -> nouveau, etc.)
+  timestamp    DateTime    @default(now())
+
+  @@index([trainSlotId])
+  @@index([timestamp])
+}
+
+model Event {
+  id                  String    @id @default(cuid())
+  title               String
+  description         String?
+  detailedDescription String? // Description détaillée avec formatage
+  type                EventType
+  tags                String[] // Tags pour catégoriser les événements
+  startDate           DateTime
+  endDate             DateTime?
+  isRecurring         Boolean   @default(false) // Événement répétitif
+  recurringDays       String[]  @default([]) // Jours de la semaine (monday, tuesday, etc.)
+  recurringEndDate    DateTime? // Date de fin de la récurrence
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model AllianceStats {
+  id            String   @id @default(cuid())
+  totalMembers  Int      @default(0)
+  totalPower    BigInt   @default(0)
+  activeMembers Int      @default(0)
+  date          DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model RolePermission {
+  id         String   @id @default(cuid())
+  roleType   String // "ADMIN", "MEMBER", ou clé du rôle d'alliance
+  permission String // La permission en tant que string
+  isEnabled  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([roleType, permission])
+  @@index([roleType])
+}
+
+model ReferenceData {
+  id          String            @id @default(cuid())
+  category    ReferenceCategory // Type de référentiel
+  key         String // Clé unique dans la catégorie
+  label       String // Libellé affiché
+  description String? // Description optionnelle
+  color       String? // Couleur pour l'affichage (hex)
+  icon        String? // Icône optionnelle
+  sortOrder   Int               @default(0) // Ordre d'affichage
+  isActive    Boolean           @default(true)
+  isSystem    Boolean           @default(false) // Empêche la suppression
+  metadata    Json? // Données additionnelles
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([category, key])
+  @@index([category, isActive])
+  @@index([category, sortOrder])
+}
+
+model ExportLog {
+  id           String       @id @default(cuid())
+  type         String // Type d'export (Membres, Trains, etc.)
+  format       String // Format (csv, json)
+  filename     String // Nom du fichier généré
+  recordCount  Int          @default(0) // Nombre d'enregistrements exportés
+  fileSize     BigInt       @default(0) // Taille du fichier en octets
+  userId       String // Utilisateur qui a lancé l'export
+  userEmail    String // Email de l'utilisateur
+  status       ExportStatus @default(COMPLETED) // Statut de l'export
+  errorMessage String? // Message d'erreur si échec
+  duration     Int          @default(0) // Durée en millisecondes
+  createdAt    DateTime     @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+}
+
+model ImportLog {
+  id             String       @id @default(cuid())
+  type           String // Type d'import (Membres, Trains, etc.)
+  format         String // Format du fichier (csv, json, xlsx)
+  originalName   String // Nom original du fichier
+  fileSize       BigInt       @default(0) // Taille du fichier en octets
+  recordCount    Int          @default(0) // Nombre d'enregistrements dans le fichier
+  processedCount Int          @default(0) // Nombre d'enregistrements traités
+  successCount   Int          @default(0) // Nombre d'enregistrements importés avec succès
+  errorCount     Int          @default(0) // Nombre d'enregistrements en erreur
+  skippedCount   Int          @default(0) // Nombre d'enregistrements ignorés
+  userId         String // Utilisateur qui a lancé l'import
+  userEmail      String // Email de l'utilisateur
+  status         ImportStatus @default(PENDING) // Statut de l'import
+  errorMessage   String? // Message d'erreur global si échec
+  errorDetails   Json? // Détails des erreurs par ligne/enregistrement
+  duration       Int          @default(0) // Durée en millisecondes
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime? // Date de fin de traitement
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+  @@index([status])
+}
+
+model InviteLink {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  createdBy String
+  maxUses   Int? // null = unlimited
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+  usedBy    String[] // emails des utilisateurs qui ont utilisé le lien
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN // Administrateur du système
+  MEMBER // Membre standard
+}
+
+enum AllianceRole {
+  R5
+  R4
+  MEMBER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum EventType {
+  ALLIANCE_WAR
+  BOSS_FIGHT
+  SERVER_WAR
+  SEASONAL
+  GUERRE_ALLIANCE
+  EVENT_SPECIAL
+  MAINTENANCE
+  FORMATION
+  REUNION
+  AUTRE
+}
+
+enum TrainAction {
+  CONDUCTOR_ASSIGNED
+  CONDUCTOR_REMOVED
+  PASSENGER_JOINED
+  PASSENGER_LEFT
+  TIME_CHANGED
+  TRAIN_CREATED
+  TRAIN_DELETED
+  TRAIN_VALIDATED
+  TRAIN_UNVALIDATED
+}
+
+enum ReferenceCategory {
+  MEMBER_SPECIALTY // Spécialités des membres
+  MEMBER_TAG // Tags des membres
+  ALLIANCE_ROLE // Rôles d'alliance
+  EVENT_TYPE // Types d'événements
+  EVENT_TAG // Tags des événements
+  TRAIN_TYPE // Types de trains (futur)
+  PRIORITY_LEVEL // Niveaux de priorité
+  STATUS_TYPE // Types de statuts
+}
+
+enum ExportStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ImportStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// === SYSTÈME D'ALERTES ===
+
+model AlertRule {
+  id            String         @id @default(cuid())
+  name          String // Nom de la règle
+  description   String? // Description de la règle
+  type          AlertType // Type d'alerte
+  isActive      Boolean        @default(true)
+  conditions    Json // Conditions sous forme JSON
+  severity      AlertSeverity  @default(MEDIUM)
+  channels      AlertChannel[] // Canaux de notification
+  cooldown      Int            @default(3600) // Cooldown en secondes (1h par défaut)
+  lastTriggered DateTime? // Dernière fois que l'alerte s'est déclenchée
+  createdBy     String // ID de l'utilisateur créateur
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  alerts        Alert[] // Historique des alertes générées
+
+  @@index([type, isActive])
+  @@index([lastTriggered])
+}
+
+model Alert {
+  id         String        @id @default(cuid())
+  ruleId     String // Règle qui a généré cette alerte
+  rule       AlertRule     @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  title      String // Titre de l'alerte
+  message    String // Message détaillé
+  severity   AlertSeverity
+  data       Json? // Données contextuelles
+  isRead     Boolean       @default(false)
+  isResolved Boolean       @default(false)
+  resolvedBy String? // Qui a résolu l'alerte
+  resolvedAt DateTime? // Quand l'alerte a été résolue
+  createdAt  DateTime      @default(now())
+
+  notifications AlertNotification[] // Notifications envoyées
+
+  @@index([ruleId])
+  @@index([createdAt])
+  @@index([isRead, isResolved])
+}
+
+model AlertNotification {
+  id        String              @id @default(cuid())
+  alertId   String
+  alert     Alert               @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel
+  status    NotificationStatus  @default(PENDING)
+  sentAt    DateTime?
+  error     String? // Message d'erreur si échec
+  metadata  Json? // Métadonnées spécifiques au canal
+  createdAt DateTime            @default(now())
+
+  @@index([alertId])
+  @@index([status])
+}
+
+model NotificationConfig {
+  id             String              @id @default(cuid())
+  channel        NotificationChannel @unique
+  isEnabled      Boolean             @default(false)
+  config         Json // Configuration spécifique au canal
+  testMessage    String? // Message de test
+  lastTest       DateTime? // Dernier test effectué
+  lastTestStatus Boolean? // Résultat du dernier test
+  lastTestError  String? // Erreur du dernier test
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([channel, isEnabled])
+}
+
+enum AlertType {
+  TRAIN_COVERAGE // Couverture des trains insuffisante
+  INACTIVE_MEMBERS // Membres inactifs
+  MISSING_CONDUCTOR // Conducteur manquant
+  EVENT_REMINDER // Rappel d'événement
+  MEMBER_THRESHOLD // Seuil de membres atteint
+  POWER_THRESHOLD // Seuil de puissance
+  SYSTEM_ERROR // Erreur système
+  CUSTOM // Alerte personnalisée
+  TRAIN_DEPARTURE // Alerte départ de train
+  MANUAL_MESSAGE // Message manuel
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertChannel {
+  EMAIL
+  DISCORD
+  TELEGRAM
+  IN_APP
+}
+
+enum NotificationChannel {
+  DISCORD
+  TELEGRAM
+  EMAIL
+  WEBHOOK
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  RETRY
+}
