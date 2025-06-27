@@ -134,30 +134,30 @@ fi
 
 # Configuration renouvellement SSL automatique
 echo "🔄 Configuration renouvellement SSL automatique..."
-CRON_SSL="0 3 * * * /usr/bin/certbot renew --quiet && cp /etc/letsencrypt/live/beben0.com/fullchain.pem $(pwd)/nginx/ssl/cert.pem && cp /etc/letsencrypt/live/beben0.com/privkey.pem $(pwd)/nginx/ssl/key.pem && cd $(pwd) && docker-compose -f docker-compose.prod.yml restart nginx"
+CRON_SSL="0 3 * * * /usr/bin/certbot renew --quiet && cp /etc/letsencrypt/live/beben0.com/fullchain.pem $(pwd)/nginx/ssl/cert.pem && cp /etc/letsencrypt/live/beben0.com/privkey.pem $(pwd)/nginx/ssl/key.pem && cd $(pwd) && docker-compose -f docker-compose.prod.yml --env-file .env.production restart nginx"
 (crontab -l 2>/dev/null | grep -v certbot; echo "$CRON_SSL") | crontab -
 echo "✅ Renouvellement SSL automatique configuré"
 
 # Configuration backup automatique
 echo "💾 Configuration backup automatique..."
 mkdir -p backups
-CRON_BACKUP="0 2 * * * cd $(pwd) && docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump -U alliance_user alliance_manager_prod > backups/backup_\$(date +\\%Y\\%m\\%d).sql"
+CRON_BACKUP="0 2 * * * cd $(pwd) && docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T postgres pg_dump -U alliance_user alliance_manager_prod > backups/backup_\$(date +\\%Y\\%m\\%d).sql"
 (crontab -l 2>/dev/null | grep -v pg_dump; echo "$CRON_BACKUP") | crontab -
 echo "✅ Backup automatique configuré (quotidien à 2h)"
 
 # Backup de la base de données actuelle
 echo "💾 Backup de la base de données..."
-if docker-compose -f docker-compose.prod.yml ps postgres 2>/dev/null | grep -q "Up"; then
-    docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump -U alliance_user alliance_manager_prod > backup_$(date +%Y%m%d_%H%M%S).sql
+if docker-compose -f docker-compose.prod.yml --env-file .env.production ps postgres 2>/dev/null | grep -q "Up"; then
+    docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T postgres pg_dump -U alliance_user alliance_manager_prod > backup_$(date +%Y%m%d_%H%M%S).sql
     echo "✅ Backup créé"
 fi
 
-# Build et déploiement
+# Build et déploiement avec variables d'environnement
 echo "🔨 Build de l'application..."
-docker-compose -f docker-compose.prod.yml build --no-cache
+docker-compose -f docker-compose.prod.yml --env-file .env.production build --no-cache
 
 echo "🏃 Démarrage des services..."
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
 
 # Tests de santé
 echo "🏥 Tests de santé..."
@@ -183,20 +183,20 @@ if curl -f http://localhost/api/health 2>/dev/null; then
 else
     echo "❌ Échec du test de santé"
     echo "📋 Logs des services:"
-    docker-compose -f docker-compose.prod.yml logs --tail=20
+    docker-compose -f docker-compose.prod.yml --env-file .env.production logs --tail=20
     echo ""
     echo "🔧 Pour diagnostiquer:"
-    echo "   docker-compose -f docker-compose.prod.yml ps"
-    echo "   docker-compose -f docker-compose.prod.yml logs app"
+    echo "   docker-compose -f docker-compose.prod.yml --env-file .env.production ps"
+    echo "   docker-compose -f docker-compose.prod.yml --env-file .env.production logs app"
     exit 1
 fi
 
 echo ""
 echo "📊 Commandes utiles:"
-echo "   - Logs en temps réel: docker-compose -f docker-compose.prod.yml logs -f"
-echo "   - Status des services: docker-compose -f docker-compose.prod.yml ps"
-echo "   - Redémarrer: docker-compose -f docker-compose.prod.yml restart"
-echo "   - Arrêter: docker-compose -f docker-compose.prod.yml down"
+echo "   - Logs en temps réel: docker-compose -f docker-compose.prod.yml --env-file .env.production logs -f"
+echo "   - Status des services: docker-compose -f docker-compose.prod.yml --env-file .env.production ps"
+echo "   - Redémarrer: docker-compose -f docker-compose.prod.yml --env-file .env.production restart"
+echo "   - Arrêter: docker-compose -f docker-compose.prod.yml --env-file .env.production down"
 echo ""
 echo "🔐 Sécurité configurée:"
 echo "   ✅ Firewall UFW activé (ports 22, 80, 443)"
