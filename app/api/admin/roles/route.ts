@@ -56,7 +56,7 @@ export async function GET() {
       rolePermissions,
       allianceRoles,
       availablePermissions: allPermissions,
-      adminRoles: ["ADMIN", "MEMBER", "GUEST"],
+      adminRoles: ["ADMIN", "GUEST"],
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des rôles:", error);
