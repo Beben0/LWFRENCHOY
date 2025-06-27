@@ -242,7 +242,6 @@ enum ReferenceCategory {
   ALLIANCE_ROLE // Rôles d'alliance
   EVENT_TYPE // Types d'événements
   EVENT_TAG // Tags des événements
-  TRAIN_TYPE // Types de trains (futur)
   PRIORITY_LEVEL // Niveaux de priorité
   STATUS_TYPE // Types de statuts
 }

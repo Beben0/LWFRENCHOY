@@ -146,33 +146,7 @@ async function main() {
     })
   }
 
-  // 1.6 Types de trains (pour futur usage)
-  const trainTypes = [
-    { key: 'RESOURCE', label: 'Ressources', description: 'Train de collecte de ressources', sortOrder: 1, color: '#059669' },
-    { key: 'ATTACK', label: 'Attaque', description: 'Train d\'attaque', sortOrder: 2, color: '#DC2626' },
-    { key: 'DEFENSE', label: 'Défense', description: 'Train de défense', sortOrder: 3, color: '#3B82F6' },
-    { key: 'EXPLORATION', label: 'Exploration', description: 'Train d\'exploration', sortOrder: 4, color: '#8B5CF6' },
-    { key: 'SPECIAL', label: 'Spécial', description: 'Train spécialisé', sortOrder: 5, color: '#F59E0B' },
-  ]
-
-  for (const trainType of trainTypes) {
-    await prisma.referenceData.upsert({
-      where: { category_key: { category: 'TRAIN_TYPE', key: trainType.key } },
-      update: {},
-      create: {
-        category: 'TRAIN_TYPE',
-        key: trainType.key,
-        label: trainType.label,
-        description: trainType.description,
-        color: trainType.color,
-        sortOrder: trainType.sortOrder,
-        isActive: true,
-        isSystem: true,
-      },
-    })
-  }
-
-  // 1.7 Niveaux de priorité
+  // 1.6 Niveaux de priorité
   const priorityLevels = [
     { key: 'LOW', label: 'Basse', description: 'Priorité basse', sortOrder: 1, color: '#22C55E' },
     { key: 'MEDIUM', label: 'Moyenne', description: 'Priorité moyenne', sortOrder: 2, color: '#F59E0B' },
@@ -197,7 +171,7 @@ async function main() {
     })
   }
 
-  // 1.8 Types de statuts
+  // 1.7 Types de statuts
   const statusTypes = [
     { key: 'ACTIVE', label: 'Actif', description: 'Élément actif', sortOrder: 1, color: '#22C55E' },
     { key: 'INACTIVE', label: 'Inactif', description: 'Élément inactif', sortOrder: 2, color: '#6B7280' },
