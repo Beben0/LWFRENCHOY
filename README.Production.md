@@ -20,9 +20,9 @@ openssl rand -base64 32  # Pour POSTGRES_PASSWORD
 mkdir -p nginx/ssl
 
 # Option A: Let's Encrypt (recommandé)
-certbot certonly --standalone -d your-domain.com
-cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/cert.pem
-cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/key.pem
+certbot certonly --standalone -d beben0.com
+cp /etc/letsencrypt/live/beben0.com/fullchain.pem nginx/ssl/cert.pem
+cp /etc/letsencrypt/live/beben0.com/privkey.pem nginx/ssl/key.pem
 
 # Option B: Certificat auto-signé (dev seulement)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -32,11 +32,8 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 ### 3. Configuration du domaine
 
 ```bash
-# Modifier nginx/nginx.conf
-sed -i 's/your-domain.com/votredomaine.com/g' nginx/nginx.conf
-
-# Modifier .env.production
-NEXTAUTH_URL=https://votredomaine.com
+# Configuration déjà faite pour beben0.com
+# Le domaine est configuré dans nginx/nginx.conf et .env.production
 ```
 
 ### 4. Déploiement
@@ -73,7 +70,7 @@ docker-compose -f docker-compose.prod.yml logs -f
 docker stats
 
 # Santé des services
-curl https://votredomaine.com/api/health
+curl https://beben0.com/api/health
 ```
 
 ### Backup automatique
