@@ -1,13 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { Permission } from "./permissions";
 
-export type UserRoleType = "ADMIN" | "MEMBER" | "GUEST" | string; // string pour les rôles d'alliance
+export type UserRoleType = "ADMIN" | "GUEST" | string; // string pour les rôles d'alliance
 
 // Configuration par défaut des rôles administratifs
-const DEFAULT_ADMIN_PERMISSIONS: Record<
-  "ADMIN" | "MEMBER" | "GUEST",
-  Permission[]
-> = {
+const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
   ADMIN: [
     "view_dashboard",
     "view_members",
@@ -30,13 +27,6 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<
     "import_data",
     "manage_alerts",
     "manage_notifications",
-  ],
-  MEMBER: [
-    "view_dashboard",
-    "view_members",
-    "view_trains",
-    "view_events",
-    "view_stats",
   ],
   GUEST: ["view_trains", "view_events"],
 };
@@ -96,7 +86,7 @@ export async function getAllianceRoles(): Promise<string[]> {
 
 // Récupérer les permissions d'un utilisateur (combinaison rôle admin + rôle alliance)
 export async function getUserPermissions(
-  adminRole: "ADMIN" | "MEMBER",
+  adminRole: "ADMIN" | "GUEST",
   allianceRole?: string | null
 ): Promise<Permission[]> {
   try {
@@ -115,7 +105,7 @@ export async function getUserPermissions(
     return Array.from(permissions);
   } catch (error) {
     console.error("Error getting user permissions:", error);
-    return DEFAULT_ADMIN_PERMISSIONS.MEMBER;
+    return DEFAULT_ADMIN_PERMISSIONS.GUEST;
   }
 }
 
@@ -134,14 +124,8 @@ export async function getRoleTypePermissions(
 
     if (rolePermissions.length === 0) {
       // Si aucune permission en BDD, retourner les permissions par défaut
-      if (
-        roleType === "ADMIN" ||
-        roleType === "MEMBER" ||
-        roleType === "GUEST"
-      ) {
-        return DEFAULT_ADMIN_PERMISSIONS[
-          roleType as keyof typeof DEFAULT_ADMIN_PERMISSIONS
-        ];
+      if (roleType === "ADMIN" || roleType === "GUEST") {
+        return DEFAULT_ADMIN_PERMISSIONS[roleType] || [];
       }
 
       // Pour les rôles d'alliance, utiliser les permissions par défaut si disponibles
@@ -156,10 +140,8 @@ export async function getRoleTypePermissions(
     );
 
     // En cas d'erreur, retourner les permissions par défaut
-    if (roleType === "ADMIN" || roleType === "MEMBER" || roleType === "GUEST") {
-      return DEFAULT_ADMIN_PERMISSIONS[
-        roleType as keyof typeof DEFAULT_ADMIN_PERMISSIONS
-      ];
+    if (roleType === "ADMIN" || roleType === "GUEST") {
+      return DEFAULT_ADMIN_PERMISSIONS[roleType] || [];
     }
 
     return DEFAULT_ALLIANCE_ROLE_PERMISSIONS[roleType] || [];
@@ -179,7 +161,6 @@ export async function getAllRolePermissions() {
     // Créer la structure de données
     const rolePermissions: Record<string, Permission[]> = {
       ADMIN: [],
-      MEMBER: [],
       GUEST: [],
     };
 
@@ -198,9 +179,6 @@ export async function getAllRolePermissions() {
     // Si aucune permission pour un rôle administratif, utiliser les permissions par défaut
     if (rolePermissions.ADMIN.length === 0) {
       rolePermissions.ADMIN = DEFAULT_ADMIN_PERMISSIONS.ADMIN;
-    }
-    if (rolePermissions.MEMBER.length === 0) {
-      rolePermissions.MEMBER = DEFAULT_ADMIN_PERMISSIONS.MEMBER;
     }
     if (rolePermissions.GUEST.length === 0) {
       rolePermissions.GUEST = DEFAULT_ADMIN_PERMISSIONS.GUEST;

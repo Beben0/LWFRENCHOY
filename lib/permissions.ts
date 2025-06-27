@@ -1,7 +1,7 @@
 import type { Session } from "next-auth";
 import { prisma } from "./prisma";
 
-export type UserRole = "ADMIN" | "MEMBER" | "GUEST";
+export type UserRole = "ADMIN" | "GUEST";
 export type Permission =
   // Navigation permissions
   | "view_dashboard"
@@ -61,14 +61,6 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "manage_alerts",
     "manage_notifications",
   ],
-  MEMBER: [
-    // Lecture seule
-    "view_dashboard",
-    "view_members",
-    "view_trains",
-    "view_events",
-    "view_stats",
-  ],
   GUEST: [
     // Accès public aux trains et événements
     "view_trains",
@@ -118,9 +110,6 @@ async function getRolePermissionsFromDB(): Promise<
     if (!permissions.ADMIN) {
       permissions.ADMIN = new Set(FALLBACK_ROLE_PERMISSIONS.ADMIN);
     }
-    if (!permissions.MEMBER) {
-      permissions.MEMBER = new Set(FALLBACK_ROLE_PERMISSIONS.MEMBER);
-    }
     if (!permissions.GUEST) {
       permissions.GUEST = new Set(FALLBACK_ROLE_PERMISSIONS.GUEST);
     }
@@ -139,7 +128,6 @@ async function getRolePermissionsFromDB(): Promise<
     // Fallback : permissions par défaut
     const fallbackPermissions: Record<string, Set<Permission>> = {
       ADMIN: new Set(FALLBACK_ROLE_PERMISSIONS.ADMIN),
-      MEMBER: new Set(FALLBACK_ROLE_PERMISSIONS.MEMBER),
       GUEST: new Set(FALLBACK_ROLE_PERMISSIONS.GUEST),
     };
 
@@ -156,7 +144,6 @@ function getRolePermissionsSync(): Record<string, Set<Permission>> {
   // Fallback synchrone
   return {
     ADMIN: new Set(FALLBACK_ROLE_PERMISSIONS.ADMIN),
-    MEMBER: new Set(FALLBACK_ROLE_PERMISSIONS.MEMBER),
     GUEST: new Set(FALLBACK_ROLE_PERMISSIONS.GUEST),
   };
 }
@@ -216,8 +203,8 @@ export function getUserRole(session: Session | null): UserRole {
   // Rôle administratif
   if (session.user?.role === "ADMIN") return "ADMIN";
 
-  // Les autres membres connectés
-  return "MEMBER";
+  // Les autres utilisateurs connectés sont GUEST par défaut
+  return "GUEST";
 }
 
 // Vérifier si un utilisateur a une permission (version asynchrone)

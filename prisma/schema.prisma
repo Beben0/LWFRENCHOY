@@ -12,7 +12,7 @@ model User {
   email        String   @unique
   pseudo       String?
   password     String
-  role         Role     @default(MEMBER) // Rôle administratif (ADMIN/MEMBER)
+  role         Role     @default(GUEST) // Rôle administratif (ADMIN/GUEST)
   allianceRole String? // Rôle d'alliance depuis le référentiel (optionnel)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -197,7 +197,7 @@ model InviteLink {
 
 enum Role {
   ADMIN // Administrateur du système
-  MEMBER // Membre standard
+  GUEST // Utilisateur invité/non authentifié
 }
 
 enum AllianceRole {
