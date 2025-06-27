@@ -7,9 +7,9 @@
 ✅ **Nginx configuré :** HTTPS + sécurité  
 ✅ **PostgreSQL optimisé**
 
-## Étapes de déploiement
+## Déploiement en 3 étapes simples
 
-### 1. Configuration DNS
+### 1. Configuration DNS (obligatoire)
 
 ```bash
 # Configure ton DNS chez ton registrar
@@ -17,91 +17,44 @@ A     beben0.com     → IP_DE_TON_SERVEUR
 AAAA  beben0.com     → IPv6_DE_TON_SERVEUR (optionnel)
 ```
 
-### 2. Installation serveur
+### 2. Cloner et déployer
 
 ```bash
-# Installation Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-
-# Installation Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-
-# Installation Certbot pour SSL
-sudo apt install certbot
-```
-
-### 3. Déploiement du code
-
-```bash
-# Cloner le repo
+# Cloner le repo sur ton serveur
 git clone YOUR_REPO_URL alliance-manager
 cd alliance-manager
 
-# Le fichier .env.production est déjà configuré ✅
-# Les domaines nginx sont configurés ✅
-```
-
-### 4. Certificats SSL Let's Encrypt
-
-```bash
-# Arrêter nginx s'il tourne
-sudo systemctl stop nginx || true
-
-# Générer les certificats
-sudo certbot certonly --standalone -d beben0.com
-
-# Copier dans le projet
-sudo mkdir -p nginx/ssl
-sudo cp /etc/letsencrypt/live/beben0.com/fullchain.pem nginx/ssl/cert.pem
-sudo cp /etc/letsencrypt/live/beben0.com/privkey.pem nginx/ssl/key.pem
-sudo chown $USER:$USER nginx/ssl/*
-```
-
-### 5. Déploiement final
-
-```bash
-# Lancer le déploiement
+# LE SCRIPT FAIT TOUT! 🚀
 ./deploy.sh
 ```
 
-### 6. Vérification
+### 3. Vérification (automatique)
 
-```bash
-# Test de santé
-curl https://beben0.com/api/health
+Le script teste automatiquement :
 
-# Logs en temps réel
-docker-compose -f docker-compose.prod.yml logs -f
+- ✅ Application locale accessible
+- ✅ HTTPS fonctionnel
+- ✅ Tests de santé
 
-# Status des services
-docker-compose -f docker-compose.prod.yml ps
-```
+## Ce que le script deploy.sh fait automatiquement
 
-## Configuration firewall
+### 🔧 Installation automatique :
 
-```bash
-# UFW (Ubuntu/Debian)
-sudo ufw allow 22      # SSH
-sudo ufw allow 80      # HTTP
-sudo ufw allow 443     # HTTPS
-sudo ufw --force enable
-```
+- **Docker & Docker Compose** (si manquant)
+- **Certbot** pour Let's Encrypt
+- **Certificats SSL** pour beben0.com
+- **Firewall UFW** (ports 22, 80, 443)
 
-## Renouvellement SSL automatique
+### ⚙️ Configuration automatique :
 
-```bash
-# Ajouter au crontab
-echo "0 3 * * * /usr/bin/certbot renew --quiet && cp /etc/letsencrypt/live/beben0.com/fullchain.pem /path/to/alliance-manager/nginx/ssl/cert.pem && cp /etc/letsencrypt/live/beben0.com/privkey.pem /path/to/alliance-manager/nginx/ssl/key.pem && docker-compose -f /path/to/alliance-manager/docker-compose.prod.yml restart nginx" | sudo crontab -
-```
+- **Renouvellement SSL** automatique (3h du matin)
+- **Backup quotidien** de la base (2h du matin)
+- **Security headers** et rate limiting
+- **Monitoring** et health checks
 
-## Backup automatique
+### 🎯 Résultat final :
 
-```bash
-# Backup quotidien à 2h du matin
-echo "0 2 * * * cd /path/to/alliance-manager && docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump -U alliance_user alliance_manager_prod > backups/backup_\$(date +\%Y\%m\%d).sql" | crontab -
-```
+Application accessible sur **https://beben0.com** avec sécurité enterprise-grade!
 
 ## Monitoring
 
