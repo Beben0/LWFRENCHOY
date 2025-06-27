@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma";
 async function createUser(
   email: string,
   password: string,
-  role: "ADMIN" | "MEMBER" = "MEMBER",
+  role: "ADMIN" | "GUEST" = "GUEST",
   pseudo?: string
 ) {
   try {
@@ -48,7 +48,7 @@ async function main() {
   await createUser("admin@alliance.gg", "admin123", "ADMIN", "Admin");
 
   // Vous pouvez ajouter d'autres utilisateurs ici
-  // await createUser("membre@alliance.gg", "membre123", "MEMBER", "TestMember");
+  // await createUser("membre@alliance.gg", "membre123", "GUEST", "TestMember");
 
   await prisma.$disconnect();
 }

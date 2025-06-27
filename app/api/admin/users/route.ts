@@ -8,7 +8,7 @@ const userSchema = z.object({
   email: z.string().email(),
   pseudo: z.string().optional(),
   password: z.string().min(6),
-  role: z.enum(["ADMIN", "MEMBER"]),
+  role: z.enum(["ADMIN", "GUEST"]),
   allianceRole: z.string().optional(),
 });
 
@@ -16,7 +16,7 @@ const userUpdateSchema = z.object({
   email: z.string().email().optional(),
   pseudo: z.string().optional(),
   password: z.string().min(6).optional(),
-  role: z.enum(["ADMIN", "MEMBER"]).optional(),
+  role: z.enum(["ADMIN", "GUEST"]).optional(),
   allianceRole: z.string().optional(),
 });
 

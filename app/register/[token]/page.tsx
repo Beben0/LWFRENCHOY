@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface RegisterPageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
 export default function RegisterPage({ params }: RegisterPageProps) {
@@ -21,6 +21,7 @@ export default function RegisterPage({ params }: RegisterPageProps) {
   const [isValidating, setIsValidating] = useState(true);
   const [inviteInfo, setInviteInfo] = useState<any>(null);
   const [error, setError] = useState("");
+  const [token, setToken] = useState<string>("");
   const [formData, setFormData] = useState({
     email: "",
     pseudo: "",
@@ -29,12 +30,22 @@ export default function RegisterPage({ params }: RegisterPageProps) {
   });
 
   useEffect(() => {
-    validateInvite();
-  }, []);
+    const initParams = async () => {
+      const resolvedParams = await params;
+      setToken(resolvedParams.token);
+    };
+    initParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (token) {
+      validateInvite();
+    }
+  }, [token]);
 
   const validateInvite = async () => {
     try {
-      const response = await fetch(`/api/invite/${params.token}/validate`);
+      const response = await fetch(`/api/invite/${token}/validate`);
 
       if (response.ok) {
         const data = await response.json();
@@ -71,7 +82,7 @@ export default function RegisterPage({ params }: RegisterPageProps) {
           email: formData.email,
           pseudo: formData.pseudo,
           password: formData.password,
-          inviteToken: params.token,
+          inviteToken: token,
         }),
       });
 

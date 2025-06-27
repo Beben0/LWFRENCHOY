@@ -2,14 +2,14 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 
 // Script pour ajouter un nouvel utilisateur
-// Usage: npx tsx scripts/add-user.ts email@example.com motdepasse [ADMIN|MEMBER]
+// Usage: npx tsx scripts/add-user.ts email@example.com motdepasse [ADMIN|GUEST]
 
 async function addUser() {
   const args = process.argv.slice(2);
 
   if (args.length < 2) {
     console.log(
-      "❌ Usage: npx tsx scripts/add-user.ts <email> <password> [ADMIN|MEMBER]"
+      "❌ Usage: npx tsx scripts/add-user.ts <email> <password> [ADMIN|GUEST]"
     );
     console.log(
       "📧 Exemple: npx tsx scripts/add-user.ts user@alliance.gg password123 ADMIN"
@@ -18,7 +18,7 @@ async function addUser() {
   }
 
   const [email, password, roleArg] = args;
-  const role = roleArg === "ADMIN" || roleArg === "MEMBER" ? roleArg : "MEMBER";
+  const role = roleArg === "ADMIN" || roleArg === "GUEST" ? roleArg : "GUEST";
 
   try {
     // Vérifier si l'utilisateur existe déjà
@@ -53,7 +53,7 @@ async function addUser() {
       data: {
         email,
         password: hashedPassword,
-        role: role as "ADMIN" | "MEMBER",
+        role: role as "ADMIN" | "GUEST",
       },
     });
 

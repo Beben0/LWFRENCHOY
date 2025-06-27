@@ -218,9 +218,7 @@ export function RolePermissionsManager() {
           <div className="flex gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Badge variant="destructive">Rôles Admin</Badge>
-              <span className="text-muted-foreground">
-                ADMIN, MEMBER, GUEST
-              </span>
+              <span className="text-muted-foreground">ADMIN, GUEST</span>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">Rôles Alliance</Badge>

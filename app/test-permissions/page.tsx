@@ -59,7 +59,7 @@ export default function TestPermissionsPage() {
                 className={`ml-2 px-2 py-1 rounded text-xs ${
                   userRole === "ADMIN"
                     ? "bg-red-100 text-red-800"
-                    : userRole === "MEMBER"
+                    : userRole === "GUEST"
                     ? "bg-blue-100 text-blue-800"
                     : "bg-gray-100 text-gray-800"
                 }`}

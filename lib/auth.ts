@@ -43,9 +43,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return {
             id: user.id,
             email: user.email,
-            pseudo: user.pseudo,
+            pseudo: user.pseudo ?? undefined,
             role: user.role,
-            allianceRole: user.allianceRole,
+            allianceRole: user.allianceRole ?? undefined,
           };
         } catch (error) {
           console.error("Auth error:", error);

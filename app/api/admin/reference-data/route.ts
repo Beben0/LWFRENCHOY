@@ -20,7 +20,6 @@ const referenceDataSchema = z.object({
     "ALLIANCE_ROLE",
     "EVENT_TYPE",
     "EVENT_TAG",
-    "TRAIN_TYPE",
     "PRIORITY_LEVEL",
     "STATUS_TYPE",
   ]),

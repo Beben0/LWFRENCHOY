@@ -18,8 +18,6 @@ export function getRedirectUrl(
   switch (userRole) {
     case "ADMIN":
       return "/admin";
-    case "MEMBER":
-      return "/admin";
     case "GUEST":
     default:
       // Les invités vont vers les trains (accessible publiquement)
@@ -42,11 +40,8 @@ export function canAccessRoute(
     return true;
   }
 
-  // Routes pour membres connectés
-  const memberRoutes = ["/admin", "/members", "/events", "/stats"];
-  if (userRole === "MEMBER" && memberRoutes.includes(route)) {
-    return true;
-  }
+  // Routes pour membres connectés (maintenant géré par les permissions d'alliance)
+  // const memberRoutes = ["/admin", "/members", "/events", "/stats"];
 
   // Routes admin
   const adminRoutes = [
@@ -55,11 +50,11 @@ export function canAccessRoute(
     "/admin/roles",
     "/admin/settings",
     "/admin/import-export",
+    "/members",
+    "/events",
+    "/stats",
   ];
-  if (
-    userRole === "ADMIN" &&
-    (memberRoutes.includes(route) || adminRoutes.includes(route))
-  ) {
+  if (userRole === "ADMIN" && adminRoutes.includes(route)) {
     return true;
   }
 

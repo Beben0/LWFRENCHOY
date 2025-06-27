@@ -7,6 +7,19 @@ import { Edit, Plus, Search, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MemberForm } from "./member-form";
 
+interface MemberFormData {
+  id?: string;
+  pseudo: string;
+  level: number;
+  power: string;
+  kills: number;
+  specialty?: string;
+  allianceRole: "R5" | "R4" | "MEMBER";
+  status: "ACTIVE" | "INACTIVE";
+  tags: string[];
+  notes?: string;
+}
+
 interface Member {
   id: string;
   pseudo: string;
@@ -26,9 +39,9 @@ export function MembersWithCrud() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | undefined>(
-    undefined
-  );
+  const [editingMember, setEditingMember] = useState<
+    MemberFormData | undefined
+  >(undefined);
 
   const fetchMembers = async () => {
     try {
@@ -54,9 +67,17 @@ export function MembersWithCrud() {
 
   const handleEdit = (member: Member) => {
     setEditingMember({
-      ...member,
+      id: member.id,
+      pseudo: member.pseudo,
+      level: member.level,
       power: String(member.power), // Convert BigInt to string for form
-    } as any);
+      kills: member.kills,
+      specialty: member.specialty || undefined,
+      allianceRole: member.allianceRole,
+      status: member.status,
+      tags: member.tags,
+      notes: member.notes || undefined,
+    });
     setShowForm(true);
   };
 

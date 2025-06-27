@@ -14,6 +14,7 @@ async function getTrainData() {
               level: true,
               specialty: true,
               allianceRole: true,
+              status: true,
             },
           },
           passengers: {
@@ -25,6 +26,7 @@ async function getTrainData() {
                   level: true,
                   specialty: true,
                   allianceRole: true,
+                  status: true,
                 },
               },
             },
