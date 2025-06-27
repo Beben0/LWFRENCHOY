@@ -17,7 +17,7 @@ export async function GET() {
 
     const guestPermissions = await prisma.rolePermission.findMany({
       where: {
-        role: "GUEST",
+        roleType: "GUEST",
         isEnabled: true,
       },
       select: {
