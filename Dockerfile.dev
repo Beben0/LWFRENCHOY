@@ -1,9 +1,12 @@
+# === Development Dockerfile ===
+# Optimized for development with hot reload
+
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies for building
-RUN apk add --no-cache libc6-compat
+# Install dependencies for building and development
+RUN apk add --no-cache libc6-compat wget
 
 # Copy package files
 COPY package.json package-lock.json* ./
@@ -14,11 +17,32 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application first to ensure PostCSS works
-RUN npm run build
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create non-root user (même en dev pour la sécurité)
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Change ownership to nextjs user
+RUN chown -R nextjs:nodejs /app
+USER nextjs
 
 # Expose port
 EXPOSE 3000
 
+# Set environment
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy and make entrypoint script executable
+USER root
+COPY scripts/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER nextjs
+
+# Set entrypoint
+ENTRYPOINT ["docker-entrypoint.sh"]
+
 # Start in development mode
-CMD ["npm", "run", "start"] 
+CMD ["npm", "run", "dev"] 
