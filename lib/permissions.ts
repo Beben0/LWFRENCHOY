@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import { Session } from "next-auth";
+import type { Session } from "next-auth";
+import { prisma } from "./prisma";
 
 export type UserRole = "ADMIN" | "MEMBER" | "GUEST";
 export type Permission =
@@ -30,10 +30,10 @@ export type Permission =
   | "manage_alerts"
   | "manage_notifications";
 
-// Cache pour les permissions de tous les rôles (admin + alliance)
+// Cache des permissions avec timestamp plus long (5 minutes)
 let rolePermissionsCache: Record<string, Set<Permission>> | null = null;
 let permissionsCacheTimestamp = 0;
-const PERMISSIONS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes au lieu de 1 minute
 
 // Permissions par défaut pour fallback (si problème avec la base de données)
 const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -82,29 +82,16 @@ async function getRolePermissionsFromDB(): Promise<
 > {
   const now = Date.now();
 
-  // Vérifier si le cache doit être invalidé
-  let shouldInvalidate = false;
-  try {
-    const { shouldInvalidateMiddlewareCache } = await import(
-      "@/lib/role-permissions"
-    );
-    shouldInvalidate = shouldInvalidateMiddlewareCache();
-  } catch (error) {
-    // Ignorer l'erreur si la fonction n'est pas disponible
-  }
-
-  // Utiliser le cache si disponible, pas expiré, et pas d'invalidation forcée
+  // Vérifier le cache
   if (
     rolePermissionsCache &&
-    now - permissionsCacheTimestamp < PERMISSIONS_CACHE_DURATION &&
-    !shouldInvalidate
+    now - permissionsCacheTimestamp < CACHE_DURATION
   ) {
     return rolePermissionsCache;
   }
 
   try {
-    const prisma = new PrismaClient();
-
+    // Utiliser l'instance singleton de Prisma
     const allRolePermissions = await prisma.rolePermission.findMany({
       where: {
         isEnabled: true,
@@ -115,7 +102,7 @@ async function getRolePermissionsFromDB(): Promise<
       },
     });
 
-    await prisma.$disconnect();
+    // Pas besoin de disconnect avec l'instance singleton
 
     // Organiser par type de rôle
     const permissions: Record<string, Set<Permission>> = {};
