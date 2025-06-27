@@ -21,10 +21,10 @@ AAAA  beben0.com     → IPv6_DE_TON_SERVEUR (optionnel)
 
 ```bash
 # Cloner le repo sur ton serveur
-git clone YOUR_REPO_URL alliance-manager
+git clone https://github.com/Beben0/LWFRENCHOY.git alliance-manager
 cd alliance-manager
 
-# LE SCRIPT FAIT TOUT! 🚀
+# LE SCRIPT FAIT TOUT! 🚀 (même les secrets)
 ./deploy.sh
 ```
 
@@ -44,6 +44,7 @@ Le script teste automatiquement :
 - **Certbot** pour Let's Encrypt
 - **Certificats SSL** pour beben0.com
 - **Firewall UFW** (ports 22, 80, 443)
+- **Secrets sécurisés** (.env.production si manquant)
 
 ### ⚙️ Configuration automatique :
 

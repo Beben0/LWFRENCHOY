@@ -68,11 +68,43 @@ else
     echo "✅ Docker Compose installé"
 fi
 
-# Vérifier fichier .env.production
+# Vérifier/créer fichier .env.production
 if [ ! -f ".env.production" ]; then
-    echo "❌ Fichier .env.production manquant!"
-    echo "Le fichier devrait déjà être présent avec les secrets générés"
-    exit 1
+    echo "⚠️ Fichier .env.production manquant, génération automatique..."
+    
+    # Générer des secrets sécurisés
+    NEXTAUTH_SECRET=$(openssl rand -base64 32)
+    POSTGRES_PASSWORD=$(openssl rand -base64 32)
+    
+    # Créer le fichier .env.production
+    cat > .env.production << EOF
+# ===========================================
+# PRODUCTION ENVIRONMENT - beben0.com
+# ===========================================
+# 🔐 SECRETS GÉNÉRÉS AUTOMATIQUEMENT - NE PAS PARTAGER !
+
+# DATABASE
+POSTGRES_DB=alliance_manager_prod
+POSTGRES_USER=alliance_user
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+
+# NEXTAUTH
+NEXTAUTH_URL=https://beben0.com
+NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+
+# NODE ENV
+NODE_ENV=production
+
+# OPTIONAL: Monitoring & Analytics
+# SENTRY_DSN=
+# ANALYTICS_ID=
+# LOG_LEVEL=error
+EOF
+    
+    echo "✅ Fichier .env.production créé avec des secrets sécurisés:"
+    echo "   - NEXTAUTH_SECRET: $(echo $NEXTAUTH_SECRET | cut -c1-8)..."
+    echo "   - POSTGRES_PASSWORD: $(echo $POSTGRES_PASSWORD | cut -c1-8)..."
+    echo ""
 else
     echo "✅ Configuration d'environnement trouvée"
 fi
