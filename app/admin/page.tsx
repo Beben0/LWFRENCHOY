@@ -12,7 +12,6 @@ import {
   Clock,
   Database,
   Download,
-  Settings,
   Shield,
   Train,
   Users,
@@ -174,12 +173,6 @@ async function AdminPageContent() {
             <Button variant="outline">
               <Download className="w-4 h-4 mr-2" />
               Sauvegarde
-            </Button>
-          </Link>
-          <Link href="/admin/settings">
-            <Button className="lastwar-gradient text-black">
-              <Settings className="w-4 h-4 mr-2" />
-              Configuration
             </Button>
           </Link>
         </div>
@@ -406,12 +399,6 @@ async function AdminPageContent() {
                   Alertes & Notifications
                 </Button>
               </Link>
-              <Link href="/admin/settings" className="w-full">
-                <Button variant="outline" className="w-full justify-start">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configuration
-                </Button>
-              </Link>
             </div>
           </CardContent>
         </Card>
@@ -436,12 +423,6 @@ async function AdminPageContent() {
                 <Button variant="outline" className="w-full justify-start">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Rapports détaillés
-                </Button>
-              </Link>
-              <Link href="/admin/settings?tab=backup" className="w-full">
-                <Button variant="outline" className="w-full justify-start">
-                  <Database className="w-4 h-4 mr-2" />
-                  Sauvegarde auto
                 </Button>
               </Link>
             </div>
