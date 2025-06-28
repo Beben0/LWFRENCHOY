@@ -376,7 +376,7 @@ export function GraphicalTrainSchedule({
               return (
                 <div
                   key={day}
-                  className={`relative flex items-center p-4 border-l-4 hover:bg-gray-800/30 transition-colors ${
+                  className={`relative border-l-4 hover:bg-gray-800/30 transition-colors ${
                     dateInfo.isToday
                       ? "bg-orange-500/10 border-l-orange-500"
                       : !!train?.conductor
@@ -395,115 +395,126 @@ export function GraphicalTrainSchedule({
                     </div>
                   )}
 
-                  {/* Jour et date */}
-                  <div className="w-32 flex-shrink-0">
-                    <div className="font-bold text-white">{dayLabels[day]}</div>
-                    <div className="text-sm text-gray-400">
-                      {dateInfo.dayNum} {dateInfo.month}
+                  {/* Layout responsive : mobile stack, desktop inline */}
+                  <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    {/* Jour, date et horaire - groupés sur mobile */}
+                    <div className="flex justify-between items-center sm:justify-start sm:gap-6">
+                      {/* Jour et date */}
+                      <div className="flex-shrink-0">
+                        <div className="font-bold text-white">
+                          {dayLabels[day]}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          {dateInfo.dayNum} {dateInfo.month}
+                        </div>
+                      </div>
+
+                      {/* Horaire */}
+                      <div className="text-center sm:text-left">
+                        {train ? (
+                          <>
+                            <div className="text-xl sm:text-2xl font-bold text-orange-400">
+                              {train.departureTime}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              →{" "}
+                              {calculateRealDepartureTime(train.departureTime)}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-gray-500">—</div>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Horaire */}
-                  <div className="w-28 flex-shrink-0 text-center">
-                    {train ? (
-                      <>
-                        <div className="text-2xl font-bold text-orange-400">
-                          {train.departureTime}
+                    {/* Temps restant - mobile full width */}
+                    <div className="sm:w-32 sm:flex-shrink-0">
+                      {train && (
+                        <div
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
+                            !!train.conductor
+                              ? "bg-green-500/20 text-green-300"
+                              : "bg-yellow-500/20 text-yellow-300"
+                          }`}
+                        >
+                          <Clock className="w-3 h-3" />
+                          {timeRemaining} restant
                         </div>
-                        <div className="text-xs text-gray-400">
-                          → {calculateRealDepartureTime(train.departureTime)}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-gray-500">—</div>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
-                  {/* Temps restant */}
-                  <div className="w-32 flex-shrink-0">
-                    {train && (
-                      <div
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
-                          !!train.conductor
-                            ? "bg-green-500/20 text-green-300"
-                            : "bg-yellow-500/20 text-yellow-300"
-                        }`}
-                      >
-                        <Clock className="w-3 h-3" />
-                        {timeRemaining} restant
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Conducteur */}
-                  <div className="flex-1 min-w-0">
-                    {train?.conductor ? (
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
-                          {getRoleIcon(train.conductor.allianceRole)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-bold text-white break-words">
-                            {train.conductor.pseudo}
+                    {/* Conducteur - mobile full width, desktop flex */}
+                    <div className="flex-1 min-w-0">
+                      {train?.conductor ? (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            {getRoleIcon(train.conductor.allianceRole)}
                           </div>
-                          <div className="text-sm text-gray-400 flex items-center gap-2">
-                            <span>Niveau {train.conductor.level}</span>
-                            {train.conductor.specialty && (
-                              <>
-                                <span>•</span>
-                                <span className="text-xs px-2 py-0.5 bg-blue-400/20 text-blue-300 rounded">
-                                  {train.conductor.specialty}
-                                </span>
-                              </>
-                            )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-white break-words">
+                              {train.conductor.pseudo}
+                            </div>
+                            <div className="text-sm text-gray-400 flex flex-wrap items-center gap-2">
+                              <span>Niveau {train.conductor.level}</span>
+                              {train.conductor.specialty && (
+                                <>
+                                  <span className="hidden sm:inline">•</span>
+                                  <span className="text-xs px-2 py-0.5 bg-blue-400/20 text-blue-300 rounded">
+                                    {train.conductor.specialty}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ) : train ? (
-                      <div className="flex items-center gap-2 text-orange-300">
-                        <span className="text-lg">⚠️</span>
-                        <span className="font-medium">Conducteur requis</span>
-                      </div>
-                    ) : (
-                      <div className="text-gray-500 italic">
-                        Aucun train programmé
-                      </div>
-                    )}
-                  </div>
+                      ) : train ? (
+                        <div className="flex items-center gap-2 text-orange-300">
+                          <span className="text-lg">⚠️</span>
+                          <span className="font-medium text-sm sm:text-base">
+                            Conducteur requis
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-gray-500 italic text-sm">
+                          Aucun train programmé
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Actions */}
-                  <div className="w-24 flex-shrink-0 text-right">
-                    {isAdmin && (
-                      <Button
-                        size="sm"
-                        variant={
-                          train?.conductor
-                            ? "secondary"
+                    {/* Actions - mobile full width button */}
+                    <div className="sm:w-24 sm:flex-shrink-0 sm:text-right">
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant={
+                            train?.conductor
+                              ? "secondary"
+                              : train
+                              ? "default"
+                              : "outline"
+                          }
+                          className="text-xs w-full sm:w-auto"
+                          onClick={() => {
+                            setSelectedTrain(
+                              train || {
+                                id: "",
+                                day,
+                                departureTime: "20:00",
+                                conductor: null,
+                                passengers: [],
+                              }
+                            );
+                            setShowConductorSelect(true);
+                          }}
+                        >
+                          {train?.conductor
+                            ? "Modifier"
                             : train
-                            ? "default"
-                            : "outline"
-                        }
-                        className="text-xs"
-                        onClick={() => {
-                          setSelectedTrain(
-                            train || {
-                              id: "",
-                              day,
-                              departureTime: "20:00",
-                              conductor: null,
-                              passengers: [],
-                            }
-                          );
-                          setShowConductorSelect(true);
-                        }}
-                      >
-                        {train?.conductor
-                          ? "Modifier"
-                          : train
-                          ? "Assigner"
-                          : "Créer"}
-                      </Button>
-                    )}
+                            ? "Assigner"
+                            : "Créer"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

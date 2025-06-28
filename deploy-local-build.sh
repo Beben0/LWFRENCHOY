@@ -64,6 +64,7 @@ docker load -i alliance-manager-image.tar
 
 echo "🧹 Nettoyage des containers existants..."
 docker-compose -f docker-compose.freebox-https.yml --env-file .env.production down 2>/dev/null || true
+docker-compose -f docker-compose.freebox.yml --env-file .env.production down 2>/dev/null || true
 
 echo "🔐 Génération du .env.production..."
 if [ ! -f ".env.production" ]; then
@@ -90,11 +91,38 @@ sleep 60
 
 echo "🔍 Test de santé HTTPS..."
 if curl -k -f https://localhost/api/health 2>/dev/null; then
-    echo "✅ Déploiement HTTPS réussi sur Freebox Delta!"
-    echo "🌐 Application accessible sur : https://beben0.com"
+    echo "✅ Application démarrée avec succès!"
+    
+    echo "🌱 Application du seed automatique..."
+    if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
+        echo "✅ Seed appliqué avec succès!"
+        echo "🎉 Déploiement HTTPS complet sur Freebox Delta!"
+        echo "🌐 Application accessible sur : https://beben0.com"
+        echo "👤 Login admin : admin@beben0.com / admin123"
+    else
+        echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
+        echo "🌐 Application accessible sur : https://beben0.com"
+    fi
 else
-    echo "⚠️ Déploiement terminé, vérifiez les logs:"
-    docker-compose -f docker-compose.freebox-https.yml --env-file .env.production logs --tail=20
+    echo "⚠️ Application pas encore prête, attente supplémentaire..."
+    sleep 30
+    if curl -k -f https://localhost/api/health 2>/dev/null; then
+        echo "✅ Application démarrée après attente supplémentaire!"
+        
+        echo "🌱 Application du seed automatique..."
+        if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
+            echo "✅ Seed appliqué avec succès!"
+            echo "🎉 Déploiement HTTPS complet sur Freebox Delta!"
+            echo "🌐 Application accessible sur : https://beben0.com"
+            echo "👤 Login admin : admin@beben0.com / admin123"
+        else
+            echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
+            echo "🌐 Application accessible sur : https://beben0.com"
+        fi
+    else
+        echo "⚠️ Déploiement terminé, vérifiez les logs:"
+        docker-compose -f docker-compose.freebox-https.yml --env-file .env.production logs --tail=20
+    fi
 fi
 
 echo "🧹 Nettoyage des fichiers d'installation..."
