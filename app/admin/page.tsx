@@ -1,8 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { auth } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
 import {
   Activity,
   AlertTriangle,
@@ -18,9 +18,44 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import { useEffect, useState } from "react";
+
+// Import client-only pour éviter les erreurs d'hydratation
+const AlertSchedulerStatus = dynamic(
+  () =>
+    import("@/components/admin/alert-scheduler-status").then(
+      (mod) => mod.AlertSchedulerStatus
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <span>Chargement...</span>
+      </div>
+    ),
+  }
+);
+
+const TrainSchedulerStatus = dynamic(
+  () =>
+    import("@/components/admin/train-scheduler-status").then(
+      (mod) => mod.TrainSchedulerStatus
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <span>Chargement...</span>
+      </div>
+    ),
+  }
+);
 
 // Fonction pour formater la puissance
 function formatPower(power: number | bigint): string {
@@ -35,96 +70,83 @@ function formatPower(power: number | bigint): string {
   return num.toLocaleString();
 }
 
-async function AdminPageContent() {
-  const session = await auth();
+interface AdminStats {
+  totalMembers: number;
+  activeMembers: number;
+  totalEvents: number;
+  upcomingEvents: number;
+  trainSlots: number;
+  assignedSlots: number;
+  totalPower: number;
+  inactiveMembers: number;
+  recentActivity: number;
+  coveragePercent: number;
+}
 
-  // Vérifier si l'utilisateur a accès à l'admin panel
-  if (!hasPermission(session, "view_admin_panel")) {
-    redirect("/auth/signin");
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session || !hasPermission(session, "view_admin_panel")) {
+      redirect("/auth/signin");
+      return;
+    }
+
+    const loadStats = async () => {
+      try {
+        const response = await fetch("/api/admin/stats");
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error("Erreur chargement stats admin:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, [session, status]);
+
+  if (!mounted || status === "loading" || loading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <Shield className="w-8 h-8 animate-spin mx-auto mb-2" />
+            <p>Chargement du dashboard...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
-  // Récupérer les vraies données de la base
-  const [
-    totalMembers,
-    activeMembers,
-    totalEvents,
-    upcomingEvents,
-    trainSlots,
-    assignedSlots,
-    totalPower,
-    inactiveMembers,
-    recentActivity,
-  ] = await Promise.all([
-    // Total des membres
-    prisma.member.count(),
+  if (!session || !hasPermission(session, "view_admin_panel")) {
+    redirect("/auth/signin");
+    return null;
+  }
 
-    // Membres actifs
-    prisma.member.count({
-      where: { status: "ACTIVE" },
-    }),
-
-    // Total des événements
-    prisma.event.count(),
-
-    // Événements à venir
-    prisma.event.count({
-      where: {
-        startDate: {
-          gte: new Date(),
-        },
-      },
-    }),
-
-    // Total des créneaux de train
-    prisma.trainSlot.count(),
-
-    // Créneaux assignés
-    prisma.trainSlot.count({
-      where: {
-        conductorId: {
-          not: null,
-        },
-      },
-    }),
-
-    // Puissance totale de l'alliance
-    prisma.member.aggregate({
-      where: { status: "ACTIVE" },
-      _sum: { power: true },
-    }),
-
-    // Membres inactifs (plus de 7 jours)
-    prisma.member.count({
-      where: {
-        lastActive: {
-          lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        },
-      },
-    }),
-
-    // Activité récente (membres connectés dans les 24h)
-    prisma.member.count({
-      where: {
-        lastActive: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        },
-      },
-    }),
-  ]);
-
-  const stats = {
-    totalMembers,
-    activeMembers,
-    totalEvents,
-    upcomingEvents,
-    trainSlots,
-    assignedSlots,
-    totalPower: totalPower._sum.power || BigInt(0),
-    inactiveMembers,
-    recentActivity,
-    coveragePercent:
-      trainSlots > 0 ? Math.round((assignedSlots / trainSlots) * 100) : 0,
-  };
+  if (!stats) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p>Erreur lors du chargement des statistiques</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Alertes système
   const alerts = [];
@@ -292,6 +314,12 @@ async function AdminPageContent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Statut Alert Scheduler */}
+        <AlertSchedulerStatus />
+
+        {/* Statut Train Scheduler */}
+        <TrainSchedulerStatus />
       </div>
 
       {/* Actions rapides */}
@@ -356,6 +384,12 @@ async function AdminPageContent() {
                   Gestion des trains
                 </Button>
               </Link>
+              <Link href="/trains-v2" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  <Zap className="w-4 h-4 mr-2" />
+                  Scheduler automatique
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -391,67 +425,65 @@ async function AdminPageContent() {
               <Link href="/admin/reference-data" className="w-full">
                 <Button variant="outline" className="w-full justify-start">
                   <Database className="w-4 h-4 mr-2" />
-                  Référentiels
-                </Button>
-              </Link>
-              <Link href="/admin/alerts" className="w-full">
-                <Button variant="outline" className="w-full justify-start">
-                  <Bell className="w-4 h-4 mr-2" />
-                  Alertes & Notifications
-                </Button>
-              </Link>
-              <Link href="/help/admin" className="w-full">
-                <Button variant="outline" className="w-full justify-start">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  Articles d'aide
+                  Données de référence
                 </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Maintenance & Données */}
+        {/* Aide et Documentation */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-orange-500" />
-              Maintenance & Données
+              <BookOpen className="w-5 h-5 text-amber-500" />
+              Aide et Documentation
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 gap-2">
-              <Link href="/admin/import-export" className="w-full">
+              <Link href="/help/admin" className="w-full">
                 <Button variant="outline" className="w-full justify-start">
-                  <Download className="w-4 h-4 mr-2" />
-                  Import / Export
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Gestion des articles
                 </Button>
               </Link>
-              <Link href="/stats" className="w-full">
+              <Link href="/help" className="w-full">
                 <Button variant="outline" className="w-full justify-start">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Rapports détaillés
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Centre d'aide
                 </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
 
-export default function AdminPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto px-4 py-6">
-          <div className="text-center">
-            Chargement du panneau d'administration...
+      {/* Section Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-blue-500" />
+            Système de Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link href="/admin/alerts" className="w-full">
+              <Button variant="outline" className="w-full justify-start">
+                <Bell className="w-4 h-4 mr-2" />
+                Gestion des alertes
+              </Button>
+            </Link>
+            <Link href="/admin/notifications" className="w-full">
+              <Button variant="outline" className="w-full justify-start">
+                <Bell className="w-4 h-4 mr-2" />
+                Configuration Discord
+              </Button>
+            </Link>
           </div>
-        </div>
-      }
-    >
-      <AdminPageContent />
-    </Suspense>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

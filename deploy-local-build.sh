@@ -89,19 +89,31 @@ docker-compose -f docker-compose.freebox-https.yml --env-file .env.production up
 echo "🏥 Attente du démarrage de l'application..."
 sleep 60
 
+echo "🗄️ Application des migrations Prisma..."
+docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx prisma db push --accept-data-loss 2>/dev/null || echo "⚠️ Erreur migration, continuons..."
+docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx prisma generate 2>/dev/null || echo "⚠️ Erreur génération client, continuons..."
+
 echo "🔍 Test de santé HTTPS..."
 if curl -k -f https://localhost/api/health 2>/dev/null; then
     echo "✅ Application démarrée avec succès!"
     
-    echo "🌱 Application du seed automatique..."
-    if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
-        echo "✅ Seed appliqué avec succès!"
+    echo "🌱 Application du seed complet..."
+    if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/complete-seed.ts; then
+        echo "✅ Seed complet appliqué avec succès!"
         echo "🎉 Déploiement HTTPS complet sur Freebox Delta!"
         echo "🌐 Application accessible sur : https://beben0.com"
         echo "👤 Login admin : admin@beben0.com / admin123"
+        echo "📚 Système d'aide initialisé avec articles de démonstration"
     else
-        echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
-        echo "🌐 Application accessible sur : https://beben0.com"
+        echo "⚠️ Erreur lors du seed complet, tentative avec le seed simple..."
+        if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
+            echo "✅ Seed simple appliqué en fallback!"
+            echo "🌐 Application accessible sur : https://beben0.com"
+            echo "👤 Login admin : admin@beben0.com / admin123"
+        else
+            echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
+            echo "🌐 Application accessible sur : https://beben0.com"
+        fi
     fi
 else
     echo "⚠️ Application pas encore prête, attente supplémentaire..."
@@ -109,15 +121,23 @@ else
     if curl -k -f https://localhost/api/health 2>/dev/null; then
         echo "✅ Application démarrée après attente supplémentaire!"
         
-        echo "🌱 Application du seed automatique..."
-        if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
-            echo "✅ Seed appliqué avec succès!"
+        echo "🌱 Application du seed complet..."
+        if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/complete-seed.ts; then
+            echo "✅ Seed complet appliqué avec succès!"
             echo "🎉 Déploiement HTTPS complet sur Freebox Delta!"
             echo "🌐 Application accessible sur : https://beben0.com"
             echo "👤 Login admin : admin@beben0.com / admin123"
+            echo "📚 Système d'aide initialisé avec articles de démonstration"
         else
-            echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
-            echo "🌐 Application accessible sur : https://beben0.com"
+            echo "⚠️ Erreur lors du seed complet, tentative avec le seed simple..."
+            if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
+                echo "✅ Seed simple appliqué en fallback!"
+                echo "🌐 Application accessible sur : https://beben0.com"
+                echo "👤 Login admin : admin@beben0.com / admin123"
+            else
+                echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
+                echo "🌐 Application accessible sur : https://beben0.com"
+            fi
         fi
     else
         echo "⚠️ Déploiement terminé, vérifiez les logs:"

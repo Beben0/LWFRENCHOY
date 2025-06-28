@@ -5,11 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  AlertCircle,
   Calendar,
   Check,
-  Clock,
+  CheckCircle,
   Crown,
   History,
+  PlayCircle,
   Search,
   Shield,
   Train,
@@ -17,6 +19,7 @@ import {
   UserMinus,
   Users,
   X,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TrainHistory } from "./train-history";
@@ -30,12 +33,40 @@ interface Member {
   status: "ACTIVE" | "INACTIVE";
 }
 
-interface TrainSlot {
+interface TrainInstance {
   id: string;
-  day: string;
+  date: string;
+  dayOfWeek: string;
   departureTime: string;
-  conductor: Member | null;
-  passengers: any[];
+  realDepartureTime: string;
+  status: string;
+  conductor?: Member;
+  passengers: Array<{
+    id: string;
+    passenger: Member;
+    joinedAt: string;
+  }>;
+  metadata: {
+    isToday: boolean;
+    isPast: boolean;
+    canRegister: boolean;
+    isBoarding: boolean;
+    timeUntilDeparture: number;
+    timeUntilRealDeparture: number;
+    passengerCount: number;
+  };
+}
+
+interface ApiResponse {
+  trains: TrainInstance[];
+  metadata: {
+    total: number;
+    daysAhead: number;
+    dateRange: {
+      from: string;
+      to: string;
+    };
+  };
 }
 
 interface ConductorHistory {
@@ -45,7 +76,7 @@ interface ConductorHistory {
 }
 
 interface GraphicalTrainScheduleProps {
-  trainSlots: TrainSlot[];
+  trainSlots: any[]; // Maintenu pour compatibilité mais non utilisé
   members: Member[];
   currentUserId?: string;
   isAdmin?: boolean;
@@ -59,63 +90,586 @@ const dayLabels: { [key: string]: string } = {
   friday: "Vendredi",
   saturday: "Samedi",
   sunday: "Dimanche",
+  lundi: "Lundi",
+  mardi: "Mardi",
+  mercredi: "Mercredi",
+  jeudi: "Jeudi",
+  vendredi: "Vendredi",
+  samedi: "Samedi",
+  dimanche: "Dimanche",
 };
 
-const timeSlotLabels: { [key: string]: string } = {
-  "08:00": "Matin",
-  "12:00": "Midi",
-  "16:00": "Après-midi",
-  "20:00": "Soir",
+const STATUS_CONFIG = {
+  SCHEDULED: {
+    label: "Programmé",
+    color: "bg-blue-500/20 text-blue-300",
+    icon: Calendar,
+  },
+  BOARDING: {
+    label: "Embarquement",
+    color: "bg-orange-500/20 text-orange-300 animate-pulse",
+    icon: PlayCircle,
+  },
+  DEPARTED: {
+    label: "Parti",
+    color: "bg-green-500/20 text-green-300",
+    icon: CheckCircle,
+  },
+  CANCELLED: {
+    label: "Annulé",
+    color: "bg-red-500/20 text-red-300",
+    icon: XCircle,
+  },
+  COMPLETED: {
+    label: "Terminé",
+    color: "bg-gray-500/20 text-gray-300",
+    icon: CheckCircle,
+  },
 };
 
-export function GraphicalTrainSchedule({
-  trainSlots,
+// Wrapper client-only pour éviter l'hydratation
+function ClientOnlyTrainSchedule(props: GraphicalTrainScheduleProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <Train className="w-6 h-6 animate-spin mr-2" />
+            <span>Chargement du planning...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return <TrainScheduleContent {...props} />;
+}
+
+// Composant client pour éviter les hydration errors
+function TrainDateInfo({ train }: { train: TrainInstance }) {
+  const [mounted, setMounted] = useState(false);
+  const [dateInfo, setDateInfo] = useState({
+    dayNum: "...",
+    month: "...",
+    isToday: false,
+  });
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Calculer côté client pour éviter hydration mismatch
+    const dateStr = train.date;
+    const datePart = dateStr.includes("T")
+      ? dateStr.split("T")[0]
+      : dateStr.split(" ")[0];
+    const dateParts = datePart.split("-");
+    const day = parseInt(dateParts[2]);
+
+    const months = [
+      "JAN",
+      "FÉV",
+      "MAR",
+      "AVR",
+      "MAI",
+      "JUN",
+      "JUL",
+      "AOÛ",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DÉC",
+    ];
+    const month = months[parseInt(dateParts[1]) - 1];
+
+    const today = new Date();
+    const todayStr =
+      today.getFullYear() +
+      "-" +
+      String(today.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(today.getDate()).padStart(2, "0");
+
+    setDateInfo({
+      dayNum: day.toString(),
+      month: month,
+      isToday: todayStr === datePart,
+    });
+  }, [train.date]);
+
+  if (!mounted) {
+    return (
+      <div>
+        <div className="text-sm text-gray-400">...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="text-sm text-gray-400">
+        {dateInfo.dayNum} {dateInfo.month}
+      </div>
+    </div>
+  );
+}
+
+// Composant séparé pour éviter les hydration errors
+function TimeDisplay({ train }: { train: TrainInstance }) {
+  const [mounted, setMounted] = useState(false);
+  const [timeData, setTimeData] = useState({
+    isPast: false,
+    timeUntilDeparture: 0,
+    timeText: "Chargement...",
+  });
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Calculer côté client pour éviter hydration mismatch
+    const calculateTime = () => {
+      const now = new Date();
+
+      // Corriger le problème de timezone : la date UTC doit être interprétée comme date locale
+      // La base stocke '2025-06-27T22:00:00.000Z' pour "27 juin" mais JS l'interprète comme "28 juin" en France
+      let trainDate: Date;
+      if (train.date.includes("T") && train.date.includes("Z")) {
+        // Date UTC de la base - on veut juste la partie date, pas l'heure
+        const datePart = train.date.split("T")[0]; // '2025-06-27'
+        trainDate = new Date(datePart); // Parse comme date locale, sans conversion timezone
+      } else {
+        trainDate = new Date(train.date);
+      }
+
+      const [hours, minutes] = train.departureTime.split(":").map(Number);
+      const departureDateTime = new Date(trainDate);
+      departureDateTime.setHours(hours, minutes, 0, 0);
+
+      const isPast = departureDateTime < now;
+      const timeUntilDeparture = isPast
+        ? 0
+        : departureDateTime.getTime() - now.getTime();
+
+      const finalTimeText = getStatusText(
+        isPast,
+        timeUntilDeparture,
+        train.status
+      );
+
+      setTimeData({
+        isPast,
+        timeUntilDeparture,
+        timeText: finalTimeText,
+      });
+    };
+
+    calculateTime();
+    // Mettre à jour toutes les minutes
+    const interval = setInterval(calculateTime, 60000);
+
+    return () => clearInterval(interval);
+  }, [train.date, train.departureTime, train.status]);
+
+  const formatTimeRemaining = (milliseconds: number): string => {
+    if (milliseconds <= 0) return "Maintenant";
+
+    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
+    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      return `${days}j ${hours % 24}h`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}min`;
+    } else {
+      return `${minutes}min`;
+    }
+  };
+
+  const getStatusText = (
+    isPast: boolean,
+    timeUntilDeparture: number,
+    status: string
+  ): string => {
+    if (status === "BOARDING") {
+      return "Embarquement !";
+    }
+    if (status === "DEPARTED") {
+      return "Train parti";
+    }
+    if (isPast) {
+      return "Train parti";
+    }
+    if (status === "SCHEDULED") {
+      if (timeUntilDeparture > 0) {
+        return formatTimeRemaining(timeUntilDeparture);
+      }
+      return "Bientôt";
+    }
+
+    const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+    return statusConfig?.label || status;
+  };
+
+  if (!mounted) {
+    return (
+      <div className="space-y-1">
+        <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gray-500/20 text-gray-300">
+          <Calendar className="w-3 h-3" />
+          Chargement...
+        </div>
+      </div>
+    );
+  }
+
+  const statusConfig =
+    STATUS_CONFIG[train.status as keyof typeof STATUS_CONFIG];
+  const StatusIcon = statusConfig?.icon || Calendar;
+
+  return (
+    <div className="space-y-1">
+      <div
+        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
+          statusConfig?.color || "bg-gray-500/20 text-gray-300"
+        }`}
+      >
+        <StatusIcon className="w-3 h-3" />
+        {timeData.timeText}
+      </div>
+    </div>
+  );
+}
+
+function TodayBadge({ train }: { train: TrainInstance }) {
+  const [isToday, setIsToday] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Calculer côté client pour éviter hydration mismatch
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0]; // Format YYYY-MM-DD
+
+    // Corriger le problème de timezone : extraire juste la partie date
+    let trainDateStr: string;
+    if (train.date.includes("T")) {
+      trainDateStr = train.date.split("T")[0]; // '2025-06-27'
+    } else {
+      trainDateStr = train.date.split(" ")[0];
+    }
+
+    console.log("🔥 DEBUG TodayBadge:", {
+      todayStr,
+      trainDateStr,
+      isToday: todayStr === trainDateStr,
+      originalTrainDate: train.date,
+    });
+
+    setIsToday(todayStr === trainDateStr);
+  }, [train.date]);
+
+  if (!mounted || !isToday) return null;
+
+  return (
+    <div className="absolute -top-1 -right-1 z-10">
+      <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
+        🔥 AUJOURD'HUI
+      </div>
+    </div>
+  );
+}
+
+// Composant pour une ligne de train avec gestion d'état client
+function TrainRow({
+  day,
+  train,
+  isAdmin,
+  actionLoading,
+  setSelectedTrain,
+  setShowConductorSelect,
+}: {
+  day: string;
+  train: TrainInstance | null;
+  isAdmin: boolean;
+  actionLoading: boolean;
+  setSelectedTrain: (train: TrainInstance) => void;
+  setShowConductorSelect: (show: boolean) => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const [borderClass, setBorderClass] = useState(
+    "bg-gray-500/10 border-l-gray-500"
+  );
+
+  useEffect(() => {
+    setMounted(true);
+
+    if (train) {
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0]; // Format YYYY-MM-DD
+
+      // Corriger le problème de timezone : extraire juste la partie date
+      let trainDateStr: string;
+      if (train.date.includes("T")) {
+        trainDateStr = train.date.split("T")[0]; // '2025-06-27'
+      } else {
+        trainDateStr = train.date.split(" ")[0];
+      }
+
+      const isToday = todayStr === trainDateStr;
+
+      if (isToday) {
+        setBorderClass("bg-orange-500/10 border-l-orange-500");
+      } else if (train?.conductor) {
+        setBorderClass("bg-green-500/10 border-l-green-500");
+      } else {
+        setBorderClass("bg-yellow-500/10 border-l-yellow-500");
+      }
+    } else {
+      setBorderClass("bg-gray-500/10 border-l-gray-500");
+    }
+  }, [train]);
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "R5":
+        return <Crown className="w-4 h-4 text-yellow-500" />;
+      case "R4":
+        return <Shield className="w-4 h-4 text-blue-500" />;
+      default:
+        return <User className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  return (
+    <div
+      className={`relative border-l-4 hover:bg-gray-800/30 transition-colors ${borderClass}`}
+    >
+      {/* Badge AUJOURD'HUI flottant */}
+      {train && <TodayBadge train={train} />}
+
+      {/* Layout responsive : mobile stack, desktop inline */}
+      <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+        {/* Jour, date et horaire - groupés sur mobile */}
+        <div className="flex justify-between items-center sm:justify-start sm:gap-6">
+          {/* Jour et date */}
+          <div className="flex-shrink-0">
+            <div className="font-bold text-white">{dayLabels[day]}</div>
+            {train && <TrainDateInfo train={train} />}
+          </div>
+
+          {/* Horaire */}
+          <div className="text-center sm:text-left">
+            {train ? (
+              <>
+                <div className="text-xl sm:text-2xl font-bold text-orange-400">
+                  {train.departureTime}
+                </div>
+                <div className="text-xs text-gray-400">
+                  → {train.realDepartureTime}
+                </div>
+              </>
+            ) : (
+              <div className="text-gray-500">—</div>
+            )}
+          </div>
+        </div>
+
+        {/* Temps restant et statut */}
+        <div className="sm:w-40 sm:flex-shrink-0">
+          {train && <TimeDisplay train={train} />}
+        </div>
+
+        {/* Conducteur - mobile full width, desktop flex */}
+        <div className="flex-1 min-w-0">
+          {train?.conductor ? (
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                {getRoleIcon(train.conductor.allianceRole)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-white break-words">
+                  {train.conductor.pseudo}
+                </div>
+                <div className="text-sm text-gray-400 flex flex-wrap items-center gap-2">
+                  <span>Niveau {train.conductor.level}</span>
+                  {train.conductor.specialty && (
+                    <>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="text-xs px-2 py-0.5 bg-blue-400/20 text-blue-300 rounded">
+                        {train.conductor.specialty}
+                      </span>
+                    </>
+                  )}
+                  <span className="hidden sm:inline">•</span>
+                  <span className="text-xs">
+                    {train.metadata.passengerCount} passagers
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : train ? (
+            <div className="flex items-center gap-2 text-orange-300">
+              <span className="text-lg">⚠️</span>
+              <span className="font-medium text-sm sm:text-base">
+                Conducteur requis
+              </span>
+            </div>
+          ) : (
+            <div className="text-gray-500 italic text-sm">
+              Aucun train programmé
+            </div>
+          )}
+        </div>
+
+        {/* Actions - mobile full width button */}
+        <div className="sm:w-24 sm:flex-shrink-0 sm:text-right">
+          {isAdmin && train && !train.metadata.isPast && (
+            <Button
+              size="sm"
+              variant={train.conductor ? "secondary" : "default"}
+              className="text-xs w-full sm:w-auto"
+              onClick={() => {
+                setSelectedTrain(train);
+                setShowConductorSelect(true);
+              }}
+              disabled={actionLoading}
+            >
+              {train.conductor ? "Modifier" : "Assigner"}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Contenu principal du composant train
+function TrainScheduleContent({
+  trainSlots, // Non utilisé maintenant
   members,
   currentUserId,
   isAdmin = false,
 }: GraphicalTrainScheduleProps) {
-  const [selectedTrain, setSelectedTrain] = useState<TrainSlot | null>(null);
+  const [trains, setTrains] = useState<TrainInstance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTrain, setSelectedTrain] = useState<TrainInstance | null>(
+    null
+  );
   const [showConductorSelect, setShowConductorSelect] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [conductorHistory, setConductorHistory] = useState<ConductorHistory[]>(
     []
   );
 
-  // Charger l'historique des conducteurs (ancien système, gardé pour compatibilité)
+  // Charger les trains depuis l'API trains-v2
+  const loadTrains = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/trains-v2?daysAhead=7`);
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement des trains");
+      }
+
+      const data: ApiResponse = await response.json();
+      setTrains(data.trains);
+
+      // Générer l'historique des conducteurs à partir des trains
+      generateConductorHistory(data.trains);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadConductorHistory = () => {
-      const history: { [key: string]: ConductorHistory } = {};
+    loadTrains();
+  }, []);
 
-      trainSlots.forEach((slot) => {
-        if (slot.conductor) {
-          const pseudo = slot.conductor.pseudo;
-          if (!history[pseudo]) {
-            history[pseudo] = {
-              pseudo,
-              count: 0,
-              lastDate: "",
-            };
-          }
-          history[pseudo].count++;
-          // On simule une date récente pour l'exemple
-          history[pseudo].lastDate = new Date().toLocaleDateString("fr-FR");
+  // Générer l'historique des conducteurs
+  const generateConductorHistory = (trainList: TrainInstance[]) => {
+    const history: { [key: string]: ConductorHistory } = {};
+
+    trainList.forEach((train) => {
+      if (train.conductor) {
+        const pseudo = train.conductor.pseudo;
+        if (!history[pseudo]) {
+          history[pseudo] = {
+            pseudo,
+            count: 0,
+            lastDate: "",
+          };
         }
-      });
+        history[pseudo].count++;
+        // Gérer les dates PostgreSQL et ISO
+        const dateStr = train.date;
+        const datePart = dateStr.includes("T")
+          ? dateStr.split("T")[0]
+          : dateStr.split(" ")[0];
+        history[pseudo].lastDate = datePart;
+      }
+    });
 
-      setConductorHistory(
-        Object.values(history).sort((a, b) => b.count - a.count)
-      );
-    };
-
-    loadConductorHistory();
-  }, [trainSlots]);
+    setConductorHistory(
+      Object.values(history).sort((a, b) => b.count - a.count)
+    );
+  };
 
   // Filtrer les membres par pseudo
   const filteredMembers = members.filter((member) =>
     member.pseudo.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAssignConductor = async (
+    trainId: string,
+    conductorId: string
+  ) => {
+    setActionLoading(true);
+    try {
+      const response = await fetch("/api/trains-v2", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "assign_conductor",
+          trainId,
+          conductorId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erreur lors de l'assignation");
+      }
+
+      await loadTrains(); // Recharger la liste
+      setShowConductorSelect(false);
+      setSelectedTrain(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleTimeChange = (newTime: string) => {
+    if (selectedTrain) {
+      setSelectedTrain({
+        ...selectedTrain,
+        departureTime: newTime,
+        realDepartureTime: calculateRealDepartureTime(newTime),
+      });
+    }
+  };
 
   const calculateRealDepartureTime = (departureTime: string) => {
     const [hours, minutes] = departureTime.split(":").map(Number);
@@ -125,158 +679,34 @@ export function GraphicalTrainSchedule({
       .padStart(2, "0")}`;
   };
 
-  const getNextSlotDate = (
-    day: string,
-    departureTime: string,
-    forceNextWeek = false
-  ) => {
-    const now = new Date();
-    const dayIndexes = {
-      sunday: 0,
-      monday: 1,
-      tuesday: 2,
-      wednesday: 3,
-      thursday: 4,
-      friday: 5,
-      saturday: 6,
-    };
+  const handleValidateChanges = async () => {
+    if (!selectedTrain) return;
 
-    const targetDayIndex = dayIndexes[day as keyof typeof dayIndexes];
-    const currentDayIndex = now.getDay();
-
-    // DEBUG: Ajouter des logs pour déboguer
-    console.log("DEBUG - getNextSlotDate:", {
-      day,
-      departureTime,
-      targetDayIndex,
-      currentDayIndex,
-      currentTime: now.toLocaleString("fr-FR"),
-    });
-
-    let daysUntilTarget;
-
-    if (targetDayIndex === currentDayIndex && !forceNextWeek) {
-      // C'est aujourd'hui, on l'affiche toujours
-      daysUntilTarget = 0;
-
-      console.log("DEBUG - C'est aujourd'hui:", {
-        day,
-        departureTime,
-        showing: "today",
-      });
-    } else {
-      // Pas aujourd'hui, calculer normalement
-      daysUntilTarget = (targetDayIndex - currentDayIndex + 7) % 7;
-      if (daysUntilTarget === 0) daysUntilTarget = 7; // Semaine prochaine si 0
-    }
-
-    if (forceNextWeek) {
-      daysUntilTarget = daysUntilTarget === 0 ? 7 : daysUntilTarget + 7;
-    }
-
-    console.log("DEBUG - Final daysUntilTarget:", daysUntilTarget);
-
-    const targetDate = new Date(now);
-    targetDate.setDate(now.getDate() + daysUntilTarget);
-    const [hours, minutes] = departureTime.split(":").map(Number);
-    targetDate.setHours(hours, minutes, 0, 0);
-
-    console.log("DEBUG - Target date:", targetDate.toLocaleString("fr-FR"));
-
-    return targetDate;
-  };
-
-  const getTimeRemaining = (day: string, departureTime: string) => {
-    const now = new Date();
-    const dayIndexes = {
-      sunday: 0,
-      monday: 1,
-      tuesday: 2,
-      wednesday: 3,
-      thursday: 4,
-      friday: 5,
-      saturday: 6,
-    };
-
-    const targetDayIndex = dayIndexes[day as keyof typeof dayIndexes];
-    const currentDayIndex = now.getDay();
-
-    // Si c'est aujourd'hui, vérifier directement l'heure
-    if (targetDayIndex === currentDayIndex) {
-      const [hours, minutes] = departureTime.split(":").map(Number);
-      const trainTimeToday = new Date();
-      trainTimeToday.setHours(hours, minutes, 0, 0);
-
-      const diff = trainTimeToday.getTime() - now.getTime();
-      if (diff <= 0) return "Fermé aujourd'hui";
-
-      const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
-      const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-      if (hoursLeft > 0) {
-        return `${hoursLeft}h ${minutesLeft}min`;
-      } else {
-        return `${minutesLeft}min`;
-      }
-    }
-
-    // Calculer pour les jours suivants
-    const nextSlotDate = getNextSlotDate(day, departureTime);
-    const diffToNextSlot = nextSlotDate.getTime() - now.getTime();
-
-    if (diffToNextSlot <= 0) return "Fermé";
-
-    const daysLeft = Math.floor(diffToNextSlot / (1000 * 60 * 60 * 24));
-    const hoursLeft = Math.floor(
-      (diffToNextSlot % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-    );
-
-    if (daysLeft > 0) {
-      return `${daysLeft}j ${hoursLeft}h`;
-    } else {
-      return `${hoursLeft}h`;
-    }
-  };
-
-  const formatSlotDate = (day: string, departureTime: string = "20:00") => {
-    const now = new Date();
-    const targetDate = getNextSlotDate(day, departureTime);
-
-    return {
-      dayNum: targetDate.getDate(),
-      month: targetDate
-        .toLocaleDateString("fr-FR", { month: "short" })
-        .toUpperCase(),
-      isToday: targetDate.toDateString() === now.toDateString(),
-    };
-  };
-
-  const handleAssignConductor = async (
-    trainId: string,
-    conductorId: string
-  ) => {
-    setLoading(true);
+    setActionLoading(true);
     try {
-      const response = await fetch(`/api/trains/${trainId}`, {
-        method: "PUT",
+      // Si l'heure a changé, on doit faire une action de modification
+      const response = await fetch("/api/trains-v2", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          conductorId: conductorId || null,
-          day: selectedTrain?.day,
-          departureTime: selectedTrain?.departureTime,
+          action: "modify_time",
+          trainId: selectedTrain.id,
+          departureTime: selectedTrain.departureTime,
         }),
       });
 
-      if (response.ok) {
-        window.location.reload();
-      } else {
-        console.error("Error assigning conductor");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erreur lors de la modification");
       }
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
+
+      await loadTrains();
       setShowConductorSelect(false);
+      setSelectedTrain(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -291,45 +721,89 @@ export function GraphicalTrainSchedule({
     }
   };
 
-  const getDayColor = (day: string, hasConductor: boolean) => {
-    const colors = {
-      monday: hasConductor
-        ? "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-blue-500/30 shadow-2xl shadow-blue-900/20"
-        : "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg",
-      tuesday: hasConductor
-        ? "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-green-500/30 shadow-2xl shadow-green-900/20"
-        : "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg",
-      wednesday: hasConductor
-        ? "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-orange-500/30 shadow-2xl shadow-orange-900/20"
-        : "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg",
-      thursday: hasConductor
-        ? "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-red-500/30 shadow-2xl shadow-red-900/20"
-        : "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg",
-      friday: hasConductor
-        ? "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-amber-500/30 shadow-2xl shadow-amber-900/20"
-        : "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg",
-      saturday: hasConductor
-        ? "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-purple-500/30 shadow-2xl shadow-purple-900/20"
-        : "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg",
-      sunday: hasConductor
-        ? "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border-pink-500/30 shadow-2xl shadow-pink-900/20"
-        : "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg",
-    };
-    return (
-      colors[day as keyof typeof colors] ||
-      "bg-gradient-to-br from-secondary/50 via-muted to-secondary/80 border-border/50 shadow-lg"
-    );
+  const weekDays = [
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi",
+    "dimanche",
+  ];
+
+  // Organiser les trains par jour de la semaine
+  const organizeTrainsByDay = () => {
+    const organized: Record<string, TrainInstance> = {};
+
+    trains.forEach((train) => {
+      const day = train.dayOfWeek;
+
+      // Si pas encore de train pour ce jour, on l'ajoute
+      if (!organized[day]) {
+        organized[day] = train;
+      } else {
+        // S'il y a déjà un train pour ce jour, on priorise :
+        // 1. Le train d'aujourd'hui (isToday = true)
+        // 2. Le train le plus proche dans le temps
+        const existingTrain = organized[day];
+
+        if (train.metadata.isToday && !existingTrain.metadata.isToday) {
+          // Le nouveau train est aujourd'hui, l'existant non -> remplacer
+          organized[day] = train;
+        } else if (!train.metadata.isToday && existingTrain.metadata.isToday) {
+          // L'existant est aujourd'hui, le nouveau non -> garder l'existant
+          // Ne rien faire
+        } else {
+          // Les deux sont aujourd'hui OU les deux ne sont pas aujourd'hui
+          // Prendre le plus proche dans le temps
+          const trainDate = new Date(train.date);
+          const existingDate = new Date(existingTrain.date);
+          if (trainDate < existingDate) {
+            organized[day] = train;
+          }
+        }
+      }
+    });
+
+    return organized;
   };
 
-  const days = [
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sunday",
-  ];
+  const trainsByDay = organizeTrainsByDay();
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <Train className="w-6 h-6 animate-spin mr-2" />
+            <span>Chargement du planning...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-red-500">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+            <p className="font-semibold">Erreur</p>
+            <p className="text-sm">{error}</p>
+          </div>
+          <Button
+            onClick={loadTrains}
+            variant="outline"
+            size="sm"
+            className="mt-3"
+          >
+            Réessayer
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -340,9 +814,12 @@ export function GraphicalTrainSchedule({
             <div>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Calendar className="w-6 h-6" />
-                Planification des Trains
+                Planification Automatique des Trains
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-2"></p>
+              <p className="text-sm text-gray-600 mt-2">
+                🤖 Trains générés automatiquement • Statuts en temps réel •{" "}
+                {trains.length} trains prévus
+              </p>
             </div>
             <Button
               variant="outline"
@@ -363,160 +840,19 @@ export function GraphicalTrainSchedule({
         </CardHeader>
         <CardContent className="p-0">
           <div className="space-y-1">
-            {days.map((day) => {
-              const train = trainSlots.find((t) => t.day === day);
-              const timeRemaining = train
-                ? getTimeRemaining(day, train.departureTime)
-                : "";
-              const dateInfo = formatSlotDate(
-                day,
-                train?.departureTime || "20:00"
-              );
+            {weekDays.map((day) => {
+              const train = trainsByDay[day];
 
               return (
-                <div
+                <TrainRow
                   key={day}
-                  className={`relative border-l-4 hover:bg-gray-800/30 transition-colors ${
-                    dateInfo.isToday
-                      ? "bg-orange-500/10 border-l-orange-500"
-                      : !!train?.conductor
-                      ? "bg-green-500/10 border-l-green-500"
-                      : train
-                      ? "bg-yellow-500/10 border-l-yellow-500"
-                      : "bg-gray-500/10 border-l-gray-500"
-                  }`}
-                >
-                  {/* Badge AUJOURD'HUI flottant */}
-                  {dateInfo.isToday && (
-                    <div className="absolute -top-1 -right-1 z-10">
-                      <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
-                        🔥 AUJOURD'HUI
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Layout responsive : mobile stack, desktop inline */}
-                  <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    {/* Jour, date et horaire - groupés sur mobile */}
-                    <div className="flex justify-between items-center sm:justify-start sm:gap-6">
-                      {/* Jour et date */}
-                      <div className="flex-shrink-0">
-                        <div className="font-bold text-white">
-                          {dayLabels[day]}
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          {dateInfo.dayNum} {dateInfo.month}
-                        </div>
-                      </div>
-
-                      {/* Horaire */}
-                      <div className="text-center sm:text-left">
-                        {train ? (
-                          <>
-                            <div className="text-xl sm:text-2xl font-bold text-orange-400">
-                              {train.departureTime}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              →{" "}
-                              {calculateRealDepartureTime(train.departureTime)}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-gray-500">—</div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Temps restant - mobile full width */}
-                    <div className="sm:w-32 sm:flex-shrink-0">
-                      {train && (
-                        <div
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
-                            !!train.conductor
-                              ? "bg-green-500/20 text-green-300"
-                              : "bg-yellow-500/20 text-yellow-300"
-                          }`}
-                        >
-                          <Clock className="w-3 h-3" />
-                          {timeRemaining} restant
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Conducteur - mobile full width, desktop flex */}
-                    <div className="flex-1 min-w-0">
-                      {train?.conductor ? (
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {getRoleIcon(train.conductor.allianceRole)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-white break-words">
-                              {train.conductor.pseudo}
-                            </div>
-                            <div className="text-sm text-gray-400 flex flex-wrap items-center gap-2">
-                              <span>Niveau {train.conductor.level}</span>
-                              {train.conductor.specialty && (
-                                <>
-                                  <span className="hidden sm:inline">•</span>
-                                  <span className="text-xs px-2 py-0.5 bg-blue-400/20 text-blue-300 rounded">
-                                    {train.conductor.specialty}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ) : train ? (
-                        <div className="flex items-center gap-2 text-orange-300">
-                          <span className="text-lg">⚠️</span>
-                          <span className="font-medium text-sm sm:text-base">
-                            Conducteur requis
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="text-gray-500 italic text-sm">
-                          Aucun train programmé
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions - mobile full width button */}
-                    <div className="sm:w-24 sm:flex-shrink-0 sm:text-right">
-                      {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant={
-                            train?.conductor
-                              ? "secondary"
-                              : train
-                              ? "default"
-                              : "outline"
-                          }
-                          className="text-xs w-full sm:w-auto"
-                          onClick={() => {
-                            setSelectedTrain(
-                              train || {
-                                id: "",
-                                day,
-                                departureTime: "20:00",
-                                conductor: null,
-                                passengers: [],
-                              }
-                            );
-                            setShowConductorSelect(true);
-                          }}
-                        >
-                          {train?.conductor
-                            ? "Modifier"
-                            : train
-                            ? "Assigner"
-                            : "Créer"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  day={day}
+                  train={train}
+                  isAdmin={isAdmin}
+                  actionLoading={actionLoading}
+                  setSelectedTrain={setSelectedTrain}
+                  setShowConductorSelect={setShowConductorSelect}
+                />
               );
             })}
           </div>
@@ -526,7 +862,7 @@ export function GraphicalTrainSchedule({
       {/* Nouveau composant d'historique */}
       <TrainHistory show={showHistory} onClose={() => setShowHistory(false)} />
 
-      {/* Modal de sélection du conducteur - Version améliorée */}
+      {/* Modal de sélection du conducteur - Ancien système amélioré */}
       {showConductorSelect && selectedTrain && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-2 border-orange-500/30 shadow-2xl">
@@ -539,12 +875,11 @@ export function GraphicalTrainSchedule({
                   </div>
                   <div>
                     <CardTitle className="text-xl text-white">
-                      Gestion du Train - {dayLabels[selectedTrain.day]}
+                      Gestion du Train - {dayLabels[selectedTrain.dayOfWeek]}
                     </CardTitle>
                     <p className="text-sm text-gray-300 mt-1">
                       Créneau de départ : {selectedTrain.departureTime} →{" "}
-                      {calculateRealDepartureTime(selectedTrain.departureTime)}{" "}
-                      (Soir)
+                      {selectedTrain.realDepartureTime} (Soir)
                     </p>
                   </div>
                 </div>
@@ -559,83 +894,59 @@ export function GraphicalTrainSchedule({
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 overflow-y-auto max-h-[calc(90vh-12rem)]">
-              <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-                {/* Section Informations du Train - Plus compacte */}
-                <div className="xl:col-span-2 space-y-6">
-                  <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-orange-400" />
-                      Informations du Créneau
-                    </h3>
+            <CardContent className="p-0 overflow-hidden">
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 p-6 max-h-[calc(90vh-12rem)] overflow-y-auto">
+                {/* Section Configuration - Plus compact */}
+                <div className="xl:col-span-1 space-y-4">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <Train className="w-5 h-5 text-orange-400" />
+                    Configuration
+                  </h3>
 
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-300">Jour :</span>
-                        <span className="text-white font-medium">
-                          {dayLabels[selectedTrain.day]}
-                        </span>
-                      </div>
+                  {/* Sélecteur d'horaire */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-gray-300">
+                      Horaire de départ
+                    </label>
+                    <TimeSlotSelector
+                      value={selectedTrain.departureTime}
+                      onChange={handleTimeChange}
+                    />
+                    <div className="text-xs text-gray-400">
+                      Départ réel: {selectedTrain.realDepartureTime} (4h après)
+                    </div>
+                  </div>
 
-                      {/* Sélection de l'heure */}
-                      <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-300">
-                          Créneau de départ :
-                        </label>
-                        <TimeSlotSelector
-                          value={selectedTrain.departureTime}
-                          onChange={(value: string) =>
-                            setSelectedTrain({
-                              ...selectedTrain,
-                              departureTime: value,
-                            })
-                          }
-                          compact={false}
-                          showPopular={true}
-                        />
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-300">Départ réel :</span>
-                        <span className="text-orange-400 font-bold">
-                          {calculateRealDepartureTime(
-                            selectedTrain.departureTime
-                          )}
-                        </span>
-                      </div>
-
-                      {selectedTrain.conductor && (
-                        <div className="pt-3 border-t border-gray-700">
-                          <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                            <Crown className="w-5 h-5 text-green-400" />
-                            <div>
-                              <div className="text-white font-medium">
-                                Conducteur actuel
-                              </div>
-                              <div className="text-green-400 text-sm">
-                                {selectedTrain.conductor.pseudo}
-                              </div>
+                  {/* Informations conducteur actuel */}
+                  <div className="space-y-3">
+                    {selectedTrain.conductor && (
+                      <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            {getRoleIcon(selectedTrain.conductor.allianceRole)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-white font-medium">
+                              Conducteur actuel
+                            </div>
+                            <div className="text-green-400 text-sm">
+                              {selectedTrain.conductor.pseudo}
                             </div>
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions principales */}
                   <div className="space-y-3">
                     <div className="flex gap-3">
                       <Button
-                        onClick={() =>
-                          handleAssignConductor(
-                            selectedTrain.id,
-                            selectedTrain.conductor?.id || ""
-                          )
-                        }
-                        disabled={loading}
+                        onClick={handleValidateChanges}
+                        disabled={actionLoading}
                         className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium py-3"
                       >
-                        {loading ? (
+                        {actionLoading ? (
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             Validation...
@@ -656,7 +967,7 @@ export function GraphicalTrainSchedule({
                         onClick={() =>
                           handleAssignConductor(selectedTrain.id, "")
                         }
-                        disabled={loading}
+                        disabled={actionLoading}
                         variant="outline"
                         className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500 py-3"
                       >
@@ -810,18 +1121,11 @@ export function GraphicalTrainSchedule({
           </Card>
         </div>
       )}
-
-      {/* Loading overlay */}
-      {loading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 p-6 rounded-lg shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>
-              <span className="text-white">Traitement en cours...</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
+}
+
+// Export du composant principal avec wrapper client-only
+export function GraphicalTrainSchedule(props: GraphicalTrainScheduleProps) {
+  return <ClientOnlyTrainSchedule {...props} />;
 }

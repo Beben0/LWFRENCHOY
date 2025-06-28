@@ -1,0 +1,298 @@
+import { PrismaClient, TrainStatus } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+interface TrainTemplate {
+  dayOfWeek: string;
+  defaultTime: string;
+  isRequired: boolean; // Train obligatoire (chaque jour) ou optionnel
+}
+
+// Configuration des trains par jour de la semaine
+const TRAIN_TEMPLATES: TrainTemplate[] = [
+  { dayOfWeek: "monday", defaultTime: "20:00", isRequired: true },
+  { dayOfWeek: "tuesday", defaultTime: "20:00", isRequired: true },
+  { dayOfWeek: "wednesday", defaultTime: "20:00", isRequired: true },
+  { dayOfWeek: "thursday", defaultTime: "20:00", isRequired: true },
+  { dayOfWeek: "friday", defaultTime: "20:00", isRequired: true },
+  { dayOfWeek: "saturday", defaultTime: "14:00", isRequired: false }, // Weekend, plus flexible
+  { dayOfWeek: "sunday", defaultTime: "14:00", isRequired: false }, // Weekend, plus flexible
+];
+
+const DAY_NAMES = {
+  monday: "lundi",
+  tuesday: "mardi",
+  wednesday: "mercredi",
+  thursday: "jeudi",
+  friday: "vendredi",
+  saturday: "samedi",
+  sunday: "dimanche",
+};
+
+function calculateRealDepartureTime(departureTime: string): string {
+  const [hours, minutes] = departureTime.split(":").map(Number);
+  const realHours = (hours + 4) % 24;
+  return `${realHours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+function getDayOfWeek(date: Date): string {
+  const dayIndex = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const dayMapping = {
+    0: "sunday",
+    1: "monday",
+    2: "tuesday",
+    3: "wednesday",
+    4: "thursday",
+    5: "friday",
+    6: "saturday",
+  };
+  return dayMapping[dayIndex as keyof typeof dayMapping];
+}
+
+async function generateTrainInstances(daysAhead: number = 14) {
+  console.log(
+    `🚂 Génération des trains pour les ${daysAhead} prochains jours...`
+  );
+
+  const now = new Date();
+  const generated = [];
+  const skipped = [];
+
+  for (let i = 0; i <= daysAhead; i++) {
+    // Utiliser une approche plus robuste pour calculer la date
+    const targetDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + i,
+      0,
+      0,
+      0,
+      0
+    );
+
+    const dayOfWeek = getDayOfWeek(targetDate);
+    const template = TRAIN_TEMPLATES.find((t) => t.dayOfWeek === dayOfWeek);
+
+    if (!template) {
+      console.log(`⚠️ Pas de template pour ${dayOfWeek}, skip`);
+      continue;
+    }
+
+    // Vérifier si le train existe déjà
+    const existingTrain = await prisma.trainInstance.findUnique({
+      where: { date: targetDate },
+    });
+
+    if (existingTrain) {
+      skipped.push({
+        date: targetDate.toLocaleDateString("fr-FR"),
+        dayOfWeek: DAY_NAMES[dayOfWeek as keyof typeof DAY_NAMES],
+        reason: "Existe déjà",
+      });
+      continue;
+    }
+
+    // Créer l'instance de train
+    const realDepartureTime = calculateRealDepartureTime(template.defaultTime);
+    const dayName = DAY_NAMES[dayOfWeek as keyof typeof DAY_NAMES];
+
+    // Debug pour vérifier la cohérence
+    console.log(
+      `🔍 Train pour ${targetDate.toLocaleDateString(
+        "fr-FR"
+      )} (${dayOfWeek} -> ${dayName})`
+    );
+
+    const trainInstance = await prisma.trainInstance.create({
+      data: {
+        date: targetDate,
+        dayOfWeek: dayName,
+        departureTime: template.defaultTime,
+        realDepartureTime,
+        status: TrainStatus.SCHEDULED,
+        isArchived: false,
+      },
+    });
+
+    generated.push({
+      id: trainInstance.id,
+      date: targetDate.toLocaleDateString("fr-FR"),
+      dayOfWeek: DAY_NAMES[dayOfWeek as keyof typeof DAY_NAMES],
+      departureTime: template.defaultTime,
+      realDepartureTime,
+    });
+  }
+
+  console.log(`✅ ${generated.length} trains générés`);
+  if (skipped.length > 0) {
+    console.log(`⏭️ ${skipped.length} trains ignorés (déjà existants)`);
+  }
+
+  return { generated, skipped };
+}
+
+async function archiveOldTrains() {
+  console.log("🗄️ Archivage des trains passés...");
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(23, 59, 59, 999);
+
+  const oldTrains = await prisma.trainInstance.updateMany({
+    where: {
+      date: { lt: yesterday },
+      isArchived: false,
+    },
+    data: {
+      isArchived: true,
+      status: TrainStatus.COMPLETED,
+    },
+  });
+
+  console.log(`📦 ${oldTrains.count} trains archivés`);
+  return oldTrains.count;
+}
+
+async function updateTrainStatuses() {
+  console.log("🔄 Mise à jour des statuts des trains...");
+
+  const now = new Date();
+  let updated = 0;
+
+  // 1. Trains en embarquement (dans les 4h avant le départ)
+  const trainsToBoard = await prisma.trainInstance.findMany({
+    where: {
+      status: TrainStatus.SCHEDULED,
+      isArchived: false,
+      date: {
+        lte: new Date(now.getTime() + 4 * 60 * 60 * 1000), // Dans les 4h
+        gte: now, // Pas encore passé
+      },
+    },
+  });
+
+  for (const train of trainsToBoard) {
+    const [hours, minutes] = train.departureTime.split(":").map(Number);
+    const departureDateTime = new Date(train.date);
+    departureDateTime.setHours(hours, minutes, 0, 0);
+
+    const timeUntilDeparture = departureDateTime.getTime() - now.getTime();
+
+    // Si c'est dans les 4h, passer en BOARDING
+    if (timeUntilDeparture <= 4 * 60 * 60 * 1000 && timeUntilDeparture > 0) {
+      await prisma.trainInstance.update({
+        where: { id: train.id },
+        data: { status: TrainStatus.BOARDING },
+      });
+      updated++;
+    }
+  }
+
+  // 2. Trains partis (heure de départ dépassée)
+  const trainsToDeparture = await prisma.trainInstance.findMany({
+    where: {
+      status: { in: [TrainStatus.SCHEDULED, TrainStatus.BOARDING] },
+      isArchived: false,
+    },
+  });
+
+  for (const train of trainsToDeparture) {
+    const [realHours, realMinutes] = train.realDepartureTime
+      .split(":")
+      .map(Number);
+    const realDepartureDateTime = new Date(train.date);
+    realDepartureDateTime.setHours(realHours, realMinutes, 0, 0);
+
+    if (now > realDepartureDateTime) {
+      await prisma.trainInstance.update({
+        where: { id: train.id },
+        data: { status: TrainStatus.DEPARTED },
+      });
+      updated++;
+    }
+  }
+
+  console.log(`🔄 ${updated} statuts de trains mis à jour`);
+  return updated;
+}
+
+async function cleanupExpiredPassengers() {
+  console.log("🧹 Nettoyage des passagers sur trains partis...");
+
+  // Supprimer les passagers des trains partis depuis plus de 24h
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const deletedPassengers = await prisma.trainPassenger.deleteMany({
+    where: {
+      trainInstance: {
+        status: TrainStatus.DEPARTED,
+        date: { lt: yesterday },
+      },
+    },
+  });
+
+  console.log(
+    `🗑️ ${deletedPassengers.count} inscriptions de passagers supprimées`
+  );
+  return deletedPassengers.count;
+}
+
+async function main() {
+  try {
+    console.log("🚂 === MAINTENANCE AUTOMATIQUE DES TRAINS ===");
+    console.log(`⏰ ${new Date().toLocaleString("fr-FR")}`);
+    console.log("");
+
+    // 1. Archiver les trains passés
+    await archiveOldTrains();
+
+    // 2. Mettre à jour les statuts
+    await updateTrainStatuses();
+
+    // 3. Générer les nouveaux trains (14 jours à l'avance)
+    await generateTrainInstances(14);
+
+    // 4. Nettoyer les anciens passagers
+    await cleanupExpiredPassengers();
+
+    console.log("");
+    console.log("✅ Maintenance terminée avec succès !");
+
+    // Statistiques
+    const stats = await prisma.trainInstance.groupBy({
+      by: ["status"],
+      _count: { status: true },
+      where: { isArchived: false },
+    });
+
+    console.log("");
+    console.log("📊 Statistiques actuelles :");
+    stats.forEach((stat) => {
+      const statusLabels: Record<string, string> = {
+        SCHEDULED: "Programmés",
+        BOARDING: "Embarquement",
+        DEPARTED: "Partis",
+        CANCELLED: "Annulés",
+        COMPLETED: "Terminés",
+      };
+      console.log(
+        `   ${statusLabels[stat.status] || stat.status}: ${stat._count.status}`
+      );
+    });
+  } catch (error) {
+    console.error("❌ Erreur lors de la maintenance:", error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// Lancer si exécuté directement
+if (require.main === module) {
+  main();
+}
+
+export { archiveOldTrains, generateTrainInstances, updateTrainStatuses };

@@ -32,50 +32,78 @@ model Member {
   lastActive      DateTime         @default(now())
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  conductsTrains  TrainSlot[]      @relation("TrainConductor")
+  trainInstances  TrainInstance[]  @relation("TrainConductor")
+  trainSlots      TrainSlot[]      @relation("TrainSlotConductor")
   trainPassengers TrainPassenger[] @relation("TrainPassengers")
+}
+
+model TrainInstance {
+  id                String           @id @default(cuid())
+  date              DateTime // Date réelle du train (ex: 2025-06-28)
+  dayOfWeek         String // lundi, mardi, etc. (pour affichage)
+  departureTime     String // Heure choisie par le conducteur (ex: "20:00")
+  realDepartureTime String // Heure réelle de départ (departureTime + 4h)
+  conductorId       String?
+  conductor         Member?          @relation("TrainConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  passengers        TrainPassenger[]
+  status            TrainStatus      @default(SCHEDULED)
+  isArchived        Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  history           TrainHistory[]
+
+  @@unique([date]) // Un seul train par date
+  @@index([date])
+  @@index([status])
+  @@index([isArchived])
 }
 
 model TrainSlot {
   id            String           @id @default(cuid())
-  day           String // "monday", "tuesday", etc.
-  departureTime String // "08:00", "14:00", "20:00" - heure choisie par le conducteur
-  conductorId   String? // Un seul conducteur par jour
-  conductor     Member?          @relation("TrainConductor", fields: [conductorId], references: [id])
-  isValidated   Boolean          @default(false) // Changements validés par l'admin
-  validatedBy   String? // ID de l'admin qui a validé
-  validatedAt   DateTime? // Date de validation
+  day           String           @unique
+  departureTime String
+  conductorId   String?
+  conductor     Member?          @relation("TrainSlotConductor", fields: [conductorId], references: [id], onDelete: SetNull)
   passengers    TrainPassenger[]
   history       TrainHistory[]
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-
-  @@unique([day]) // Un seul train par jour
+  isObsolete    Boolean          @default(true) // Marquer comme obsolète
 }
 
 model TrainPassenger {
-  id          String    @id @default(cuid())
-  trainSlotId String
-  trainSlot   TrainSlot @relation(fields: [trainSlotId], references: [id], onDelete: Cascade)
-  passengerId String
-  passenger   Member    @relation("TrainPassengers", fields: [passengerId], references: [id])
-  joinedAt    DateTime  @default(now())
+  id              String         @id @default(cuid())
+  // Nouveau système
+  trainInstanceId String?
+  trainInstance   TrainInstance? @relation(fields: [trainInstanceId], references: [id], onDelete: Cascade)
+  // Ancien système (compatibilité)
+  trainSlotId     String?
+  trainSlot       TrainSlot?     @relation(fields: [trainSlotId], references: [id], onDelete: Cascade)
+  // Commun
+  passengerId     String
+  passenger       Member         @relation("TrainPassengers", fields: [passengerId], references: [id])
+  joinedAt        DateTime       @default(now())
 
-  @@unique([trainSlotId, passengerId]) // Un passager ne peut pas être deux fois sur le même train
+  @@unique([trainInstanceId, passengerId])
+  @@unique([trainSlotId, passengerId])
 }
 
 model TrainHistory {
-  id           String      @id @default(cuid())
-  trainSlotId  String
-  trainSlot    TrainSlot   @relation(fields: [trainSlotId], references: [id], onDelete: Cascade)
-  action       TrainAction
-  actorId      String? // L'utilisateur qui a fait l'action (null si système)
-  actorPseudo  String? // Pseudo sauvegardé au moment de l'action
-  targetId     String? // ID du membre affecté (conducteur/passager)
-  targetPseudo String? // Pseudo du membre affecté
-  details      String? // Détails additionnels (ancien horaire -> nouveau, etc.)
-  timestamp    DateTime    @default(now())
+  id              String         @id @default(cuid())
+  // Nouveau système
+  trainInstanceId String?
+  trainInstance   TrainInstance? @relation(fields: [trainInstanceId], references: [id], onDelete: Cascade)
+  // Ancien système (compatibilité)
+  trainSlotId     String?
+  trainSlot       TrainSlot?     @relation(fields: [trainSlotId], references: [id], onDelete: Cascade)
+  // Commun
+  action          TrainAction
+  actorId         String?
+  actorPseudo     String?
+  targetId        String?
+  targetPseudo    String?
+  details         String?
+  timestamp       DateTime       @default(now())
 
+  @@index([trainInstanceId])
   @@index([trainSlotId])
   @@index([timestamp])
 }
@@ -422,4 +450,12 @@ enum ArticleStatus {
   REVIEW
   PUBLISHED
   ARCHIVED
+}
+
+enum TrainStatus {
+  SCHEDULED // Programmé
+  BOARDING // Embarquement en cours (dans les 4h)
+  DEPARTED // Parti
+  CANCELLED // Annulé
+  COMPLETED // Terminé
 }

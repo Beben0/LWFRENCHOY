@@ -1,62 +1,51 @@
+"use client";
+
 import { GraphicalTrainSchedule } from "@/components/trains/graphical-train-schedule";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 
-async function getTrainData() {
-  try {
-    const [trainSlots, members] = await Promise.all([
-      prisma.trainSlot.findMany({
-        include: {
-          conductor: {
-            select: {
-              id: true,
-              pseudo: true,
-              level: true,
-              specialty: true,
-              allianceRole: true,
-              status: true,
-            },
-          },
-          passengers: {
-            include: {
-              passenger: {
-                select: {
-                  id: true,
-                  pseudo: true,
-                  level: true,
-                  specialty: true,
-                  allianceRole: true,
-                  status: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { day: "asc" },
-      }),
-      prisma.member.findMany({
-        select: {
-          id: true,
-          pseudo: true,
-          level: true,
-          specialty: true,
-          allianceRole: true,
-          status: true,
-        },
-        orderBy: { pseudo: "asc" },
-      }),
-    ]);
-
-    return { trainSlots, members };
-  } catch (error) {
-    console.error("Error fetching train data:", error);
-    return { trainSlots: [], members: [] };
-  }
+interface Member {
+  id: string;
+  pseudo: string;
+  level: number;
+  specialty: string | null;
+  allianceRole: "R5" | "R4" | "MEMBER";
+  status: "ACTIVE" | "INACTIVE";
 }
 
-export default async function TrainsPage() {
-  const session = await auth();
-  const { trainSlots, members } = await getTrainData();
+export default function TrainsPage() {
+  const { data: session } = useSession();
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const response = await fetch("/api/members");
+        if (response.ok) {
+          const data = await response.json();
+          setMembers(data.members || []);
+        }
+      } catch (error) {
+        console.error("Error fetching members:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMembers();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2" />
+          <span>Chargement...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -71,9 +60,9 @@ export default async function TrainsPage() {
         </div>
       </div>
 
-      {/* Vue graphique */}
+      {/* Interface graphique en liste comme dans le screenshot */}
       <GraphicalTrainSchedule
-        trainSlots={trainSlots}
+        trainSlots={[]} // Maintenu pour compatibilité mais non utilisé
         members={members}
         currentUserId={session?.user?.id}
         isAdmin={session?.user?.role === "ADMIN"}

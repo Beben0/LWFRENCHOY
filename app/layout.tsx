@@ -28,7 +28,7 @@ export default async function RootLayout({
   // Pas besoin de précharger - le cache se gère automatiquement
 
   return (
-    <html lang="fr" className="dark">
+    <html lang="fr" suppressHydrationWarning>
       <body className={inter.className}>
         <SessionProvider>
           <NotificationWrapper>

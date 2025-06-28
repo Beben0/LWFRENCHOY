@@ -146,7 +146,8 @@ export default function RegisterPage({ params }: RegisterPageProps) {
         <CardHeader>
           <CardTitle className="text-center">🎯 Rejoindre l'Alliance</CardTitle>
           <CardDescription className="text-center">
-            Créez votre compte pour accéder au système LWFRENCHOY
+            Créez votre compte pour accéder au centre d'information de
+            l'Alliance FROY !
           </CardDescription>
           {inviteInfo && (
             <div className="text-xs text-muted-foreground text-center space-y-1">
