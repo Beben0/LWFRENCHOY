@@ -73,7 +73,7 @@ export function Navigation() {
               <div className="absolute inset-0.5 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg">
                 <div className="w-full h-full bg-black/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   <span className="text-white font-black text-xs tracking-wider drop-shadow-lg">
-                    FROY
+                    FY
                   </span>
                 </div>
               </div>

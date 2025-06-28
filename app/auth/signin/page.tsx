@@ -56,7 +56,7 @@ function SignInForm() {
           <div className="lastwar-gradient w-16 h-16 rounded-lg mx-auto mb-4 flex items-center justify-center">
             <Shield className="w-8 h-8 text-black" />
           </div>
-          <CardTitle className="text-2xl">FROY Frenchoy</CardTitle>
+          <CardTitle className="text-2xl">Frenchoy</CardTitle>
           <CardDescription>
             Connectez-vous pour accéder à votre alliance Last War
           </CardDescription>
@@ -76,7 +76,7 @@ function SignInForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
-                placeholder="admin@alliance.gg"
+                placeholder="votre@email.com"
                 required
               />
             </div>
@@ -133,14 +133,6 @@ function SignInForm() {
                 Demandez une invitation à un administrateur
               </span>
             </p>
-          </div>
-
-          <div className="mt-6 p-4 bg-muted/50 rounded-md">
-            <p className="text-sm text-muted-foreground mb-2">
-              Compte de démonstration :
-            </p>
-            <p className="text-xs font-mono">Email: admin@alliance.gg</p>
-            <p className="text-xs font-mono">Mot de passe: admin123</p>
           </div>
         </CardContent>
       </Card>
