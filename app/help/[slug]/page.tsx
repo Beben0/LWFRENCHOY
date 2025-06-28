@@ -101,7 +101,7 @@ export default function HelpArticlePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const slug = params?.slug as string;
+  const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const canEditArticles = session?.user?.role === "ADMIN";
 
   useEffect(() => {

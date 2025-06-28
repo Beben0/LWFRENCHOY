@@ -6,10 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
 // GET - Récupérer un article d'aide par slug
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const session = await auth();
 
     const canViewDrafts = hasPermission(session, "edit_help_article");
@@ -50,7 +50,7 @@ export async function GET(
 // PUT - Mettre à jour un article d'aide
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await auth();
@@ -58,7 +58,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { slug } = params;
+    const { slug } = await params;
     const body = await request.json();
     const {
       title,
@@ -142,7 +142,7 @@ export async function PUT(
 // DELETE - Supprimer un article d'aide
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await auth();
@@ -150,7 +150,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { slug } = params;
+    const { slug } = await params;
 
     // Vérifier que l'article existe
     const existingArticle = await prisma.helpArticle.findUnique({

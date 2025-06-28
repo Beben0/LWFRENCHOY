@@ -5,6 +5,222 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding help articles...");
 
+  // 1. Ajouter les données de référence pour les catégories d'aide
+  const helpCategories = [
+    {
+      key: "GAME_BASICS",
+      label: "Bases du jeu",
+      description: "Guides pour débuter dans Last War",
+      sortOrder: 1,
+      color: "#3B82F6",
+    },
+    {
+      key: "STRATEGY",
+      label: "Stratégies",
+      description: "Stratégies avancées et conseils tactiques",
+      sortOrder: 2,
+      color: "#059669",
+    },
+    {
+      key: "ALLIANCE",
+      label: "Alliance",
+      description: "Tout sur la vie en alliance",
+      sortOrder: 3,
+      color: "#8B5CF6",
+    },
+    {
+      key: "TRAINS",
+      label: "Trains",
+      description: "Système de trains d'alliance",
+      sortOrder: 4,
+      color: "#DC2626",
+    },
+    {
+      key: "EVENTS",
+      label: "Événements",
+      description: "Événements du jeu et de l'alliance",
+      sortOrder: 5,
+      color: "#F59E0B",
+    },
+    {
+      key: "TIPS_TRICKS",
+      label: "Astuces",
+      description: "Trucs et astuces utiles",
+      sortOrder: 6,
+      color: "#10B981",
+    },
+    {
+      key: "FAQ",
+      label: "Questions fréquentes",
+      description: "Réponses aux questions courantes",
+      sortOrder: 7,
+      color: "#6B7280",
+    },
+    {
+      key: "TUTORIAL",
+      label: "Tutoriels",
+      description: "Tutoriels pas à pas",
+      sortOrder: 8,
+      color: "#EC4899",
+    },
+    {
+      key: "ADVANCED",
+      label: "Avancé",
+      description: "Contenu pour joueurs expérimentés",
+      sortOrder: 9,
+      color: "#7C2D12",
+    },
+  ];
+
+  for (const category of helpCategories) {
+    await prisma.referenceData.upsert({
+      where: {
+        category_key: { category: "HELP_CATEGORY", key: category.key },
+      },
+      update: {},
+      create: {
+        category: "HELP_CATEGORY",
+        key: category.key,
+        label: category.label,
+        description: category.description,
+        color: category.color,
+        sortOrder: category.sortOrder,
+        isActive: true,
+        isSystem: true,
+      },
+    });
+  }
+
+  // 2. Ajouter les statuts d'articles
+  const helpStatuses = [
+    {
+      key: "DRAFT",
+      label: "Brouillon",
+      description: "Article en cours de rédaction",
+      sortOrder: 1,
+      color: "#6B7280",
+    },
+    {
+      key: "REVIEW",
+      label: "En révision",
+      description: "Article en attente de révision",
+      sortOrder: 2,
+      color: "#F59E0B",
+    },
+    {
+      key: "PUBLISHED",
+      label: "Publié",
+      description: "Article publié et visible",
+      sortOrder: 3,
+      color: "#10B981",
+    },
+    {
+      key: "ARCHIVED",
+      label: "Archivé",
+      description: "Article archivé",
+      sortOrder: 4,
+      color: "#EF4444",
+    },
+  ];
+
+  for (const status of helpStatuses) {
+    await prisma.referenceData.upsert({
+      where: {
+        category_key: { category: "HELP_STATUS", key: status.key },
+      },
+      update: {},
+      create: {
+        category: "HELP_STATUS",
+        key: status.key,
+        label: status.label,
+        description: status.description,
+        color: status.color,
+        sortOrder: status.sortOrder,
+        isActive: true,
+        isSystem: true,
+      },
+    });
+  }
+
+  // 3. Tags d'aide prédéfinis
+  const helpTags = [
+    {
+      key: "DEBUTANT",
+      label: "Débutant",
+      description: "Pour les nouveaux joueurs",
+      sortOrder: 1,
+      color: "#3B82F6",
+    },
+    {
+      key: "AVANCE",
+      label: "Avancé",
+      description: "Pour les joueurs expérimentés",
+      sortOrder: 2,
+      color: "#7C2D12",
+    },
+    {
+      key: "TUTORIEL",
+      label: "Tutoriel",
+      description: "Guide pas à pas",
+      sortOrder: 3,
+      color: "#EC4899",
+    },
+    {
+      key: "IMPORTANT",
+      label: "Important",
+      description: "Information cruciale",
+      sortOrder: 4,
+      color: "#DC2626",
+    },
+    {
+      key: "RESSOURCES",
+      label: "Ressources",
+      description: "Gestion des ressources",
+      sortOrder: 5,
+      color: "#059669",
+    },
+    {
+      key: "COMBAT",
+      label: "Combat",
+      description: "Stratégies de combat",
+      sortOrder: 6,
+      color: "#991B1B",
+    },
+    {
+      key: "CONSTRUCTION",
+      label: "Construction",
+      description: "Développement de base",
+      sortOrder: 7,
+      color: "#92400E",
+    },
+    {
+      key: "COORDINATION",
+      label: "Coordination",
+      description: "Travail d'équipe",
+      sortOrder: 8,
+      color: "#8B5CF6",
+    },
+  ];
+
+  for (const tag of helpTags) {
+    await prisma.referenceData.upsert({
+      where: {
+        category_key: { category: "HELP_TAG", key: tag.key },
+      },
+      update: {},
+      create: {
+        category: "HELP_TAG",
+        key: tag.key,
+        label: tag.label,
+        description: tag.description,
+        color: tag.color,
+        sortOrder: tag.sortOrder,
+        isActive: true,
+        isSystem: true,
+      },
+    });
+  }
+
   // Articles d'aide de démonstration
   const helpArticles = [
     {

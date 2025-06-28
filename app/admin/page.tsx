@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   BarChart3,
   Bell,
+  BookOpen,
   Calendar,
   Clock,
   Database,
@@ -397,6 +398,12 @@ async function AdminPageContent() {
                 <Button variant="outline" className="w-full justify-start">
                   <Bell className="w-4 h-4 mr-2" />
                   Alertes & Notifications
+                </Button>
+              </Link>
+              <Link href="/help/admin" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Articles d'aide
                 </Button>
               </Link>
             </div>

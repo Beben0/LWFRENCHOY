@@ -244,6 +244,9 @@ enum ReferenceCategory {
   EVENT_TAG // Tags des événements
   PRIORITY_LEVEL // Niveaux de priorité
   STATUS_TYPE // Types de statuts
+  HELP_CATEGORY // Catégories d'articles d'aide
+  HELP_STATUS // Statuts d'articles d'aide
+  HELP_TAG // Tags d'articles d'aide
 }
 
 enum ExportStatus {
