@@ -330,7 +330,7 @@ export default function NewHelpArticlePage() {
                       <Badge
                         key={tag.key}
                         variant="outline"
-                        className="cursor-pointer hover:bg-gray-100"
+                        className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
                         style={{ borderColor: tag.color || undefined }}
                         onClick={() => handleSelectReferenceTag(tag.key)}
                       >
