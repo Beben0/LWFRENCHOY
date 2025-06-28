@@ -41,7 +41,7 @@ next-env.d.ts
 /prisma/migrations/dev.db*
 
 # docker
-/data
+/data 
 
 # production secrets & configs
 nginx/ssl/

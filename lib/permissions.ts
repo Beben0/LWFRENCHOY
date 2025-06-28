@@ -10,6 +10,7 @@ export type Permission =
   | "view_events"
   | "view_stats"
   | "view_admin_panel"
+  | "view_help"
 
   // CRUD permissions
   | "create_member"
@@ -21,6 +22,13 @@ export type Permission =
   | "create_event"
   | "edit_event"
   | "delete_event"
+
+  // Help articles permissions
+  | "create_help_article"
+  | "edit_help_article"
+  | "delete_help_article"
+  | "publish_help_article"
+  | "manage_help_categories"
 
   // Admin permissions
   | "manage_users"
@@ -45,6 +53,7 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_events",
     "view_stats",
     "view_admin_panel",
+    "view_help",
     "create_member",
     "edit_member",
     "delete_member",
@@ -54,6 +63,11 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "create_event",
     "edit_event",
     "delete_event",
+    "create_help_article",
+    "edit_help_article",
+    "delete_help_article",
+    "publish_help_article",
+    "manage_help_categories",
     "manage_users",
     "manage_permissions",
     "export_data",
@@ -62,9 +76,10 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "manage_notifications",
   ],
   GUEST: [
-    // Accès public aux trains et événements
+    // Accès public aux trains, événements et aide
     "view_trains",
     "view_events",
+    "view_help",
   ],
 };
 

@@ -1,0 +1,90 @@
+services:
+  app:
+    image: alliance-manager:latest # Utilise l'image pré-buildée
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public"
+      NEXTAUTH_URL: "https://beben0.com"
+      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET}"
+      NODE_ENV: "production"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Limits légers pour Freebox
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.3"
+        reservations:
+          memory: 256M
+          cpus: "0.1"
+
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432" # Exposé pour debug/admin depuis le réseau local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Limits pour Freebox
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 512M
+          cpus: "0.2"
+
+  # Nginx avec HTTPS et certificats Let's Encrypt
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80" # HTTP (redirection vers HTTPS)
+      - "443:443" # HTTPS
+    volumes:
+      - ./nginx/nginx-freebox-https.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro # Certificats SSL
+      - /var/lib/letsencrypt:/var/lib/letsencrypt:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.1"
+        reservations:
+          memory: 64M
+          cpus: "0.05"
+
+volumes:
+  postgres_data:
+    driver: local

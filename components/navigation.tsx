@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationDropdown } from "@/components/ui/notification-dropdown";
 import {
   BarChart3,
+  BookOpen,
   Calendar,
   LogIn,
   LogOut,
@@ -53,6 +54,13 @@ export function Navigation() {
       showForGuests: true,
     },
     {
+      href: "/help",
+      label: "Aide",
+      icon: BookOpen,
+      permission: "view_help" as const,
+      showForGuests: true,
+    },
+    {
       href: "/stats",
       label: "Stats",
       icon: BarChart3,
@@ -73,7 +81,7 @@ export function Navigation() {
               <div className="absolute inset-0.5 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg">
                 <div className="w-full h-full bg-black/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   <span className="text-white font-black text-xs tracking-wider drop-shadow-lg">
-                    FY
+                    FROY
                   </span>
                 </div>
               </div>

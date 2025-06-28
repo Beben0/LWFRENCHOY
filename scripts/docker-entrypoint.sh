@@ -9,14 +9,14 @@ echo "🔍 Testing database connectivity..."
 if nc -z postgres 5432; then
   echo "✅ Database connection successful!"
   
-  echo "🔄 Applying database migrations..."
+echo "🔄 Applying database migrations..."
   if npx prisma db push; then
     echo "✅ Database migrations applied successfully!"
   else
     echo "⚠️ Database migration failed, continuing anyway..."
   fi
   
-  echo "🛠️ Generating Prisma client..."
+echo "🛠️ Generating Prisma client..."
   if npx prisma generate; then
     echo "✅ Prisma client generated successfully!"
   else
