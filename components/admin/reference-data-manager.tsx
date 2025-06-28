@@ -36,6 +36,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   TRAIN_TYPE: "Types de Trains",
   PRIORITY_LEVEL: "Niveaux de Priorité",
   STATUS_TYPE: "Types de Statuts",
+  HELP_CATEGORY: "Catégories d'Aide",
+  HELP_STATUS: "Statuts d'Articles d'Aide",
+  HELP_TAG: "Tags d'Articles d'Aide",
 };
 
 export function ReferenceDataManager() {

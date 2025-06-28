@@ -217,7 +217,7 @@ export default function HelpAdminPage() {
                 onKeyPress={(e: React.KeyboardEvent) =>
                   e.key === "Enter" && handleSearch()
                 }
-                className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <Button onClick={handleSearch}>
                 <Search className="w-4 h-4" />
@@ -231,7 +231,7 @@ export default function HelpAdminPage() {
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   setSelectedCategory(e.target.value)
                 }
-                className="px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-48"
+                className="px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-48"
               >
                 <option value="">Toutes les catégories</option>
                 {referenceData?.categories.map((category) => (
@@ -246,7 +246,7 @@ export default function HelpAdminPage() {
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   setSelectedStatus(e.target.value)
                 }
-                className="px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-40"
+                className="px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-40"
               >
                 <option value="">Tous les statuts</option>
                 {referenceData?.statuses.map((status) => (

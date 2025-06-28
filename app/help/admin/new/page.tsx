@@ -208,7 +208,7 @@ export default function NewHelpArticlePage() {
                     type="text"
                     value={form.title}
                     onChange={(e) => handleInputChange("title", e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Titre de l'article"
                     required
                   />
@@ -223,7 +223,7 @@ export default function NewHelpArticlePage() {
                     onChange={(e) =>
                       handleInputChange("excerpt", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Bref résumé de l'article"
                     rows={3}
                   />
@@ -238,7 +238,7 @@ export default function NewHelpArticlePage() {
                     onChange={(e) =>
                       handleInputChange("category", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   >
                     <option value="">Sélectionner une catégorie</option>
@@ -261,7 +261,7 @@ export default function NewHelpArticlePage() {
                 <textarea
                   value={form.content}
                   onChange={(e) => handleInputChange("content", e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Contenu de l'article en Markdown..."
                   rows={20}
                   required
@@ -316,7 +316,7 @@ export default function NewHelpArticlePage() {
                         e.key === "Enter" &&
                         (e.preventDefault(), handleAddTag())
                       }
-                      className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="flex-1 px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="Nom du tag"
                     />
                     <Button type="button" onClick={handleAddTag}>
@@ -365,7 +365,7 @@ export default function NewHelpArticlePage() {
                     onChange={(e) =>
                       handleInputChange("status", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {referenceData?.statuses.map((status) => (
                       <option key={status.key} value={status.key}>
@@ -384,7 +384,7 @@ export default function NewHelpArticlePage() {
                     onChange={(e) =>
                       handleInputChange("priority", parseInt(e.target.value))
                     }
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value={0}>Normale</option>
                     <option value={1}>Importante</option>

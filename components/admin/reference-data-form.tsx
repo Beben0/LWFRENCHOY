@@ -85,62 +85,55 @@ export function ReferenceDataForm({
 
   return (
     <Card className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-900 rounded-lg">
-        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-700">
-          <CardTitle className="text-white">
+      <div className="w-full max-w-md bg-card rounded-lg border">
+        <CardHeader className="flex flex-row items-center justify-between border-b">
+          <CardTitle>
             {mode === "create" ? "Ajouter" : "Modifier"} un élément
           </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="text-gray-400 hover:text-white"
-          >
+          <Button variant="ghost" size="sm" onClick={onCancel}>
             <X className="w-4 h-4" />
           </Button>
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-900/50 border border-red-500 text-red-300 rounded">
+              <div className="p-3 bg-destructive/20 border border-destructive text-destructive-foreground rounded">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Clé *
-              </label>
+              <label className="block text-sm font-medium mb-2">Clé *</label>
               <input
                 type="text"
                 value={formData.key}
                 onChange={(e) => handleInputChange("key", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Ex: sniper, urgent, etc."
                 required
                 disabled={item?.isSystem}
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Identifiant unique (sans espaces ni caractères spéciaux)
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
+              <label className="block text-sm font-medium mb-2">
                 Libellé *
               </label>
               <input
                 type="text"
                 value={formData.label}
                 onChange={(e) => handleInputChange("label", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Ex: Sniper, Urgent, etc."
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
+              <label className="block text-sm font-medium mb-2">
                 Description
               </label>
               <textarea
@@ -148,45 +141,41 @@ export function ReferenceDataForm({
                 onChange={(e) =>
                   handleInputChange("description", e.target.value)
                 }
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Description optionnelle"
                 rows={2}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Couleur
-              </label>
+              <label className="block text-sm font-medium mb-2">Couleur</label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={formData.color}
                   onChange={(e) => handleInputChange("color", e.target.value)}
-                  className="w-16 h-8 bg-gray-800 border border-gray-600 rounded cursor-pointer"
+                  className="w-16 h-8 bg-background border border-border rounded cursor-pointer"
                 />
                 <input
                   type="text"
                   value={formData.color}
                   onChange={(e) => handleInputChange("color", e.target.value)}
-                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="flex-1 px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="#3b82f6"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Icône
-              </label>
+              <label className="block text-sm font-medium mb-2">Icône</label>
               <input
                 type="text"
                 value={formData.icon}
                 onChange={(e) => handleInputChange("icon", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Ex: target, star, crown, etc."
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Nom de l'icône Lucide (optionnel)
               </p>
             </div>
@@ -199,22 +188,15 @@ export function ReferenceDataForm({
                 onChange={(e) =>
                   handleInputChange("isActive", e.target.checked)
                 }
-                className="w-4 h-4 text-red-600 bg-gray-800 border-gray-600 rounded focus:ring-red-500 focus:ring-2"
+                className="w-4 h-4 rounded border border-border bg-background focus:ring-2 focus:ring-primary"
               />
-              <label
-                htmlFor="isActive"
-                className="text-sm font-medium text-gray-300"
-              >
+              <label htmlFor="isActive" className="text-sm font-medium">
                 Actif
               </label>
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              >
+              <Button type="submit" disabled={loading} className="flex-1">
                 <Save className="w-4 h-4 mr-2" />
                 {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
@@ -223,7 +205,6 @@ export function ReferenceDataForm({
                 variant="outline"
                 onClick={onCancel}
                 disabled={loading}
-                className="border-gray-600 text-gray-300 hover:bg-gray-800"
               >
                 Annuler
               </Button>
