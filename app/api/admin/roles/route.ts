@@ -50,6 +50,12 @@ export async function GET() {
       "import_data",
       "manage_alerts",
       "manage_notifications",
+      "view_help",
+      "create_help_article",
+      "edit_help_article",
+      "delete_help_article",
+      "publish_help_article",
+      "manage_help_categories",
     ];
 
     return NextResponse.json({

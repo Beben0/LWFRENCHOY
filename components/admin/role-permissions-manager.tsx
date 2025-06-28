@@ -334,6 +334,12 @@ function getPermissionDescription(permission: string): string {
     import_data: "Importer des données",
     manage_alerts: "Gérer les alertes",
     manage_notifications: "Gérer les notifications",
+    view_help: "Voir les articles d'aide",
+    create_help_article: "Créer des articles d'aide",
+    edit_help_article: "Modifier des articles d'aide",
+    delete_help_article: "Supprimer des articles d'aide",
+    publish_help_article: "Publier des articles d'aide",
+    manage_help_categories: "Gérer les catégories d'aide",
   };
 
   return descriptions[permission] || "Permission spéciale";

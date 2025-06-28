@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { ArrowLeft, BookOpen, Eye, Save, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -255,21 +256,15 @@ export default function NewHelpArticlePage() {
             {/* Contenu */}
             <Card>
               <CardHeader>
-                <CardTitle>Contenu *</CardTitle>
+                <CardTitle>Contenu</CardTitle>
               </CardHeader>
               <CardContent>
-                <textarea
+                <MarkdownEditor
                   value={form.content}
-                  onChange={(e) => handleInputChange("content", e.target.value)}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={(value) => handleInputChange("content", value)}
                   placeholder="Contenu de l'article en Markdown..."
-                  rows={20}
-                  required
+                  height={500}
                 />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Vous pouvez utiliser Markdown: **gras**, *italique*, `code`,
-                  [lien](url), # Titre
-                </p>
               </CardContent>
             </Card>
 
