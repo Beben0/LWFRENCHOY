@@ -34,14 +34,14 @@ async function main() {
   console.log("🔧 Script de mise à jour des mots de passe\n");
 
   // Mettre à jour les mots de passe pour tous les utilisateurs
-  await updatePassword("admin@alliance.gg", "admin123");
+  await updatePassword("admin@beben0.com", "admin123");
   await updatePassword("henri.benjamin03@gmail.com", "admin123"); // Mot de passe temporaire
 
   console.log(
     "\n🔐 Tous les mots de passe ont été mis à jour avec hachage bcrypt"
   );
   console.log("📧 Connexions disponibles:");
-  console.log("   admin@alliance.gg / admin123");
+  console.log("   admin@beben0.com / admin123");
   console.log("   henri.benjamin03@gmail.com / admin123");
 
   await prisma.$disconnect();

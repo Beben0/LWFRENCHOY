@@ -45,7 +45,7 @@ async function main() {
   console.log("🔧 Script de création d'utilisateurs\n");
 
   // Créer l'utilisateur admin par défaut
-  await createUser("admin@alliance.gg", "admin123", "ADMIN", "Admin");
+  await createUser("admin@beben0.com", "admin123", "ADMIN", "Admin");
 
   // Vous pouvez ajouter d'autres utilisateurs ici
   // await createUser("membre@alliance.gg", "membre123", "GUEST", "TestMember");

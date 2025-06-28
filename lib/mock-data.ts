@@ -122,7 +122,7 @@ export const mockTrainSlots = [
 
 export const mockUser = {
   id: "admin",
-  email: "admin@alliance.gg",
+  email: "admin@beben0.com",
   role: "ADMIN" as const,
   password: "$2a$10$hash", // admin123 hashed
 };

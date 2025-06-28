@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Shield } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -57,9 +51,6 @@ function SignInForm() {
             <Shield className="w-8 h-8 text-black" />
           </div>
           <CardTitle className="text-2xl">Frenchoy</CardTitle>
-          <CardDescription>
-            Connectez-vous pour accéder à votre alliance Last War
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
