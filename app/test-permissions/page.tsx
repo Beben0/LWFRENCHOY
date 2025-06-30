@@ -7,6 +7,7 @@ import {
   getUserPermissions,
   getUserRole,
   hasPermission,
+  type Permission,
 } from "@/lib/permissions";
 import {
   BarChart3,
@@ -46,6 +47,33 @@ export default function TestPermissionsPage() {
     const m = members.find((m: any) => m.id === id);
     setSelectedMember(m || null);
   };
+
+  // Create mock session for selected member
+  const createMockSession = (member: any) => {
+    if (!member) return null;
+    return {
+      user: {
+        id: member.userId || "mock",
+        email: member.email,
+        role: "GUEST", // assume non-admin by default
+        member: {
+          id: member.id,
+          pseudo: member.pseudo,
+          allianceRole: member.allianceRole,
+          power: member.power,
+        },
+      },
+      expires: new Date().toISOString(),
+    };
+  };
+
+  const mockSession = selectedMember ? createMockSession(selectedMember) : null;
+  const mockPermissions = mockSession ? getUserPermissions(mockSession) : [];
+  const mockRole = mockSession ? getUserRole(mockSession) : "GUEST";
+
+  // Helper to check mock permission
+  const mockCan = (perm: Permission) =>
+    mockSession ? hasPermission(mockSession, perm) : false;
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -126,16 +154,263 @@ export default function TestPermissionsPage() {
             </select>
           </div>
           {selectedMember && (
-            <div className="text-sm">
-              <p>
-                <strong>Pseudo:</strong> {selectedMember.pseudo}
-              </p>
-              <p>
-                <strong>Rôle Alliance:</strong> {selectedMember.allianceRole}
-              </p>
-              <p>
-                <strong>Power:</strong> {selectedMember.power}
-              </p>
+            <div className="space-y-4">
+              <div className="text-sm bg-slate-50 p-3 rounded">
+                <p>
+                  <strong>Pseudo:</strong> {selectedMember.pseudo}
+                </p>
+                <p>
+                  <strong>Email:</strong> {selectedMember.email}
+                </p>
+                <p>
+                  <strong>Rôle Alliance:</strong>{" "}
+                  {selectedMember.allianceRole || "MEMBER"}
+                </p>
+                <p>
+                  <strong>Power:</strong>{" "}
+                  {selectedMember.power?.toLocaleString()}
+                </p>
+                <p>
+                  <strong>Rôle Système:</strong> {mockRole}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-sm mb-2">
+                  Permissions de ce membre ({mockPermissions.length})
+                </h4>
+                <div className="flex flex-wrap gap-1">
+                  {mockPermissions.length > 0 ? (
+                    mockPermissions.map((perm) => (
+                      <span
+                        key={perm}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
+                      >
+                        {perm}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Aucune permission
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* What can this member see/do? */}
+              <div>
+                <h4 className="font-semibold text-sm mb-2">
+                  Ce que ce membre peut voir
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("view_dashboard")
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("view_dashboard")
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      }`}
+                    ></span>
+                    Dashboard
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("view_members")
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("view_members") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Membres
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("view_trains") ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("view_trains") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Trains
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("view_events") ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("view_events") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Événements
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("view_vs") ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("view_vs") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    VS Wars
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("view_stats") ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("view_stats") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Stats
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions this member can do */}
+              <div>
+                <h4 className="font-semibold text-sm mb-2">
+                  Actions possibles
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("edit_event") ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("edit_event") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Planifier événements
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("edit_train_slot")
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("edit_train_slot")
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      }`}
+                    ></span>
+                    Gérer trains
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("edit_vs") ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("edit_vs") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Gérer VS
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("manage_users")
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("manage_users") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Gestion utilisateurs
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("manage_permissions")
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("manage_permissions")
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      }`}
+                    ></span>
+                    Gestion permissions
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      mockCan("export_data") ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        mockCan("export_data") ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    Export/Import données
+                  </div>
+                </div>
+              </div>
+
+              {/* Dashboard sections this member would see */}
+              <div>
+                <h4 className="font-semibold text-sm mb-2">
+                  Sections Dashboard visibles
+                </h4>
+                <div className="text-xs space-y-1">
+                  {mockCan("view_events") && (
+                    <div className="text-green-600">✅ Événements & Trains</div>
+                  )}
+                  {mockCan("view_vs") && (
+                    <div className="text-green-600">
+                      ✅ VS (Guerre d'alliance)
+                    </div>
+                  )}
+                  {mockCan("view_members") && (
+                    <div className="text-green-600">✅ Membres</div>
+                  )}
+                  {mockCan("manage_alerts") && (
+                    <div className="text-green-600">✅ Outils & Scheduler</div>
+                  )}
+                  {(mockCan("manage_users") ||
+                    mockCan("manage_permissions")) && (
+                    <div className="text-green-600">✅ Administration</div>
+                  )}
+                  {mockCan("view_help") && (
+                    <div className="text-green-600">✅ Aide & Docs</div>
+                  )}
+
+                  {/* Show if they can't see anything */}
+                  {!mockCan("view_dashboard") && (
+                    <div className="text-red-600">
+                      ❌ Aucun accès au dashboard
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
