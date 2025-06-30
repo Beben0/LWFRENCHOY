@@ -202,11 +202,16 @@ export default function TestPermissionsPage() {
       {/* Actions CRUD - Test de protection */}
       <Card>
         <CardHeader>
-          <CardTitle>Actions CRUD Protégées</CardTitle>
+          <CardTitle>Actions CRUD Protégées par Permissions</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Ces boutons d'action ne s'affichent que pour les administrateurs :
+            Les boutons ci-dessous apparaissent uniquement si votre session
+            possède la permission requise (
+            <code>create_* / edit_* / delete_*</code>). Les rôles d'alliance
+            (R4/R5) ou <code>ADMIN</code> disposent généralement de ces droits,
+            mais ils peuvent être accordés individuellement par le gestionnaire
+            de rôles.
           </p>
 
           <div className="space-y-4">
@@ -297,14 +302,18 @@ export default function TestPermissionsPage() {
         </CardContent>
       </Card>
 
-      {/* Fonctionnalités Admin Exclusives */}
+      {/* Fonctionnalités nécessitant les permissions d'administration */}
       <Card>
         <CardHeader>
-          <CardTitle>Fonctionnalités Administrateur</CardTitle>
+          <CardTitle>Fonctionnalités Avancées (Administration)</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Ces fonctionnalités ne sont accessibles qu'aux R4/R5 :
+            Cette section requiert des permissions d'administration (
+            <code>manage_permissions</code>, <code>export_data</code>, …). Elle
+            est donc visible pour les rôles disposant de ces droits (ex :{" "}
+            <strong>ADMIN</strong>, <strong>R4</strong>, <strong>R5</strong>, ou
+            tout rôle personnalisé auquel on a accordé ces permissions).
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
