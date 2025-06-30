@@ -431,6 +431,25 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
+        {/* Gestion Officiers */}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              🛡️ <span className="text-green-400">Gestion Officiers</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 gap-2">
+              <Link href="/admin/officers" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  🛡️ <span className="ml-2">Pour toi JC</span>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Administration Système */}
         <Card>
           <CardHeader>
@@ -510,12 +529,6 @@ export default function AdminPage() {
               <Button variant="outline" className="w-full justify-start">
                 <Bell className="w-4 h-4 mr-2" />
                 Gestion des alertes
-              </Button>
-            </Link>
-            <Link href="/admin/notifications" className="w-full">
-              <Button variant="outline" className="w-full justify-start">
-                <Bell className="w-4 h-4 mr-2" />
-                Configuration Discord
               </Button>
             </Link>
           </div>
