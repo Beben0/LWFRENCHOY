@@ -22,7 +22,7 @@ interface Member {
   power: bigint;
   kills: number;
   specialty: string | null;
-  allianceRole: "R5" | "R4" | "MEMBER";
+  allianceRole: string;
   status: "ACTIVE" | "INACTIVE";
   tags: string[];
   lastActive: Date;

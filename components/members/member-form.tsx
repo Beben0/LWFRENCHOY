@@ -16,7 +16,7 @@ interface Member {
   power: string;
   kills: number;
   specialty?: string;
-  allianceRole: "R5" | "R4" | "MEMBER";
+  allianceRole: string;
   status: "ACTIVE" | "INACTIVE";
   tags: string[];
   notes?: string;

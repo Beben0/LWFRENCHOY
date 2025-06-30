@@ -231,12 +231,6 @@ enum Role {
   GUEST // Utilisateur invité/non authentifié
 }
 
-enum AllianceRole {
-  R5
-  R4
-  MEMBER
-}
-
 enum Status {
   ACTIVE
   INACTIVE

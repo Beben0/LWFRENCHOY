@@ -9,7 +9,7 @@ interface Member {
   pseudo: string;
   level: number;
   specialty: string | null;
-  allianceRole: "R5" | "R4" | "MEMBER";
+  allianceRole: string;
   status: "ACTIVE" | "INACTIVE";
 }
 

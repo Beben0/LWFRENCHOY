@@ -14,7 +14,7 @@ interface MemberFormData {
   power: string;
   kills: number;
   specialty?: string;
-  allianceRole: "R5" | "R4" | "MEMBER";
+  allianceRole: string;
   status: "ACTIVE" | "INACTIVE";
   tags: string[];
   notes?: string;
@@ -27,7 +27,7 @@ interface Member {
   power: bigint;
   kills: number;
   specialty: string | null;
-  allianceRole: "R5" | "R4" | "MEMBER";
+  allianceRole: string;
   status: "ACTIVE" | "INACTIVE";
   tags: string[];
   notes: string | null;
