@@ -86,25 +86,37 @@ export async function GET(request: NextRequest) {
         break;
 
       case "Complet":
-        const [rawMembersComplet, trains, events, users] = await Promise.all([
-          prisma.member.findMany(),
-          prisma.trainSlot.findMany({ include: { conductor: true } }),
-          prisma.event.findMany(),
-          prisma.user.findMany({
-            select: {
-              email: true,
-              role: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          }),
-        ]);
+        const [rawMembersComplet, trains, events, users, vsWeeks] =
+          await Promise.all([
+            prisma.member.findMany(),
+            prisma.trainSlot.findMany({ include: { conductor: true } }),
+            prisma.event.findMany(),
+            prisma.user.findMany({
+              select: {
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            }),
+            prisma.vSWeek.findMany({
+              include: {
+                days: true,
+                participants: {
+                  include: {
+                    member: { select: { pseudo: true } },
+                    dailyResults: true,
+                  },
+                },
+              },
+            }),
+          ]);
         // Convertir BigInt pour éviter l'erreur de sérialisation
         const membersComplet = rawMembersComplet.map((member) => ({
           ...member,
           power: member.power.toString(),
         }));
-        data = { members: membersComplet, trains, events, users };
+        data = { members: membersComplet, trains, events, users, vsWeeks };
         filename = "export_complet";
         break;
 
@@ -157,6 +169,8 @@ export async function GET(request: NextRequest) {
       finalFilename = `${filename}.json`;
     } else {
       // CSV format
+      const replacerBigInt = (_k: string, v: any) =>
+        typeof v === "bigint" ? v.toString() : v;
       let csv = "";
       if (Array.isArray(data) && data.length > 0) {
         const headers = Object.keys(data[0]);
@@ -165,9 +179,13 @@ export async function GET(request: NextRequest) {
           .map((row) =>
             headers
               .map((header) => {
-                const value = row[header];
+                const value = (row as any)[header];
                 if (value === null || value === undefined) return "";
-                if (typeof value === "object") return JSON.stringify(value);
+                if (typeof value === "object")
+                  return `"${JSON.stringify(value, replacerBigInt).replace(
+                    /"/g,
+                    '""'
+                  )}"`;
                 return `"${value.toString().replace(/"/g, '""')}"`;
               })
               .join(",")
