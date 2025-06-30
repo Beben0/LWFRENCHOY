@@ -453,6 +453,14 @@ export default function UnifiedDashboard() {
               label="Données Ref."
             />
           )}
+          {can("manage_permissions") && (
+            <Tile
+              permission="manage_permissions"
+              href="/test-permissions"
+              icon={Shield}
+              label="Test Permissions"
+            />
+          )}
           {can("manage_alerts") && (
             <Tile
               permission="manage_alerts"

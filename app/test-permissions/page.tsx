@@ -21,11 +21,31 @@ import {
   Users,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 export default function TestPermissionsPage() {
   const { data: session } = useSession();
   const userRole = getUserRole(session);
   const userPermissions = getUserPermissions(session);
+
+  const [members, setMembers] = useState<any[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedMember, setSelectedMember] = useState<any | null>(null);
+
+  // Load members (first 500)
+  useEffect(() => {
+    fetch("/api/members?limit=500")
+      .then((r) => r.json())
+      .then((d) => setMembers(d.members || []))
+      .catch(() => {});
+  }, []);
+
+  const handleSelect = (e: any) => {
+    const id = e.target.value;
+    setSelectedId(id);
+    const m = members.find((m: any) => m.id === id);
+    setSelectedMember(m || null);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -81,6 +101,43 @@ export default function TestPermissionsPage() {
               ))}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Tester un membre particulier */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tester un membre spécifique</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm">Sélectionner un membre</label>
+            <select
+              className="mt-1 w-full border rounded p-2 bg-card"
+              value={selectedId}
+              onChange={handleSelect}
+            >
+              <option value="">—</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.pseudo || m.email} ({m.allianceRole || ""})
+                </option>
+              ))}
+            </select>
+          </div>
+          {selectedMember && (
+            <div className="text-sm">
+              <p>
+                <strong>Pseudo:</strong> {selectedMember.pseudo}
+              </p>
+              <p>
+                <strong>Rôle Alliance:</strong> {selectedMember.allianceRole}
+              </p>
+              <p>
+                <strong>Power:</strong> {selectedMember.power}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
