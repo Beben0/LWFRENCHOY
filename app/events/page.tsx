@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/utils";
 import {
@@ -213,15 +214,17 @@ export default function EventsPage() {
                 <Icon className={`w-5 h-5 ${config.color}`} />
               </div>
               <div>
-                <CardTitle className="text-lg">{event.title}</CardTitle>
+                <CardTitle className="text-lg">
+                  <Translate>{event.title}</Translate>
+                </CardTitle>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Badge variant="outline" className={config.color}>
-                    {config.label}
+                    <Translate>{config.label}</Translate>
                   </Badge>
                   {event.isRecurring && (
                     <Badge variant="outline" className="text-purple-600">
                       <Repeat className="w-3 h-3 mr-1" />
-                      Récurrent
+                      <Translate>Récurrent</Translate>
                     </Badge>
                   )}
                 </div>
@@ -255,14 +258,16 @@ export default function EventsPage() {
           {/* Description */}
           {event.description && (
             <p className="text-sm text-muted-foreground mb-3">
-              {event.description}
+              <Translate>{event.description}</Translate>
             </p>
           )}
 
           {/* Description détaillée */}
           {event.detailedDescription && (
             <div className="text-sm text-muted-foreground mb-3 p-2 bg-gray-50 dark:bg-gray-800 rounded">
-              <p className="whitespace-pre-wrap">{event.detailedDescription}</p>
+              <p className="whitespace-pre-wrap">
+                <Translate>{event.detailedDescription}</Translate>
+              </p>
             </div>
           )}
 
@@ -271,7 +276,7 @@ export default function EventsPage() {
             <div className="flex flex-wrap gap-1 mb-3">
               {event.tags.map((tag, index) => (
                 <Badge key={index} variant="secondary" className="text-xs">
-                  {tag}
+                  <Translate>{tag}</Translate>
                 </Badge>
               ))}
             </div>
@@ -282,9 +287,15 @@ export default function EventsPage() {
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span>
-                Début: {formatDate(new Date(event.startDate))}
-                {event.endDate &&
-                  ` - Fin: ${formatDate(new Date(event.endDate))}`}
+                <Translate>Début</Translate>:{" "}
+                {formatDate(new Date(event.startDate))}
+                {event.endDate && (
+                  <>
+                    {" - "}
+                    <Translate>Fin</Translate>:{" "}
+                    {formatDate(new Date(event.endDate))}
+                  </>
+                )}
               </span>
             </div>
 
@@ -293,10 +304,15 @@ export default function EventsPage() {
               <div className="flex items-center gap-2">
                 <Repeat className="w-4 h-4 text-muted-foreground" />
                 <span>
-                  Répété:{" "}
+                  <Translate>Répété</Translate>:{" "}
                   {event.recurringDays.map((day) => dayNames[day]).join(", ")}
-                  {event.recurringEndDate &&
-                    ` jusqu'au ${formatDate(new Date(event.recurringEndDate))}`}
+                  {event.recurringEndDate && (
+                    <>
+                      {" "}
+                      <Translate>jusqu&apos;au</Translate>{" "}
+                      {formatDate(new Date(event.recurringEndDate))}
+                    </>
+                  )}
                 </span>
               </div>
             )}
@@ -311,7 +327,9 @@ export default function EventsPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-lastwar-orange mx-auto"></div>
-          <p className="mt-4">Chargement des événements...</p>
+          <p className="mt-4">
+            <Translate>Chargement des événements…</Translate>
+          </p>
         </div>
       </div>
     );
@@ -326,12 +344,12 @@ export default function EventsPage() {
             <div className="flex-1">
               <CardTitle className="flex items-center gap-2 text-xl text-white">
                 <Calendar className="w-6 h-6 text-lastwar-orange" />
-                Événements d'Alliance
+                <Translate>Événements d'Alliance</Translate>
               </CardTitle>
               <p className="text-sm text-gray-400 mt-2">
-                Gestion complète des événements •{" "}
-                {upcomingEvents.length + recurringEvents.length} événements
-                actifs
+                <Translate>Gestion complète des événements</Translate> •{" "}
+                {upcomingEvents.length + recurringEvents.length}{" "}
+                <Translate>événements actifs</Translate>
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -341,8 +359,12 @@ export default function EventsPage() {
                   onClick={handleCreateNew}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Nouvel Événement</span>
-                  <span className="sm:hidden">Nouveau</span>
+                  <span className="hidden sm:inline">
+                    <Translate>Nouvel Événement</Translate>
+                  </span>
+                  <span className="sm:hidden">
+                    <Translate>Nouveau</Translate>
+                  </span>
                 </Button>
               )}
             </div>
@@ -363,7 +385,9 @@ export default function EventsPage() {
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>Prochains</span>
+          <span>
+            <Translate>Prochains</Translate>
+          </span>
           <Badge
             variant="secondary"
             className="ml-1 bg-gray-600 text-white text-xs"
@@ -382,7 +406,9 @@ export default function EventsPage() {
           }`}
         >
           <Repeat className="w-4 h-4" />
-          <span>Récurrents</span>
+          <span>
+            <Translate>Récurrents</Translate>
+          </span>
           <Badge
             variant="secondary"
             className="ml-1 bg-gray-600 text-white text-xs"
@@ -401,7 +427,9 @@ export default function EventsPage() {
           }`}
         >
           <CalendarDays className="w-4 h-4" />
-          <span>Passés</span>
+          <span>
+            <Translate>Passés</Translate>
+          </span>
           <Badge
             variant="secondary"
             className="ml-1 bg-gray-600 text-white text-xs"
@@ -423,7 +451,9 @@ export default function EventsPage() {
                 <p className="text-2xl font-bold text-white">
                   {upcomingEvents.length}
                 </p>
-                <p className="text-sm text-gray-400">Prochains</p>
+                <p className="text-sm text-gray-400">
+                  <Translate>Prochains</Translate>
+                </p>
               </div>
             </div>
           </CardContent>
@@ -439,7 +469,9 @@ export default function EventsPage() {
                 <p className="text-2xl font-bold text-white">
                   {recurringEvents.length}
                 </p>
-                <p className="text-sm text-gray-400">Récurrents</p>
+                <p className="text-sm text-gray-400">
+                  <Translate>Récurrents</Translate>
+                </p>
               </div>
             </div>
           </CardContent>
@@ -461,7 +493,9 @@ export default function EventsPage() {
                     ).length
                   }
                 </p>
-                <p className="text-sm text-gray-400">Guerres</p>
+                <p className="text-sm text-gray-400">
+                  <Translate>Guerres</Translate>
+                </p>
               </div>
             </div>
           </CardContent>
@@ -481,7 +515,9 @@ export default function EventsPage() {
                     ).length
                   }
                 </p>
-                <p className="text-sm text-gray-400">Boss</p>
+                <p className="text-sm text-gray-400">
+                  <Translate>Boss</Translate>
+                </p>
               </div>
             </div>
           </CardContent>
@@ -497,15 +533,17 @@ export default function EventsPage() {
                 <CardContent className="p-8 text-center">
                   <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    Aucun événement à venir
+                    <Translate>Aucun événement à venir</Translate>
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Créez votre premier événement pour commencer
+                    <Translate>
+                      Créez votre premier événement pour commencer
+                    </Translate>
                   </p>
                   {hasPermission(session.data, "create_event") && (
                     <Button onClick={handleCreateNew}>
                       <Plus className="w-4 h-4 mr-2" />
-                      Créer un événement
+                      <Translate>Créer un événement</Translate>
                     </Button>
                   )}
                 </CardContent>
@@ -525,10 +563,12 @@ export default function EventsPage() {
                 <CardContent className="p-8 text-center">
                   <Repeat className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    Aucun événement récurrent
+                    <Translate>Aucun événement récurrent</Translate>
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Les événements récurrents apparaîtront ici
+                    <Translate>
+                      Les événements récurrents apparaîtront ici
+                    </Translate>
                   </p>
                 </CardContent>
               </Card>
@@ -547,10 +587,12 @@ export default function EventsPage() {
                 <CardContent className="p-8 text-center">
                   <CalendarDays className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    Aucun événement passé
+                    <Translate>Aucun événement passé</Translate>
                   </h3>
                   <p className="text-muted-foreground">
-                    L'historique des événements apparaîtra ici
+                    <Translate>
+                      L'historique des événements apparaîtra ici
+                    </Translate>
                   </p>
                 </CardContent>
               </Card>

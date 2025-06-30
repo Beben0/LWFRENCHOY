@@ -2,7 +2,9 @@
 
 import { PermissionGuard } from "@/components/auth/permission-guard";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { NotificationDropdown } from "@/components/ui/notification-dropdown";
+import { Translate } from "@/components/ui/translate";
 import {
   BarChart3,
   BookOpen,
@@ -123,6 +125,8 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
+            <LanguageSwitcher />
+
             {filteredNavigationItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -138,7 +142,9 @@ export function Navigation() {
                       className="flex items-center space-x-2"
                     >
                       <Icon className="w-4 h-4" />
-                      <span className="whitespace-nowrap">{item.label}</span>
+                      <span className="whitespace-nowrap">
+                        <Translate>{item.label}</Translate>
+                      </span>
                     </Button>
                   </Link>
                 </PermissionGuard>
@@ -170,9 +176,11 @@ export function Navigation() {
                     {session.user.email}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {session.user.role === "ADMIN"
-                      ? "Administrateur"
-                      : "Membre"}
+                    {session.user.role === "ADMIN" ? (
+                      <Translate>Administrateur</Translate>
+                    ) : (
+                      <Translate>Membre</Translate>
+                    )}
                   </div>
                 </div>
 
@@ -184,7 +192,9 @@ export function Navigation() {
                   className="flex items-center space-x-1"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden lg:inline">Déconnexion</span>
+                  <span className="hidden lg:inline">
+                    <Translate>Déconnexion</Translate>
+                  </span>
                 </Button>
               </div>
             ) : (
@@ -195,7 +205,9 @@ export function Navigation() {
                   className="flex items-center space-x-2"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>Connexion</span>
+                  <span>
+                    <Translate>Connexion</Translate>
+                  </span>
                 </Button>
               </Link>
             )}
@@ -205,6 +217,8 @@ export function Navigation() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2 border-t border-border">
+            <LanguageSwitcher />
+
             {filteredNavigationItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -219,7 +233,7 @@ export function Navigation() {
                   >
                     <Button variant="ghost" className="w-full justify-start">
                       <Icon className="w-4 h-4 mr-2" />
-                      {item.label}
+                      <Translate>{item.label}</Translate>
                     </Button>
                   </Link>
                 </PermissionGuard>
@@ -235,9 +249,11 @@ export function Navigation() {
                       {session.user.email}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {session.user.role === "ADMIN"
-                        ? "Administrateur"
-                        : "Membre"}
+                      {session.user.role === "ADMIN" ? (
+                        <Translate>Administrateur</Translate>
+                      ) : (
+                        <Translate>Membre</Translate>
+                      )}
                     </div>
                   </div>
                   <Button
@@ -246,7 +262,7 @@ export function Navigation() {
                     onClick={handleSignOut}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
-                    Déconnexion
+                    <Translate>Déconnexion</Translate>
                   </Button>
                 </div>
               ) : (
@@ -256,7 +272,7 @@ export function Navigation() {
                 >
                   <Button variant="ghost" className="w-full justify-start">
                     <LogIn className="w-4 h-4 mr-2" />
-                    Connexion
+                    <Translate>Connexion</Translate>
                   </Button>
                 </Link>
               )}

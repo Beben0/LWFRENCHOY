@@ -1,6 +1,7 @@
 "use client";
 
 import { GraphicalTrainSchedule } from "@/components/trains/graphical-train-schedule";
+import { Translate } from "@/components/ui/translate";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -41,7 +42,9 @@ export default function TrainsPage() {
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2" />
-          <span>Chargement...</span>
+          <span>
+            <Translate>Chargement…</Translate>
+          </span>
         </div>
       </div>
     );
@@ -51,11 +54,17 @@ export default function TrainsPage() {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Planification des Trains</h1>
+          <h1 className="text-3xl font-bold">
+            <Translate>Planification des Trains</Translate>
+          </h1>
           <p className="text-muted-foreground">
-            {session
-              ? "Bienvenue à bord !"
-              : "Consultez les horaires des trains d'alliance"}
+            {session ? (
+              <Translate>Bienvenue à bord !</Translate>
+            ) : (
+              <Translate>
+                Consultez les horaires des trains d'alliance
+              </Translate>
+            )}
           </p>
         </div>
       </div>

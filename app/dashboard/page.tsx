@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import {
   Activity,
   AlertTriangle,
@@ -21,6 +22,7 @@ import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import { Children, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -167,10 +169,11 @@ export default function UnifiedDashboard() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold lastwar-gradient bg-clip-text text-transparent flex items-center gap-2">
-            <Shield className="w-8 h-8 text-lastwar-orange" /> Dashboard
+            <Shield className="w-8 h-8 text-lastwar-orange" />{" "}
+            <Translate>Dashboard</Translate>
           </h1>
           <p className="text-muted-foreground">
-            Bienvenue sur votre centre de contrôle
+            <Translate>Bienvenue sur votre centre de contrôle</Translate>
             {displayName && (
               <span className="ml-1 font-semibold text-foreground">
                 {displayName}
@@ -191,8 +194,8 @@ export default function UnifiedDashboard() {
       {alerts.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-yellow-500" /> Alertes
-            Système
+            <AlertTriangle className="w-5 h-5 text-yellow-500" />{" "}
+            <Translate>Alertes Système</Translate>
           </h2>
           <div className="grid grid-cols-1 gap-3">
             {alerts.map((alert, index) => (
@@ -210,16 +213,16 @@ export default function UnifiedDashboard() {
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <h3 className="font-semibold text-foreground">
-                        {alert.title}
+                        <Translate>{alert.title}</Translate>
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {alert.message}
+                        <Translate>{alert.message}</Translate>
                       </p>
                     </div>
                     {alert.action && (
                       <Link href={alert.action}>
                         <Button size="sm" variant="outline">
-                          Corriger
+                          <Translate>Corriger</Translate>
                         </Button>
                       </Link>
                     )}
@@ -236,47 +239,57 @@ export default function UnifiedDashboard() {
         {can("view_members") && (
           <StatCard
             icon={Users}
-            label="Membres actifs"
+            label={<Translate>Membres actifs</Translate>}
             value={stats.activeMembers}
           />
         )}
         {can("view_events") && (
           <StatCard
             icon={Calendar}
-            label="Événements à venir"
+            label={<Translate>Événements à venir</Translate>}
             value={stats.upcomingEvents}
-            sub="Prochain: "
+            sub={<Translate>Prochain: </Translate>}
             subValue={nextEventDate}
           />
         )}
         {can("view_vs") && (
           <StatCard
             icon={Sword}
-            label="VS en cours"
-            value={stats.currentVS ? stats.currentVS.enemyName : "Aucun"}
+            label={<Translate>Guerre en cours</Translate>}
+            value={
+              stats.currentVS ? (
+                stats.currentVS.enemyName
+              ) : (
+                <Translate>Aucun</Translate>
+              )
+            }
           />
         )}
         {alerts.length > 0 && (
-          <StatCard icon={Bell} label="Alertes" value={stats.unreadAlerts} />
+          <StatCard
+            icon={Bell}
+            label={<Translate>Alertes</Translate>}
+            value={stats.unreadAlerts}
+          />
         )}
         {can("view_trains") && (
           <StatCard
             icon={Train}
-            label="Couverture trains"
+            label={<Translate>Couverture trains</Translate>}
             value={`${stats.coveragePercent}%`}
           />
         )}
         {can("view_stats") && (
           <StatCard
             icon={Zap}
-            label="Puissance totale"
+            label={<Translate>Puissance totale</Translate>}
             value={formatPower(stats.totalPower)}
           />
         )}
         {can("view_members") && (
           <StatCard
             icon={AlertTriangle}
-            label="Inactifs"
+            label={<Translate>Inactifs</Translate>}
             value={stats.inactiveMembers}
             color="text-yellow-400"
           />
@@ -285,13 +298,13 @@ export default function UnifiedDashboard() {
 
       {/* ---- 1. Événements & Trains ---- */}
       {(can("view_events") || can("view_trains")) && (
-        <Section title="Événements & Trains">
+        <Section title={<Translate>Événements & Trains</Translate>}>
           {can("edit_event") && (
             <Tile
               permission="edit_event"
               href="/events-crud"
               icon={Calendar}
-              label="Planifier"
+              label={<Translate>Planifier</Translate>}
             />
           )}
           {can("view_events") && (
@@ -299,7 +312,7 @@ export default function UnifiedDashboard() {
               permission="view_events"
               href="/events"
               icon={Clock}
-              label="À venir"
+              label={<Translate>À venir</Translate>}
             />
           )}
           {can("view_trains") && (
@@ -307,7 +320,7 @@ export default function UnifiedDashboard() {
               permission="view_trains"
               href="/trains"
               icon={Train}
-              label="Gestion trains"
+              label={<Translate>Gestion trains</Translate>}
             />
           )}
           {can("view_trains") && (
@@ -315,7 +328,7 @@ export default function UnifiedDashboard() {
               permission="view_trains"
               href="/trains-v2"
               icon={Zap}
-              label="Scheduler auto"
+              label={<Translate>Scheduler auto</Translate>}
             />
           )}
         </Section>
@@ -323,19 +336,19 @@ export default function UnifiedDashboard() {
 
       {/* ---- 2. Guerre VS ---- */}
       {can("view_vs") && (
-        <Section title="VS (Guerre d'alliance)">
+        <Section title={<Translate>VS (Guerre d'alliance)</Translate>}>
           <Tile
             permission="view_vs"
             href="/vs"
             icon={Sword}
-            label="Vue générale"
+            label={<Translate>Vue générale</Translate>}
           />
           {can("edit_vs") && (
             <Tile
               permission="edit_vs_week"
               href="/admin/vs"
               icon={Database}
-              label="Gestion VS"
+              label={<Translate>Gestion VS</Translate>}
             />
           )}
           {can("edit_vs") && (
@@ -343,7 +356,7 @@ export default function UnifiedDashboard() {
               permission="edit_vs"
               href="/admin/vs/quick-entry"
               icon={Zap}
-              label="Saisie rapide"
+              label={<Translate>Saisie rapide</Translate>}
             />
           )}
           {can("view_vs") && (
@@ -351,7 +364,7 @@ export default function UnifiedDashboard() {
               permission="view_vs"
               href="/admin/vs/history"
               icon={Activity}
-              label="Historique"
+              label={<Translate>Historique</Translate>}
             />
           )}
         </Section>
@@ -359,52 +372,52 @@ export default function UnifiedDashboard() {
 
       {/* ---- 3. Membres ---- */}
       {can("view_members") && (
-        <Section title="Membres">
+        <Section title={<Translate>Membres</Translate>}>
           <Tile
             permission="view_members"
             href="/members-crud"
             icon={Users}
-            label="Liste"
+            label={<Translate>Liste</Translate>}
           />
           <Tile
             permission="view_members"
             href="/members-crud?filter=inactive"
             icon={AlertTriangle}
-            label="Inactifs"
+            label={<Translate>Inactifs</Translate>}
           />
           {can("view_stats") && (
             <Tile
               permission="view_stats"
               href="/stats"
               icon={BarChart3}
-              label="Stats"
+              label={<Translate>Stats</Translate>}
             />
           )}
         </Section>
       )}
       {/* ---- 6. Aide ---- */}
       {can("view_help") && (
-        <Section title="Aide & Docs">
+        <Section title={<Translate>Aide & Docs</Translate>}>
           {can("edit_help_article") && (
             <Tile
               permission="edit_help_article"
               href="/help/admin"
               icon={BookOpen}
-              label="Articles"
+              label={<Translate>Articles</Translate>}
             />
           )}
           <Tile
             permission="view_help"
             href="/help"
             icon={BookOpen}
-            label="Centre d'aide"
+            label={<Translate>Centre d'aide</Translate>}
           />
         </Section>
       )}
 
       {/* ---- 4. Outils & Scheduler ---- */}
       {(can("manage_alerts") || can("view_trains")) && (
-        <Section title="Outils & Scheduler">
+        <Section title={<Translate>Outils & Scheduler</Translate>}>
           {can("manage_alerts") && <AlertSchedulerStatus />}
           {can("manage_alerts") && <TrainSchedulerStatus />}
           {can("view_dashboard") && (
@@ -412,7 +425,7 @@ export default function UnifiedDashboard() {
               permission="view_dashboard"
               href="/admin/officers/hive-simulator"
               icon={Database}
-              label="Hive Simulator"
+              label={<Translate>Hive Simulator</Translate>}
             />
           )}
         </Section>
@@ -420,13 +433,13 @@ export default function UnifiedDashboard() {
 
       {/* ---- 5. Administration ---- */}
       {(can("manage_users") || can("manage_permissions")) && (
-        <Section title="Administration">
+        <Section title={<Translate>Administration</Translate>}>
           {can("manage_users") && (
             <Tile
               permission="manage_users"
               href="/admin/users"
               icon={Users}
-              label="Utilisateurs"
+              label={<Translate>Utilisateurs</Translate>}
             />
           )}
           {can("manage_users") && (
@@ -434,7 +447,7 @@ export default function UnifiedDashboard() {
               permission="manage_users"
               href="/admin/invites"
               icon={Users}
-              label="Invitations"
+              label={<Translate>Invitations</Translate>}
             />
           )}
           {can("manage_permissions") && (
@@ -442,7 +455,7 @@ export default function UnifiedDashboard() {
               permission="manage_permissions"
               href="/admin/roles"
               icon={Shield}
-              label="Rôles & Perms"
+              label={<Translate>Rôles & Perms</Translate>}
             />
           )}
           {can("manage_permissions") && (
@@ -450,7 +463,7 @@ export default function UnifiedDashboard() {
               permission="manage_permissions"
               href="/admin/reference-data"
               icon={Database}
-              label="Données Ref."
+              label={<Translate>Données Ref.</Translate>}
             />
           )}
           {can("manage_permissions") && (
@@ -458,7 +471,7 @@ export default function UnifiedDashboard() {
               permission="manage_permissions"
               href="/test-permissions"
               icon={Shield}
-              label="Test Permissions"
+              label={<Translate>Test Permissions</Translate>}
             />
           )}
           {can("manage_alerts") && (
@@ -466,7 +479,7 @@ export default function UnifiedDashboard() {
               permission="manage_alerts"
               href="/admin/alerts"
               icon={Bell}
-              label="Alertes"
+              label={<Translate>Alertes</Translate>}
             />
           )}
           {(can("export_data") || can("import_data")) && (
@@ -478,7 +491,7 @@ export default function UnifiedDashboard() {
               }
               href="/admin/import-export"
               icon={Download}
-              label="Sauvegarde"
+              label={<Translate>Sauvegarde</Translate>}
             />
           )}
         </Section>
@@ -491,10 +504,10 @@ export default function UnifiedDashboard() {
 // Helper components
 interface StatCardProps {
   icon: any;
-  label: string;
+  label: ReactNode;
   value: any;
   color?: string;
-  sub?: string;
+  sub?: ReactNode;
   subValue?: any;
 }
 
@@ -530,8 +543,8 @@ function Section({
   title,
   children,
 }: {
-  title: string;
-  children: React.ReactNode;
+  title: ReactNode;
+  children: ReactNode;
 }) {
   const visibleChildren = Children.toArray(children).filter(Boolean);
   if (visibleChildren.length === 0) return null;
@@ -555,7 +568,7 @@ function Tile({
   permission: Permission;
   href: string;
   icon: any;
-  label: string;
+  label: ReactNode;
 }) {
   const { data: session } = useSession();
 

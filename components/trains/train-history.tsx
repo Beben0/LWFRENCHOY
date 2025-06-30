@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import {
   Calendar,
   Clock,
@@ -182,7 +183,7 @@ export function TrainHistory({ show, onClose }: TrainHistoryProps) {
         <CardHeader className="flex flex-row items-center justify-between bg-slate-800/50 border-b border-slate-600">
           <CardTitle className="flex items-center gap-2 text-white">
             <History className="w-5 h-5 text-blue-400" />
-            Historique des Trains
+            <Translate>Historique des Trains</Translate>
           </CardTitle>
           <Button
             variant="ghost"
@@ -205,7 +206,7 @@ export function TrainHistory({ show, onClose }: TrainHistoryProps) {
             }`}
           >
             <History className="w-4 h-4 inline mr-2" />
-            Historique détaillé
+            <Translate>Historique</Translate>
           </button>
           <button
             onClick={() => setActiveTab("ranking")}
@@ -216,7 +217,7 @@ export function TrainHistory({ show, onClose }: TrainHistoryProps) {
             }`}
           >
             <Trophy className="w-4 h-4 inline mr-2" />
-            Classement
+            <Translate>Classement</Translate>
           </button>
         </div>
 
@@ -249,10 +250,12 @@ export function TrainHistory({ show, onClose }: TrainHistoryProps) {
                     onChange={(e) => setFilterAction(e.target.value)}
                     className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   >
-                    <option value="all">Toutes les actions</option>
+                    <option value="all">
+                      <Translate>Toutes les actions</Translate>
+                    </option>
                     {Object.entries(actionLabels).map(([key, label]) => (
                       <option key={key} value={key}>
-                        {label}
+                        <Translate>{label}</Translate>
                       </option>
                     ))}
                   </select>
@@ -314,18 +317,8 @@ export function TrainHistory({ show, onClose }: TrainHistoryProps) {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-slate-400">
-                  <div className="text-6xl mb-4">📅</div>
-                  <div className="text-lg font-semibold">
-                    {searchTerm || filterAction !== "all"
-                      ? "Aucun résultat trouvé"
-                      : "Aucun historique disponible"}
-                  </div>
-                  <div className="text-sm mt-2">
-                    {searchTerm || filterAction !== "all"
-                      ? "Essayez de modifier vos filtres"
-                      : "Les actions sur les trains apparaîtront ici"}
-                  </div>
+                <div className="p-8 text-center text-gray-500">
+                  <Translate>Aucun historique disponible</Translate>
                 </div>
               )}
             </div>
@@ -392,14 +385,8 @@ export function TrainHistory({ show, onClose }: TrainHistoryProps) {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-12 text-slate-400">
-                  <div className="text-6xl mb-4">🏆</div>
-                  <div className="text-lg font-semibold">
-                    Aucun classement disponible
-                  </div>
-                  <div className="text-sm mt-2">
-                    Les données apparaîtront une fois les trains assignés
-                  </div>
+                <div className="p-8 text-center text-gray-500">
+                  <Translate>Aucun classement disponible</Translate>
                 </div>
               )}
             </div>

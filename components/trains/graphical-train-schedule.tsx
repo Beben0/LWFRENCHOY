@@ -4,6 +4,7 @@ import { TimeSlotSelector } from "@/components/forms/time-slot-selector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import {
   AlertCircle,
   Calendar,
@@ -141,7 +142,9 @@ function ClientOnlyTrainSchedule(props: GraphicalTrainScheduleProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
             <Train className="w-6 h-6 animate-spin mr-2" />
-            <span>Chargement du planning...</span>
+            <span>
+              <Translate>Chargement du planning…</Translate>
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -213,7 +216,9 @@ function TrainDateInfo({ train }: { train: TrainInstance }) {
   return (
     <div>
       <div className="text-sm text-gray-400">
-        {dateInfo.dayNum} {dateInfo.month}
+        <Translate>
+          {dateInfo.dayNum} {dateInfo.month}
+        </Translate>
       </div>
     </div>
   );
@@ -321,7 +326,7 @@ function TimeDisplay({ train }: { train: TrainInstance }) {
       <div className="space-y-1">
         <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gray-500/20 text-gray-300">
           <Calendar className="w-3 h-3" />
-          Chargement...
+          <Translate>Chargement…</Translate>
         </div>
       </div>
     );
@@ -339,7 +344,7 @@ function TimeDisplay({ train }: { train: TrainInstance }) {
         }`}
       >
         <StatusIcon className="w-3 h-3" />
-        {timeData.timeText}
+        <Translate>{timeData.timeText}</Translate>
       </div>
     </div>
   );
@@ -375,7 +380,9 @@ function TodayBadge({ train }: { train: TrainInstance }) {
 
   return (
     <div className="absolute -top-1 -right-1 z-10">
-      <div className={badgeClass}>{badgeText}</div>
+      <div className={badgeClass}>
+        <Translate>{badgeText}</Translate>
+      </div>
     </div>
   );
 }
@@ -444,7 +451,9 @@ function TrainRow({
         <div className="flex justify-between items-center sm:justify-start sm:gap-6">
           {/* Jour et date */}
           <div className="flex-shrink-0">
-            <div className="font-bold text-white">{dayLabels[day]}</div>
+            <div className="font-bold text-white">
+              <Translate>{dayLabels[day]}</Translate>
+            </div>
             {train && <TrainDateInfo train={train} />}
           </div>
 
@@ -460,7 +469,9 @@ function TrainRow({
                 </div>
               </>
             ) : (
-              <div className="text-gray-500">—</div>
+              <div className="text-gray-500">
+                <Translate>—</Translate>
+              </div>
             )}
           </div>
         </div>
@@ -497,8 +508,8 @@ function TrainRow({
           ) : train ? (
             <div className="flex items-center gap-2 text-orange-300">
               <span className="text-lg">⚠️</span>
-              <span className="font-medium text-sm sm:text-base">
-                Conducteur requis
+              <span className="text-sm">
+                <Translate>Conducteur requis</Translate>
               </span>
             </div>
           ) : (
@@ -521,7 +532,11 @@ function TrainRow({
               }}
               disabled={actionLoading}
             >
-              {train.conductor ? "Modifier" : "Assigner"}
+              {train.conductor ? (
+                <Translate>Modifier</Translate>
+              ) : (
+                <Translate>Assigner</Translate>
+              )}
             </Button>
           )}
         </div>
@@ -733,7 +748,9 @@ function TrainScheduleContent({
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
             <Train className="w-6 h-6 animate-spin mr-2" />
-            <span>Chargement du planning...</span>
+            <span>
+              <Translate>Chargement du planning…</Translate>
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -771,28 +788,37 @@ function TrainScheduleContent({
             <div className="flex-1">
               <CardTitle className="flex items-center gap-2 text-xl text-white">
                 <Calendar className="w-6 h-6" />
-                Planification Automatique des Trains
+                <Translate>Planification Automatique des Trains</Translate>
               </CardTitle>
               <p className="text-sm text-gray-400 mt-2">
-                🤖 Trains générés automatiquement • Statuts en temps réel •{" "}
-                {trains.length} trains prévus
+                🤖 <Translate>Trains générés automatiquement</Translate> •{" "}
+                <Translate>Statuts en temps réel</Translate> • {trains.length}{" "}
+                <Translate>trains prévus</Translate>
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {/* Sélecteur de période amélioré */}
               <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700">
                 <label className="text-sm font-medium text-gray-300 whitespace-nowrap">
-                  Afficher
+                  <Translate>Afficher</Translate>
                 </label>
                 <select
                   value={daysAhead}
                   onChange={(e) => setDaysAhead(Number(e.target.value))}
                   className="bg-gray-700 text-white border border-gray-600 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[100px]"
                 >
-                  <option value={7}>7 jours</option>
-                  <option value={14}>14 jours</option>
-                  <option value={21}>3 semaines</option>
-                  <option value={30}>1 mois</option>
+                  <option value={7}>
+                    <Translate>7 jours</Translate>
+                  </option>
+                  <option value={14}>
+                    <Translate>14 jours</Translate>
+                  </option>
+                  <option value={21}>
+                    <Translate>3 semaines</Translate>
+                  </option>
+                  <option value={30}>
+                    <Translate>1 mois</Translate>
+                  </option>
                 </select>
               </div>
               <Button
@@ -801,7 +827,9 @@ function TrainScheduleContent({
                 className="flex items-center gap-2 bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
               >
                 <History className="w-4 h-4" />
-                <span className="hidden sm:inline">Historique</span>
+                <span className="hidden sm:inline">
+                  <Translate>Historique</Translate>
+                </span>
               </Button>
             </div>
           </div>
@@ -812,7 +840,7 @@ function TrainScheduleContent({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            Tous les trains ({trains.length})
+            <Translate>Tous les trains</Translate> ({trains.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -838,7 +866,7 @@ function TrainScheduleContent({
                     <div className="flex justify-between items-center sm:justify-start sm:gap-6">
                       <div className="flex-shrink-0">
                         <div className="font-bold text-white">
-                          {train.dayOfWeek}
+                          <Translate>{train.dayOfWeek}</Translate>
                         </div>
                         <TrainDateInfo train={train} />
                       </div>
@@ -886,8 +914,8 @@ function TrainScheduleContent({
                       ) : (
                         <div className="flex items-center gap-2 text-orange-300">
                           <span className="text-lg">⚠️</span>
-                          <span className="font-medium text-sm sm:text-base">
-                            Conducteur requis
+                          <span className="text-sm">
+                            <Translate>Conducteur requis</Translate>
                           </span>
                         </div>
                       )}
@@ -906,7 +934,11 @@ function TrainScheduleContent({
                           }}
                           disabled={actionLoading}
                         >
-                          {train.conductor ? "Modifier" : "Assigner"}
+                          {train.conductor ? (
+                            <Translate>Modifier</Translate>
+                          ) : (
+                            <Translate>Assigner</Translate>
+                          )}
                         </Button>
                       )}
                     </div>
@@ -916,9 +948,14 @@ function TrainScheduleContent({
             ) : (
               <div className="p-8 text-center text-gray-500">
                 <Train className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">Aucun train programmé</p>
+                <p className="text-lg font-medium">
+                  <Translate>Aucun train programmé</Translate>
+                </p>
                 <p className="text-sm">
-                  Les trains apparaîtront automatiquement selon la planification
+                  <Translate>
+                    Les trains apparaîtront automatiquement selon la
+                    planification
+                  </Translate>
                 </p>
               </div>
             )}
@@ -942,7 +979,10 @@ function TrainScheduleContent({
                   </div>
                   <div>
                     <CardTitle className="text-xl text-white">
-                      Gestion du Train - {dayLabels[selectedTrain.dayOfWeek]}
+                      Gestion du Train -{" "}
+                      <Translate>
+                        {dayLabels[selectedTrain.dayOfWeek]}
+                      </Translate>
                     </CardTitle>
                     <p className="text-sm text-gray-300 mt-1">
                       Créneau de départ : {selectedTrain.departureTime} →{" "}
@@ -1016,7 +1056,7 @@ function TrainScheduleContent({
                         {actionLoading ? (
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Validation...
+                            <Translate>Validation…</Translate>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
@@ -1039,7 +1079,7 @@ function TrainScheduleContent({
                         className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500 py-3"
                       >
                         <UserMinus className="w-5 h-5 mr-2" />
-                        Retirer le Conducteur
+                        <Translate>Retirer le Conducteur</Translate>
                       </Button>
                     )}
                   </div>
@@ -1139,7 +1179,7 @@ function TrainScheduleContent({
                                         variant="outline"
                                         className="text-xs text-yellow-500 border-yellow-500/50"
                                       >
-                                        Inactif
+                                        <Translate>Inactif</Translate>
                                       </Badge>
                                     )}
                                   </div>
@@ -1192,7 +1232,7 @@ function TrainScheduleContent({
   );
 }
 
-// Export du composant principal avec wrapper client-only
+// Export principal
 export function GraphicalTrainSchedule(props: GraphicalTrainScheduleProps) {
   return <ClientOnlyTrainSchedule {...props} />;
 }
