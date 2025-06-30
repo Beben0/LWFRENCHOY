@@ -223,8 +223,9 @@ export default function ImportExportPage() {
       case "evenements":
         if (format === "csv") {
           content =
-            "title,description,type,startDate,endDate\n" +
-            "Guerre Alliance,Description exemple,ALLIANCE_WAR,2024-02-01T20:00:00,2024-02-01T22:00:00\n";
+            "title,description,type,startDate,endDate,isRecurring,recurringDays,recurringEndDate,tags\n" +
+            "Guerre Alliance,Description exemple,ALLIANCE_WAR,2025-07-15T20:00:00,2025-07-15T22:00:00,false,, ,combat,alliance\n" +
+            "Boss Hebdo,Boss du lundi,BOSS_FIGHT,2025-07-14T19:00:00,2025-07-14T20:00:00,true,monday,2025-08-31,raid,boss\n";
           filename = "modele_evenements.csv";
         } else {
           content = JSON.stringify(
@@ -233,8 +234,23 @@ export default function ImportExportPage() {
                 title: "Guerre Alliance",
                 description: "Description exemple",
                 type: "ALLIANCE_WAR",
-                startDate: "2024-02-01T20:00:00",
-                endDate: "2024-02-01T22:00:00",
+                startDate: "2025-07-15T20:00:00",
+                endDate: "2025-07-15T22:00:00",
+                isRecurring: false,
+                recurringDays: [],
+                recurringEndDate: null,
+                tags: ["combat", "alliance"],
+              },
+              {
+                title: "Boss Hebdo",
+                description: "Boss du lundi",
+                type: "BOSS_FIGHT",
+                startDate: "2025-07-14T19:00:00",
+                endDate: "2025-07-14T20:00:00",
+                isRecurring: true,
+                recurringDays: ["monday"],
+                recurringEndDate: "2025-08-31",
+                tags: ["raid", "boss"],
               },
             ],
             null,
