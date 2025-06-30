@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { ReferenceCategory } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -128,6 +129,29 @@ export async function POST(request: NextRequest) {
               continue;
             }
 
+            // Normaliser le rôle d'alliance : seul R5, R4 et MEMBER sont valides dans Prisma.
+            // On mappe les valeurs R1, R2, R3 (et autres) sur MEMBER pour éviter les erreurs.
+            const roleStr = (item.allianceRole || "MEMBER").toUpperCase();
+
+            // Assurer la présence dans le référentiel
+            await prisma.referenceData.upsert({
+              where: {
+                category_key: {
+                  category: ReferenceCategory.ALLIANCE_ROLE,
+                  key: roleStr,
+                },
+              },
+              update: {},
+              create: {
+                category: ReferenceCategory.ALLIANCE_ROLE,
+                key: roleStr,
+                label: roleStr,
+                isSystem: false,
+              },
+            });
+
+            const normalizedRole = roleStr; // maintenant chaîne libre
+
             await prisma.member.upsert({
               where: { pseudo: item.pseudo.trim() },
               update: {
@@ -135,7 +159,7 @@ export async function POST(request: NextRequest) {
                 power: BigInt(item.power || 0),
                 kills: parseInt(item.kills) || 0,
                 specialty: item.specialty || null,
-                allianceRole: item.allianceRole || "MEMBER",
+                allianceRole: normalizedRole,
                 status: item.status || "ACTIVE",
                 notes: item.notes || null,
                 lastActive: item.lastActive
@@ -148,7 +172,7 @@ export async function POST(request: NextRequest) {
                 power: BigInt(item.power || 0),
                 kills: parseInt(item.kills) || 0,
                 specialty: item.specialty || null,
-                allianceRole: item.allianceRole || "MEMBER",
+                allianceRole: normalizedRole,
                 status: item.status || "ACTIVE",
                 notes: item.notes || null,
                 lastActive: item.lastActive

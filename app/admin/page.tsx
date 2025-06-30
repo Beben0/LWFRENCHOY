@@ -446,6 +446,11 @@ export default function AdminPage() {
                   🛡️ <span className="ml-2">Pour toi JC</span>
                 </Button>
               </Link>
+              <Link href="/admin/officers/hive-simulator" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  🐝 <span className="ml-2">Simulateur ruche</span>
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

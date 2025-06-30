@@ -25,7 +25,7 @@ model Member {
   power            BigInt           @default(0)
   kills            Int              @default(0)
   specialty        String?
-  allianceRole     AllianceRole     @default(MEMBER)
+  allianceRole     String           @default("MEMBER") // clé du référentiel ALLIANCE_ROLE
   status           Status           @default(ACTIVE)
   tags             String[]
   notes            String?
@@ -36,6 +36,8 @@ model Member {
   trainSlots       TrainSlot[]      @relation("TrainSlotConductor")
   trainPassengers  TrainPassenger[] @relation("TrainPassengers")
   vsParticipations VSParticipant[]
+  HivePlacement    HivePlacement?   @relation(fields: [hivePlacementId], references: [id])
+  hivePlacementId  String?
 }
 
 model TrainInstance {
@@ -512,7 +514,7 @@ model VSParticipant {
   weekId        String
   week          VSWeek             @relation(fields: [weekId], references: [id], onDelete: Cascade)
   memberId      String
-  member        Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member        Member?            @relation(fields: [memberId], references: [id], onDelete: Cascade)
   totalMvp      Int                @default(0)
   totalKills    Int                @default(0)
   kills         Int                @default(0) // Kills de la semaine
@@ -574,4 +576,16 @@ enum VSResult {
   VICTORY // Victoire
   DEFEAT // Défaite
   DRAW // Égalité
+}
+
+model HivePlacement {
+  id        String   @id @default(cuid())
+  memberId  String?
+  x         Int
+  y         Int
+  createdAt DateTime @default(now())
+  Member    Member[]
+
+  // relation removed to simplify marshal storage
+  @@unique([memberId])
 }

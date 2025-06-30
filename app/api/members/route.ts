@@ -9,7 +9,7 @@ const memberSchema = z.object({
   power: z.string().transform((val) => BigInt(val)),
   kills: z.number().min(0),
   specialty: z.string().optional(),
-  allianceRole: z.enum(["R5", "R4", "MEMBER"]),
+  allianceRole: z.string(),
   status: z.enum(["ACTIVE", "INACTIVE"]),
   tags: z.array(z.string()).default([]),
   notes: z.string().optional(),

@@ -42,13 +42,24 @@ export function MembersWithCrud() {
   const [editingMember, setEditingMember] = useState<
     MemberFormData | undefined
   >(undefined);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
+  const [totalMembersCount, setTotalMembersCount] = useState(0);
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch(`/api/members?search=${search}`);
+      const params = new URLSearchParams({
+        search,
+        page: String(page),
+        limit: String(limit),
+      });
+      const response = await fetch(`/api/members?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setMembers(data.members);
+        setTotalPages(data.pagination.totalPages || 1);
+        setTotalMembersCount(data.pagination.total);
       }
     } catch (error) {
       console.error("Error fetching members:", error);
@@ -59,11 +70,15 @@ export function MembersWithCrud() {
 
   useEffect(() => {
     fetchMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, page]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
   }, [search]);
 
-  const filteredMembers = members.filter((member) =>
-    member.pseudo.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredMembers = members;
 
   const handleEdit = (member: Member) => {
     setEditingMember({
@@ -119,7 +134,7 @@ export function MembersWithCrud() {
             Gestion des Membres
           </h1>
           <p className="text-muted-foreground">
-            {members.length} membres dans votre alliance
+            {totalMembersCount} membres dans votre alliance
           </p>
         </div>
 
@@ -149,7 +164,7 @@ export function MembersWithCrud() {
             />
           </div>
           <p className="text-sm text-muted-foreground mt-2">
-            {filteredMembers.length} membre(s) trouvé(s)
+            Page {page}/{totalPages} • {members.length} affichés
           </p>
         </CardContent>
       </Card>
@@ -159,7 +174,7 @@ export function MembersWithCrud() {
         <div className="text-center py-8">Chargement...</div>
       ) : (
         <div className="space-y-2">
-          {filteredMembers.map((member) => (
+          {members.map((member) => (
             <Card
               key={member.id}
               className="hover:bg-accent/50 transition-colors"
@@ -242,9 +257,34 @@ export function MembersWithCrud() {
             </Card>
           ))}
 
-          {filteredMembers.length === 0 && search && (
+          {members.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               Aucun membre trouvé pour "{search}"
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Précédent
+              </Button>
+              <span className="text-sm">
+                Page {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Suivant
+              </Button>
             </div>
           )}
         </div>
