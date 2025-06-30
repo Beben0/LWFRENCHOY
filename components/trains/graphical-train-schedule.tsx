@@ -346,41 +346,36 @@ function TimeDisplay({ train }: { train: TrainInstance }) {
 }
 
 function TodayBadge({ train }: { train: TrainInstance }) {
-  const [isToday, setIsToday] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
 
-    // Calculer côté client pour éviter hydration mismatch
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0]; // Format YYYY-MM-DD
+  // Utiliser directement les métadonnées calculées côté serveur
+  const isToday = train.metadata.isToday;
 
-    // Corriger le problème de timezone : extraire juste la partie date
-    let trainDateStr: string;
-    if (train.date.includes("T")) {
-      trainDateStr = train.date.split("T")[0]; // '2025-06-27'
-    } else {
-      trainDateStr = train.date.split(" ")[0];
-    }
-
-    console.log("🔥 DEBUG TodayBadge:", {
-      todayStr,
-      trainDateStr,
-      isToday: todayStr === trainDateStr,
-      originalTrainDate: train.date,
-    });
-
-    setIsToday(todayStr === trainDateStr);
-  }, [train.date]);
+  console.log("🔥 DEBUG TodayBadge:", {
+    trainDate: train.date,
+    dayOfWeek: train.dayOfWeek,
+    isToday: train.metadata.isToday,
+    isPast: train.metadata.isPast,
+    metadata: train.metadata,
+  });
 
   if (!mounted || !isToday) return null;
 
+  // Affichage différent selon si le train est parti ou pas
+  const isPast = train.metadata.isPast;
+  const badgeClass = isPast
+    ? "bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg"
+    : "bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse";
+
+  const badgeText = isPast ? "🕐 AUJOURD'HUI (PARTI)" : "🔥 AUJOURD'HUI";
+
   return (
     <div className="absolute -top-1 -right-1 z-10">
-      <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
-        🔥 AUJOURD'HUI
-      </div>
+      <div className={badgeClass}>{badgeText}</div>
     </div>
   );
 }
@@ -410,18 +405,8 @@ function TrainRow({
     setMounted(true);
 
     if (train) {
-      const today = new Date();
-      const todayStr = today.toISOString().split("T")[0]; // Format YYYY-MM-DD
-
-      // Corriger le problème de timezone : extraire juste la partie date
-      let trainDateStr: string;
-      if (train.date.includes("T")) {
-        trainDateStr = train.date.split("T")[0]; // '2025-06-27'
-      } else {
-        trainDateStr = train.date.split(" ")[0];
-      }
-
-      const isToday = todayStr === trainDateStr;
+      // Utiliser les métadonnées calculées côté serveur
+      const isToday = train.metadata.isToday;
 
       if (isToday) {
         setBorderClass("bg-orange-500/10 border-l-orange-500");
@@ -569,12 +554,13 @@ function TrainScheduleContent({
   const [conductorHistory, setConductorHistory] = useState<ConductorHistory[]>(
     []
   );
+  const [daysAhead, setDaysAhead] = useState(7); // Nouveau state pour la période
 
   // Charger les trains depuis l'API trains-v2
   const loadTrains = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/trains-v2?daysAhead=7`);
+      const response = await fetch(`/api/trains-v2?daysAhead=${daysAhead}`);
 
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des trains");
@@ -594,7 +580,7 @@ function TrainScheduleContent({
 
   useEffect(() => {
     loadTrains();
-  }, []);
+  }, [daysAhead]); // Recharger quand la période change
 
   // Générer l'historique des conducteurs
   const generateConductorHistory = (trainList: TrainInstance[]) => {
@@ -684,20 +670,44 @@ function TrainScheduleContent({
 
     setActionLoading(true);
     try {
-      // Si l'heure a changé, on doit faire une action de modification
-      const response = await fetch("/api/trains-v2", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "modify_time",
-          trainId: selectedTrain.id,
-          departureTime: selectedTrain.departureTime,
-        }),
-      });
+      // Si un conducteur est sélectionné ET a changé, on fait l'assignation
+      const selectedConductorId = selectedTrain.conductor?.id || "";
+      const originalConductorId =
+        trains.find((t) => t.id === selectedTrain.id)?.conductor?.id || "";
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erreur lors de la modification");
+      if (selectedConductorId !== originalConductorId) {
+        // Assignation de conducteur (peut inclure changement d'horaire)
+        const response = await fetch("/api/trains-v2", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "assign_conductor",
+            trainId: selectedTrain.id,
+            conductorId: selectedConductorId,
+            departureTime: selectedTrain.departureTime, // Inclure l'horaire au cas où
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Erreur lors de l'assignation");
+        }
+      } else {
+        // Seulement changement d'horaire
+        const response = await fetch("/api/trains-v2", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "modify_time",
+            trainId: selectedTrain.id,
+            departureTime: selectedTrain.departureTime,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Erreur lors de la modification");
+        }
       }
 
       await loadTrains();
@@ -720,55 +730,6 @@ function TrainScheduleContent({
         return <User className="w-4 h-4 text-gray-500" />;
     }
   };
-
-  const weekDays = [
-    "lundi",
-    "mardi",
-    "mercredi",
-    "jeudi",
-    "vendredi",
-    "samedi",
-    "dimanche",
-  ];
-
-  // Organiser les trains par jour de la semaine
-  const organizeTrainsByDay = () => {
-    const organized: Record<string, TrainInstance> = {};
-
-    trains.forEach((train) => {
-      const day = train.dayOfWeek;
-
-      // Si pas encore de train pour ce jour, on l'ajoute
-      if (!organized[day]) {
-        organized[day] = train;
-      } else {
-        // S'il y a déjà un train pour ce jour, on priorise :
-        // 1. Le train d'aujourd'hui (isToday = true)
-        // 2. Le train le plus proche dans le temps
-        const existingTrain = organized[day];
-
-        if (train.metadata.isToday && !existingTrain.metadata.isToday) {
-          // Le nouveau train est aujourd'hui, l'existant non -> remplacer
-          organized[day] = train;
-        } else if (!train.metadata.isToday && existingTrain.metadata.isToday) {
-          // L'existant est aujourd'hui, le nouveau non -> garder l'existant
-          // Ne rien faire
-        } else {
-          // Les deux sont aujourd'hui OU les deux ne sont pas aujourd'hui
-          // Prendre le plus proche dans le temps
-          const trainDate = new Date(train.date);
-          const existingDate = new Date(existingTrain.date);
-          if (trainDate < existingDate) {
-            organized[day] = train;
-          }
-        }
-      }
-    });
-
-    return organized;
-  };
-
-  const trainsByDay = organizeTrainsByDay();
 
   if (loading) {
     return (
@@ -810,51 +771,165 @@ function TrainScheduleContent({
       {/* Header avec historique */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-xl">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-2 text-xl text-white">
                 <Calendar className="w-6 h-6" />
                 Planification Automatique des Trains
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-400 mt-2">
                 🤖 Trains générés automatiquement • Statuts en temps réel •{" "}
                 {trains.length} trains prévus
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowHistory(true)}
-              className="flex items-center gap-2"
-            >
-              <History className="w-4 h-4" />
-              Historique
-            </Button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Sélecteur de période amélioré */}
+              <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700">
+                <label className="text-sm font-medium text-gray-300 whitespace-nowrap">
+                  Afficher
+                </label>
+                <select
+                  value={daysAhead}
+                  onChange={(e) => setDaysAhead(Number(e.target.value))}
+                  className="bg-gray-700 text-white border border-gray-600 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[100px]"
+                >
+                  <option value={7}>7 jours</option>
+                  <option value={14}>14 jours</option>
+                  <option value={21}>3 semaines</option>
+                  <option value={30}>1 mois</option>
+                </select>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowHistory(true)}
+                className="flex items-center gap-2 bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
+              >
+                <History className="w-4 h-4" />
+                <span className="hidden sm:inline">Historique</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Planning en tableau compact */}
+      {/* Liste chronologique de tous les trains */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Planning de la semaine</CardTitle>
+          <CardTitle className="text-lg">
+            Tous les trains ({trains.length})
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="space-y-1">
-            {weekDays.map((day) => {
-              const train = trainsByDay[day];
+            {trains.length > 0 ? (
+              trains.map((train) => (
+                <div
+                  key={train.id}
+                  className={`relative border-l-4 hover:bg-gray-800/30 transition-colors ${
+                    train.metadata.isToday
+                      ? "bg-orange-500/10 border-l-orange-500"
+                      : train?.conductor
+                      ? "bg-green-500/10 border-l-green-500"
+                      : "bg-yellow-500/10 border-l-yellow-500"
+                  }`}
+                >
+                  {/* Badge AUJOURD'HUI flottant */}
+                  {train.metadata.isToday && <TodayBadge train={train} />}
 
-              return (
-                <TrainRow
-                  key={day}
-                  day={day}
-                  train={train}
-                  isAdmin={isAdmin}
-                  actionLoading={actionLoading}
-                  setSelectedTrain={setSelectedTrain}
-                  setShowConductorSelect={setShowConductorSelect}
-                />
-              );
-            })}
+                  {/* Layout responsive : mobile stack, desktop inline */}
+                  <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    {/* Date et jour */}
+                    <div className="flex justify-between items-center sm:justify-start sm:gap-6">
+                      <div className="flex-shrink-0">
+                        <div className="font-bold text-white">
+                          {train.dayOfWeek}
+                        </div>
+                        <TrainDateInfo train={train} />
+                      </div>
+
+                      {/* Horaire */}
+                      <div className="text-center sm:text-left">
+                        <div className="text-xl sm:text-2xl font-bold text-orange-400">
+                          {train.departureTime}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          → {train.realDepartureTime}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Temps restant et statut */}
+                    <div className="sm:w-40 sm:flex-shrink-0">
+                      <TimeDisplay train={train} />
+                    </div>
+
+                    {/* Conducteur - mobile full width, desktop flex */}
+                    <div className="flex-1 min-w-0">
+                      {train?.conductor ? (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            {getRoleIcon(train.conductor.allianceRole)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-white break-words">
+                              {train.conductor.pseudo}
+                            </div>
+                            <div className="text-sm text-gray-400 flex flex-wrap items-center gap-2">
+                              <span>Niveau {train.conductor.level}</span>
+                              {train.conductor.specialty && (
+                                <>
+                                  <span className="hidden sm:inline">•</span>
+                                  <span className="text-xs px-2 py-0.5 bg-blue-400/20 text-blue-300 rounded">
+                                    {train.conductor.specialty}
+                                  </span>
+                                </>
+                              )}
+                              <span className="hidden sm:inline">•</span>
+                              <span className="text-xs">
+                                {train.metadata.passengerCount} passagers
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-orange-300">
+                          <span className="text-lg">⚠️</span>
+                          <span className="font-medium text-sm sm:text-base">
+                            Conducteur requis
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions - mobile full width button */}
+                    <div className="sm:w-24 sm:flex-shrink-0 sm:text-right">
+                      {isAdmin && !train.metadata.isPast && (
+                        <Button
+                          size="sm"
+                          variant={train.conductor ? "secondary" : "default"}
+                          className="text-xs w-full sm:w-auto"
+                          onClick={() => {
+                            setSelectedTrain(train);
+                            setShowConductorSelect(true);
+                          }}
+                          disabled={actionLoading}
+                        >
+                          {train.conductor ? "Modifier" : "Assigner"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-8 text-center text-gray-500">
+                <Train className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">Aucun train programmé</p>
+                <p className="text-sm">
+                  Les trains apparaîtront automatiquement selon la planification
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -394,6 +394,43 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
+        {/* Gestion VS */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              ⚔️
+              <span className="text-red-500">Gestion VS</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 gap-2">
+              <Link href="/admin/vs" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  ⚔️
+                  <span className="ml-2">Gérer les VS</span>
+                </Button>
+              </Link>
+              <Link href="/vs" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  📊
+                  <span className="ml-2">Voir les classements</span>
+                </Button>
+              </Link>
+              <Link href="/admin/vs/quick-entry" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  ⚡<span className="ml-2">Saisie rapide points</span>
+                </Button>
+              </Link>
+              <Link href="/admin/vs/history" className="w-full">
+                <Button variant="outline" className="w-full justify-start">
+                  📈
+                  <span className="ml-2">Historique complet</span>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Administration Système */}
         <Card>
           <CardHeader>

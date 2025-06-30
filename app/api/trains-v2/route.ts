@@ -209,6 +209,7 @@ export async function POST(request: NextRequest) {
 
         updateData.departureTime = departureTime;
         updateData.realDepartureTime = realDepartureTime;
+        updateData.status = TrainStatus.SCHEDULED; // Reset to SCHEDULED when time is modified
       }
 
       const updatedTrain = await prisma.trainInstance.update({
@@ -379,6 +380,7 @@ export async function POST(request: NextRequest) {
         data: {
           departureTime,
           realDepartureTime,
+          status: TrainStatus.SCHEDULED, // Reset to SCHEDULED when time is modified
         },
         include: {
           conductor: {

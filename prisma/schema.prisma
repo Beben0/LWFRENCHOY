@@ -19,22 +19,23 @@ model User {
 }
 
 model Member {
-  id              String           @id @default(cuid())
-  pseudo          String           @unique
-  level           Int              @default(1)
-  power           BigInt           @default(0)
-  kills           Int              @default(0)
-  specialty       String?
-  allianceRole    AllianceRole     @default(MEMBER)
-  status          Status           @default(ACTIVE)
-  tags            String[]
-  notes           String?
-  lastActive      DateTime         @default(now())
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  trainInstances  TrainInstance[]  @relation("TrainConductor")
-  trainSlots      TrainSlot[]      @relation("TrainSlotConductor")
-  trainPassengers TrainPassenger[] @relation("TrainPassengers")
+  id               String           @id @default(cuid())
+  pseudo           String           @unique
+  level            Int              @default(1)
+  power            BigInt           @default(0)
+  kills            Int              @default(0)
+  specialty        String?
+  allianceRole     AllianceRole     @default(MEMBER)
+  status           Status           @default(ACTIVE)
+  tags             String[]
+  notes            String?
+  lastActive       DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  trainInstances   TrainInstance[]  @relation("TrainConductor")
+  trainSlots       TrainSlot[]      @relation("TrainSlotConductor")
+  trainPassengers  TrainPassenger[] @relation("TrainPassengers")
+  vsParticipations VSParticipant[]
 }
 
 model TrainInstance {
@@ -458,4 +459,119 @@ enum TrainStatus {
   DEPARTED // Parti
   CANCELLED // Annulé
   COMPLETED // Terminé
+}
+
+// VS (Versus/Guerres) History Models
+model VSWeek {
+  id              String             @id @default(cuid())
+  weekNumber      Int // Numéro de la semaine dans l'année (1-53)
+  year            Int // Année
+  startDate       DateTime // Début de la semaine VS
+  endDate         DateTime // Fin de la semaine VS
+  title           String? // Titre/description de la semaine (optionnel)
+  allianceScore   Int                @default(0) // Score total de l'alliance
+  enemyScore      Int                @default(0) // Score total de l'ennemi
+  enemyName       String? // Nom de l'alliance ennemie
+  status          VSWeekStatus       @default(ACTIVE)
+  isCompleted     Boolean            @default(false)
+  result          VSResult? // Résultat final (VICTORY/DEFEAT/DRAW)
+  metadata        Json? // Données additionnelles (serveur, etc.)
+  days            VSDay[]
+  participants    VSParticipant[]
+  participantDays VSParticipantDay[] // Résultats quotidiens des participants
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@unique([year, weekNumber])
+  @@index([year, weekNumber])
+  @@index([status])
+  @@index([isCompleted])
+}
+
+model VSDay {
+  id            String    @id @default(cuid())
+  weekId        String
+  week          VSWeek    @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  dayNumber     Int // Jour de la semaine (1-7)
+  date          DateTime // Date du jour
+  allianceScore Int       @default(0) // Score alliance du jour
+  enemyScore    Int       @default(0) // Score ennemi du jour
+  result        VSResult? // Résultat du jour
+  events        String[]  @default([]) // Événements du jour (captures, défenses, etc.)
+  metadata      Json? // Données additionnelles
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([weekId, dayNumber])
+  @@index([weekId, dayNumber])
+  @@index([date])
+}
+
+model VSParticipant {
+  id            String             @id @default(cuid())
+  weekId        String
+  week          VSWeek             @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  totalMvp      Int                @default(0)
+  totalKills    Int                @default(0)
+  kills         Int                @default(0) // Kills de la semaine
+  deaths        Int                @default(0) // Morts de la semaine
+  powerGain     BigInt             @default(0) // Gain de puissance
+  powerLoss     BigInt             @default(0) // Perte de puissance
+  participation Int                @default(0) // Score de participation (0-100)
+  rank          Int? // Classement dans l'alliance pour cette semaine
+  rewards       String[]           @default([]) // Récompenses obtenues
+  metadata      Json? // Données additionnelles
+  dailyResults  VSParticipantDay[] // Résultats quotidiens
+  points        Int                @default(0) // Points VS pour le classement
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([weekId, memberId])
+  @@index([weekId])
+  @@index([memberId])
+  @@index([kills])
+  @@index([participation])
+}
+
+model VSParticipantDay {
+  id            String        @id @default(cuid())
+  participantId String
+  participant   VSParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  weekId        String
+  week          VSWeek        @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  dayNumber     Int // Jour de la semaine (1-6)
+  date          DateTime // Date du jour
+  kills         Int           @default(0) // Kills du jour
+  deaths        Int           @default(0) // Morts du jour
+  powerGain     BigInt        @default(0) // Gain de puissance du jour
+  powerLoss     BigInt        @default(0) // Perte de puissance du jour
+  attacks       Int           @default(0) // Nombre d'attaques
+  defenses      Int           @default(0) // Nombre de défenses
+  participated  Boolean       @default(false) // A participé ce jour
+  mvpPoints     Int           @default(0) // Points MVP du jour
+  events        String[]      @default([]) // Événements spéciaux du jour
+  notes         String? // Notes sur la performance
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([participantId, dayNumber])
+  @@index([weekId, dayNumber])
+  @@index([date])
+  @@index([kills])
+  @@index([participated])
+}
+
+enum VSWeekStatus {
+  PREPARATION // Préparation
+  ACTIVE // En cours
+  COMPLETED // Terminée
+  CANCELLED // Annulée
+}
+
+enum VSResult {
+  VICTORY // Victoire
+  DEFEAT // Défaite
+  DRAW // Égalité
 }

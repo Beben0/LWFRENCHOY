@@ -12,7 +12,8 @@ export type TrainAction =
   | "TRAIN_UNVALIDATED";
 
 interface LogTrainActionParams {
-  trainSlotId: string;
+  trainInstanceId?: string;
+  trainSlotId?: string; // Garde pour compatibilité
   action: TrainAction;
   actorId?: string;
   actorPseudo?: string;
@@ -23,6 +24,7 @@ interface LogTrainActionParams {
 
 // Log une action sur un train
 export async function logTrainAction({
+  trainInstanceId,
   trainSlotId,
   action,
   actorId,
@@ -34,6 +36,7 @@ export async function logTrainAction({
   try {
     await prisma.trainHistory.create({
       data: {
+        trainInstanceId,
         trainSlotId,
         action,
         actorId,
@@ -48,7 +51,15 @@ export async function logTrainAction({
   }
 }
 
-// Récupérer l'historique d'un train spécifique
+// Récupérer l'historique d'un train spécifique (nouveau système)
+export async function getTrainInstanceHistory(trainInstanceId: string) {
+  return await prisma.trainHistory.findMany({
+    where: { trainInstanceId },
+    orderBy: { timestamp: "desc" },
+  });
+}
+
+// Récupérer l'historique d'un train spécifique (ancien système - pour compatibilité)
 export async function getTrainHistory(trainSlotId: string) {
   return await prisma.trainHistory.findMany({
     where: { trainSlotId },
@@ -60,6 +71,13 @@ export async function getTrainHistory(trainSlotId: string) {
 export async function getGlobalTrainHistory(limit = 50) {
   return await prisma.trainHistory.findMany({
     include: {
+      trainInstance: {
+        select: {
+          dayOfWeek: true,
+          departureTime: true,
+          date: true,
+        },
+      },
       trainSlot: {
         select: {
           day: true,
@@ -88,10 +106,11 @@ export async function getConductorStats(memberId: string) {
         OR: [{ targetId: memberId }, { actorId: memberId }],
       },
       include: {
-        trainSlot: {
+        trainInstance: {
           select: {
-            day: true,
+            dayOfWeek: true,
             departureTime: true,
+            date: true,
           },
         },
       },
@@ -128,10 +147,11 @@ export async function getConductorRanking() {
         },
         orderBy: { timestamp: "desc" },
         include: {
-          trainSlot: {
+          trainInstance: {
             select: {
-              day: true,
+              dayOfWeek: true,
               departureTime: true,
+              date: true,
             },
           },
         },
@@ -142,7 +162,7 @@ export async function getConductorRanking() {
         targetId: conductor.targetId,
         count: conductor._count.id,
         lastDate: lastAssignment?.timestamp || null,
-        lastTrain: lastAssignment?.trainSlot || null,
+        lastTrain: lastAssignment?.trainInstance || null,
       };
     })
   );

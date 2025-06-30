@@ -28,6 +28,10 @@ interface TrainHistoryEntry {
     day: string;
     departureTime: string;
   };
+  trainInstance?: {
+    dayOfWeek: string;
+    departureTime: string;
+  };
 }
 
 interface ConductorRankingEntry {
@@ -278,8 +282,19 @@ export function TrainHistory({ show, onClose }: TrainHistoryProps) {
                         <div className="flex items-center gap-4 mt-2 text-sm text-slate-400">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {dayLabels[entry.trainSlot.day]} -{" "}
-                            {entry.trainSlot.departureTime}
+                            {entry.trainInstance ? (
+                              <span>
+                                {entry.trainInstance.dayOfWeek} -{" "}
+                                {entry.trainInstance.departureTime}
+                              </span>
+                            ) : entry.trainSlot ? (
+                              <span>
+                                {dayLabels[entry.trainSlot.day]} -{" "}
+                                {entry.trainSlot.departureTime}
+                              </span>
+                            ) : (
+                              <span>Train supprimé</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />

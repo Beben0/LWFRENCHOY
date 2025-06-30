@@ -37,3 +37,33 @@ export function getTimeAgo(date: Date): string {
   if (days < 30) return `Il y a ${Math.floor(days / 7)} semaines`;
   return `Il y a ${Math.floor(days / 30)} mois`;
 }
+
+// Fonction pour convertir les BigInt en chaînes pour la sérialisation JSON
+export function jsonify(data: any): any {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (typeof data === "bigint") {
+    return data.toString();
+  }
+
+  // Convertir les objets Date en chaînes ISO pour éviter les "Invalid Date" côté client
+  if (data instanceof Date) {
+    return data.toISOString();
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => jsonify(item));
+  }
+
+  if (typeof data === "object") {
+    const result: { [key: string]: any } = {};
+    for (const key in data) {
+      result[key] = jsonify(data[key]);
+    }
+    return result;
+  }
+
+  return data;
+}

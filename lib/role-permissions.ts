@@ -12,6 +12,8 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "view_events",
     "view_stats",
     "view_admin_panel",
+    "view_help",
+    "view_vs",
     "create_member",
     "edit_member",
     "delete_member",
@@ -21,6 +23,11 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "create_event",
     "edit_event",
     "delete_event",
+    "create_vs_week",
+    "edit_vs_week",
+    "delete_vs_week",
+    "manage_vs_participants",
+    "edit_vs_results",
     "manage_users",
     "manage_permissions",
     "export_data",
@@ -28,7 +35,7 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "manage_alerts",
     "manage_notifications",
   ],
-  GUEST: ["view_trains", "view_events"],
+  GUEST: ["view_trains", "view_events", "view_help", "view_vs"],
 };
 
 // Permissions par défaut pour les rôles d'alliance
@@ -39,12 +46,17 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_trains",
     "view_events",
     "view_stats",
+    "view_vs",
     "create_member",
     "edit_member",
     "create_train_slot",
     "edit_train_slot",
     "create_event",
     "edit_event",
+    "create_vs_week",
+    "edit_vs_week",
+    "manage_vs_participants",
+    "edit_vs_results",
     "manage_alerts",
   ],
   R4: [
@@ -53,8 +65,10 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_trains",
     "view_events",
     "view_stats",
+    "view_vs",
     "create_train_slot",
     "edit_train_slot",
+    "edit_vs_results",
   ],
   MEMBER: [
     "view_dashboard",
@@ -62,6 +76,7 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_trains",
     "view_events",
     "view_stats",
+    "view_vs",
   ],
 };
 

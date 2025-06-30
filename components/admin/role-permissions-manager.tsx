@@ -1,10 +1,9 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Circle, RefreshCw, Save, Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface RolePermissionsData {
   rolePermissions: Record<string, string[]>;
@@ -164,6 +163,49 @@ export function RolePermissionsManager() {
 
   const allRoles = [...data.adminRoles, ...data.allianceRoles];
 
+  const permissionGroups = {
+    Navigation: [
+      "view_dashboard",
+      "view_members",
+      "view_trains",
+      "view_events",
+      "view_stats",
+      "view_admin_panel",
+      "view_help",
+    ],
+    "Gestion des Membres": ["create_member", "edit_member", "delete_member"],
+    "Gestion des Trains": [
+      "create_train_slot",
+      "edit_train_slot",
+      "delete_train_slot",
+    ],
+    "Gestion des Événements": ["create_event", "edit_event", "delete_event"],
+    "Gestion des Articles d'Aide": [
+      "create_help_article",
+      "edit_help_article",
+      "delete_help_article",
+      "publish_help_article",
+      "manage_help_categories",
+    ],
+    "Gestion VS": [
+      "view_vs",
+      "create_vs_week",
+      "edit_vs_week",
+      "delete_vs_week",
+      "manage_vs_participants",
+      "edit_vs_results",
+      "edit_vs",
+    ],
+    Administration: [
+      "manage_users",
+      "manage_permissions",
+      "export_data",
+      "import_data",
+      "manage_alerts",
+      "manage_notifications",
+    ],
+  };
+
   return (
     <div className="space-y-6">
       {/* Header avec actions */}
@@ -211,87 +253,75 @@ export function RolePermissionsManager() {
         </div>
       )}
 
-      {/* Matrice des permissions */}
+      {/* Tableau des permissions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Matrice des Permissions</CardTitle>
-          <div className="flex gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Badge variant="destructive">Rôles Admin</Badge>
-              <span className="text-muted-foreground">ADMIN, GUEST</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">Rôles Alliance</Badge>
-              <span className="text-muted-foreground">
-                {data.allianceRoles.join(", ")}
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2 font-medium">Permission</th>
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-300">
+                    Permission
+                  </th>
                   {allRoles.map((role) => (
                     <th
                       key={role}
-                      className="text-center p-2 font-medium min-w-[100px]"
+                      className="py-3 px-4 text-center text-sm font-semibold text-gray-300"
                     >
-                      <div className="flex flex-col items-center gap-1">
-                        <Badge
-                          variant={
-                            data.adminRoles.includes(role)
-                              ? "destructive"
-                              : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {role}
-                        </Badge>
-                      </div>
+                      {role}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                {data.availablePermissions.map((permission) => (
-                  <tr key={permission} className="border-b hover:bg-muted/50">
-                    <td className="p-2 font-medium">
-                      <div className="flex flex-col">
-                        <span>{permission}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {getPermissionDescription(permission)}
-                        </span>
-                      </div>
-                    </td>
-                    {allRoles.map((role) => {
-                      const hasPermission =
-                        localPermissions[role]?.includes(permission) || false;
-                      return (
+              <tbody className="divide-y divide-gray-800">
+                {Object.entries(permissionGroups).map(
+                  ([groupName, permissions]) => (
+                    <React.Fragment key={groupName}>
+                      <tr className="bg-gray-800/50">
                         <td
-                          key={`${role}-${permission}`}
-                          className="p-2 text-center"
+                          colSpan={allRoles.length + 1}
+                          className="py-2 px-4 text-sm font-bold text-gray-200"
                         >
-                          <button
-                            onClick={() => togglePermission(role, permission)}
-                            className="w-6 h-6 flex items-center justify-center hover:bg-muted rounded"
-                            title={`${
-                              hasPermission ? "Retirer" : "Ajouter"
-                            } la permission ${permission} pour ${role}`}
-                          >
-                            {hasPermission ? (
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                            ) : (
-                              <Circle className="w-5 h-5 text-muted-foreground" />
-                            )}
-                          </button>
+                          {groupName}
                         </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                      </tr>
+                      {permissions.map((permission) => (
+                        <tr key={permission} className="hover:bg-gray-700/50">
+                          <td className="py-3 px-4">
+                            <div className="font-medium text-gray-100">
+                              {permission}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {getPermissionDescription(permission)}
+                            </div>
+                          </td>
+                          {allRoles.map((role) => (
+                            <td
+                              key={`${role}-${permission}`}
+                              className="py-3 px-4 text-center"
+                            >
+                              <button
+                                onClick={() =>
+                                  togglePermission(role, permission)
+                                }
+                                className="inline-flex items-center"
+                                aria-label={`Toggle ${permission} for ${role}`}
+                              >
+                                {localPermissions[role]?.includes(
+                                  permission
+                                ) ? (
+                                  <CheckCircle className="w-5 h-5 text-green-500" />
+                                ) : (
+                                  <Circle className="w-5 h-5 text-gray-500" />
+                                )}
+                              </button>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  )
+                )}
               </tbody>
             </table>
           </div>
@@ -312,35 +342,90 @@ export function RolePermissionsManager() {
 
 // Descriptions des permissions pour une meilleure UX
 function getPermissionDescription(permission: string): string {
-  const descriptions: Record<string, string> = {
-    view_dashboard: "Accès au tableau de bord",
-    view_members: "Voir la liste des membres",
-    view_trains: "Voir les plannings de trains",
-    view_events: "Voir les événements",
-    view_stats: "Voir les statistiques",
-    view_admin_panel: "Accès au panel admin",
-    create_member: "Créer des membres",
-    edit_member: "Modifier des membres",
-    delete_member: "Supprimer des membres",
-    create_train_slot: "Créer des créneaux de train",
-    edit_train_slot: "Modifier des créneaux de train",
-    delete_train_slot: "Supprimer des créneaux de train",
-    create_event: "Créer des événements",
-    edit_event: "Modifier des événements",
-    delete_event: "Supprimer des événements",
-    manage_users: "Gérer les utilisateurs",
-    manage_permissions: "Gérer les permissions",
-    export_data: "Exporter des données",
-    import_data: "Importer des données",
-    manage_alerts: "Gérer les alertes",
-    manage_notifications: "Gérer les notifications",
-    view_help: "Voir les articles d'aide",
-    create_help_article: "Créer des articles d'aide",
-    edit_help_article: "Modifier des articles d'aide",
-    delete_help_article: "Supprimer des articles d'aide",
-    publish_help_article: "Publier des articles d'aide",
-    manage_help_categories: "Gérer les catégories d'aide",
-  };
+  switch (permission) {
+    // Navigation
+    case "view_dashboard":
+      return "Voir le dashboard principal";
+    case "view_members":
+      return "Voir la liste des membres";
+    case "view_trains":
+      return "Voir les plannings de trains";
+    case "view_events":
+      return "Voir les événements";
+    case "view_stats":
+      return "Voir les statistiques";
+    case "view_admin_panel":
+      return "Accès au panel admin";
+    case "view_help":
+      return "Voir les articles d'aide";
 
-  return descriptions[permission] || "Permission spéciale";
+    // VS
+    case "view_vs":
+      return "Voir les classements et historiques VS";
+    case "create_vs_week":
+      return "Créer une nouvelle semaine VS";
+    case "edit_vs_week":
+      return "Modifier les détails d'une semaine VS";
+    case "delete_vs_week":
+      return "Supprimer une semaine VS";
+    case "manage_vs_participants":
+      return "Ajouter/supprimer des participants à un VS";
+    case "edit_vs_results":
+      return "Modifier les résultats et scores d'un VS";
+    case "edit_vs":
+      return "Permission générale pour modifier les données VS";
+
+    // Gestion des Membres
+    case "create_member":
+      return "Créer des membres";
+    case "edit_member":
+      return "Modifier des membres";
+    case "delete_member":
+      return "Supprimer des membres";
+
+    // Gestion des Trains
+    case "create_train_slot":
+      return "Créer des créneaux de train";
+    case "edit_train_slot":
+      return "Modifier des créneaux de train";
+    case "delete_train_slot":
+      return "Supprimer des créneaux de train";
+
+    // Gestion des Événements
+    case "create_event":
+      return "Créer des événements";
+    case "edit_event":
+      return "Modifier des événements";
+    case "delete_event":
+      return "Supprimer des événements";
+
+    // Gestion des Articles d'Aide
+    case "create_help_article":
+      return "Créer des articles d'aide";
+    case "edit_help_article":
+      return "Modifier des articles d'aide";
+    case "delete_help_article":
+      return "Supprimer des articles d'aide";
+    case "publish_help_article":
+      return "Publier des articles d'aide";
+    case "manage_help_categories":
+      return "Gérer les catégories d'aide";
+
+    // Administration
+    case "manage_users":
+      return "Gérer les comptes utilisateurs";
+    case "manage_permissions":
+      return "Gérer les permissions";
+    case "export_data":
+      return "Exporter des données";
+    case "import_data":
+      return "Importer des données";
+    case "manage_alerts":
+      return "Gérer les alertes";
+    case "manage_notifications":
+      return "Gérer les notifications";
+
+    default:
+      return "Description non disponible";
+  }
 }

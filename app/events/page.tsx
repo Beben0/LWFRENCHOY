@@ -319,92 +319,140 @@ export default function EventsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Calendar className="w-8 h-8 text-lastwar-orange" />
-            Événements d'Alliance
-          </h1>
-          <p className="text-muted-foreground">
-            Gestion complète des événements classiques et récurrents
-          </p>
-        </div>
+      {/* Header amélioré */}
+      <Card className="bg-gray-900/50 border-gray-700">
+        <CardHeader>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-2 text-xl text-white">
+                <Calendar className="w-6 h-6 text-lastwar-orange" />
+                Événements d'Alliance
+              </CardTitle>
+              <p className="text-sm text-gray-400 mt-2">
+                Gestion complète des événements •{" "}
+                {upcomingEvents.length + recurringEvents.length} événements
+                actifs
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {hasPermission(session.data, "create_event") && (
+                <Button
+                  className="lastwar-gradient text-black hover:opacity-90 transition-opacity"
+                  onClick={handleCreateNew}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Nouvel Événement</span>
+                  <span className="sm:hidden">Nouveau</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
 
-        {hasPermission(session.data, "create_event") && (
-          <Button
-            className="lastwar-gradient text-black"
-            onClick={handleCreateNew}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouvel Événement
-          </Button>
-        )}
-      </div>
-
-      {/* Tabs Navigation */}
-      <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+      {/* Tabs Navigation améliorés */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-gray-800/50 p-2 rounded-lg border border-gray-700">
         <Button
           variant={activeTab === "upcoming" ? "default" : "ghost"}
           size="sm"
           onClick={() => setActiveTab("upcoming")}
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 justify-center sm:justify-start ${
+            activeTab === "upcoming"
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "text-gray-300 hover:text-white hover:bg-gray-700"
+          }`}
         >
           <Clock className="w-4 h-4" />
-          Prochains ({upcomingEvents.length})
+          <span>Prochains</span>
+          <Badge
+            variant="secondary"
+            className="ml-1 bg-gray-600 text-white text-xs"
+          >
+            {upcomingEvents.length}
+          </Badge>
         </Button>
         <Button
           variant={activeTab === "recurring" ? "default" : "ghost"}
           size="sm"
           onClick={() => setActiveTab("recurring")}
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 justify-center sm:justify-start ${
+            activeTab === "recurring"
+              ? "bg-purple-600 text-white hover:bg-purple-700"
+              : "text-gray-300 hover:text-white hover:bg-gray-700"
+          }`}
         >
           <Repeat className="w-4 h-4" />
-          Récurrents ({recurringEvents.length})
+          <span>Récurrents</span>
+          <Badge
+            variant="secondary"
+            className="ml-1 bg-gray-600 text-white text-xs"
+          >
+            {recurringEvents.length}
+          </Badge>
         </Button>
         <Button
           variant={activeTab === "past" ? "default" : "ghost"}
           size="sm"
           onClick={() => setActiveTab("past")}
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 justify-center sm:justify-start ${
+            activeTab === "past"
+              ? "bg-gray-600 text-white hover:bg-gray-700"
+              : "text-gray-300 hover:text-white hover:bg-gray-700"
+          }`}
         >
           <CalendarDays className="w-4 h-4" />
-          Passés ({pastEvents.length})
+          <span>Passés</span>
+          <Badge
+            variant="secondary"
+            className="ml-1 bg-gray-600 text-white text-xs"
+          >
+            {pastEvents.length}
+          </Badge>
         </Button>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      {/* Quick Stats améliorés */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Clock className="w-8 h-8 text-lastwar-orange" />
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Clock className="w-6 h-6 text-blue-400" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{upcomingEvents.length}</p>
-                <p className="text-sm text-muted-foreground">Prochains</p>
+                <p className="text-2xl font-bold text-white">
+                  {upcomingEvents.length}
+                </p>
+                <p className="text-sm text-gray-400">Prochains</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Repeat className="w-8 h-8 text-purple-500" />
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <Repeat className="w-6 h-6 text-purple-400" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{recurringEvents.length}</p>
-                <p className="text-sm text-muted-foreground">Récurrents</p>
+                <p className="text-2xl font-bold text-white">
+                  {recurringEvents.length}
+                </p>
+                <p className="text-sm text-gray-400">Récurrents</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Sword className="w-8 h-8 text-red-500" />
+              <div className="p-2 bg-red-500/20 rounded-lg">
+                <Sword className="w-6 h-6 text-red-400" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-white">
                   {
                     [...upcomingEvents, ...recurringEvents].filter(
                       (e) =>
@@ -413,25 +461,27 @@ export default function EventsPage() {
                     ).length
                   }
                 </p>
-                <p className="text-sm text-muted-foreground">Guerres</p>
+                <p className="text-sm text-gray-400">Guerres</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Crown className="w-8 h-8 text-orange-500" />
+              <div className="p-2 bg-orange-500/20 rounded-lg">
+                <Crown className="w-6 h-6 text-orange-400" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-white">
                   {
                     [...upcomingEvents, ...recurringEvents].filter(
                       (e) => e.type === "BOSS_FIGHT"
                     ).length
                   }
                 </p>
-                <p className="text-sm text-muted-foreground">Boss</p>
+                <p className="text-sm text-gray-400">Boss</p>
               </div>
             </div>
           </CardContent>

@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   Shield,
+  Sword,
   Train,
   Users,
 } from "lucide-react";
@@ -44,6 +45,13 @@ export function Navigation() {
       label: "Trains",
       icon: Train,
       permission: "view_trains" as const,
+      showForGuests: true,
+    },
+    {
+      href: "/vs",
+      label: "VS Wars",
+      icon: Sword,
+      permission: "view_vs" as const,
       showForGuests: true,
     },
     {

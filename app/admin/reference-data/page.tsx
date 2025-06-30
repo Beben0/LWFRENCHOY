@@ -1,30 +1,26 @@
 import { ReferenceDataManager } from "@/components/admin/reference-data-manager";
-import { PermissionGuard } from "@/components/auth/permission-guard";
 import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
 import { redirect } from "next/navigation";
 
-export default async function ReferenceDataPage() {
+export default async function AdminReferenceDataPage() {
   const session = await auth();
 
-  if (!session || !hasPermission(session, "view_admin_panel")) {
+  if (!session) {
     redirect("/auth/signin");
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          Gestion des Référentiels
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white mb-2">
+          Données de Référence
         </h1>
-        <p className="text-muted-foreground">
-          Administration des tags, spécialités, rôles et types d'événements
+        <p className="text-gray-400">
+          Gérer les catégories et éléments de référence
         </p>
       </div>
 
-      <PermissionGuard permission="manage_permissions">
-        <ReferenceDataManager />
-      </PermissionGuard>
+      <ReferenceDataManager />
     </div>
   );
 }

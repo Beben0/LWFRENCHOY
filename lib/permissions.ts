@@ -11,6 +11,7 @@ export type Permission =
   | "view_stats"
   | "view_admin_panel"
   | "view_help"
+  | "view_vs"
 
   // CRUD permissions
   | "create_member"
@@ -29,6 +30,14 @@ export type Permission =
   | "delete_help_article"
   | "publish_help_article"
   | "manage_help_categories"
+
+  // VS permissions
+  | "create_vs_week"
+  | "edit_vs_week"
+  | "delete_vs_week"
+  | "manage_vs_participants"
+  | "edit_vs_results"
+  | "edit_vs"
 
   // Admin permissions
   | "manage_users"
@@ -54,6 +63,7 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_stats",
     "view_admin_panel",
     "view_help",
+    "view_vs",
     "create_member",
     "edit_member",
     "delete_member",
@@ -68,6 +78,12 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "delete_help_article",
     "publish_help_article",
     "manage_help_categories",
+    "create_vs_week",
+    "edit_vs_week",
+    "delete_vs_week",
+    "manage_vs_participants",
+    "edit_vs_results",
+    "edit_vs",
     "manage_users",
     "manage_permissions",
     "export_data",
@@ -80,6 +96,7 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_trains",
     "view_events",
     "view_help",
+    "view_vs",
   ],
 };
 

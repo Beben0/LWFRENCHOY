@@ -79,8 +79,19 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 NEXTAUTH_URL=https://beben0.com
 NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 NODE_ENV=production
+AUTO_START_TRAINS=true
+AUTO_START_ALERTS=true
 ENVEOF
-    echo "✅ .env.production créé"
+    echo "✅ .env.production créé avec schedulers auto-start"
+else
+    # Ajouter les variables si elles n'existent pas
+    if ! grep -q "AUTO_START_TRAINS" .env.production; then
+        echo "AUTO_START_TRAINS=true" >> .env.production
+    fi
+    if ! grep -q "AUTO_START_ALERTS" .env.production; then
+        echo "AUTO_START_ALERTS=true" >> .env.production
+    fi
+    echo "✅ .env.production mis à jour avec schedulers auto-start"
 fi
 
 echo "🏃 Démarrage des services HTTPS..."
@@ -100,16 +111,34 @@ if curl -k -f https://localhost/api/health 2>/dev/null; then
     echo "🌱 Application du seed complet..."
     if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/complete-seed.ts; then
         echo "✅ Seed complet appliqué avec succès!"
+        
+        echo "🚂 Génération des trains pour les 14 prochains jours..."
+        if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/generate-train-instances.ts; then
+            echo "✅ Trains générés avec succès!"
+        else
+            echo "⚠️ Erreur lors de la génération des trains, mais l'app fonctionne"
+        fi
+        
         echo "🎉 Déploiement HTTPS complet sur Freebox Delta!"
         echo "🌐 Application accessible sur : https://beben0.com"
         echo "👤 Login admin : admin@beben0.com / admin123"
         echo "📚 Système d'aide initialisé avec articles de démonstration"
+        echo "🚂 Trains automatiques générés et schedulers actifs"
     else
         echo "⚠️ Erreur lors du seed complet, tentative avec le seed simple..."
         if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
             echo "✅ Seed simple appliqué en fallback!"
+                
+                echo "🚂 Génération des trains pour les 14 prochains jours..."
+                if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/generate-train-instances.ts; then
+                    echo "✅ Trains générés avec succès!"
+                else
+                    echo "⚠️ Erreur lors de la génération des trains, mais l'app fonctionne"
+                fi
+                
             echo "🌐 Application accessible sur : https://beben0.com"
             echo "👤 Login admin : admin@beben0.com / admin123"
+                echo "🚂 Trains automatiques générés et schedulers actifs"
         else
             echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
             echo "🌐 Application accessible sur : https://beben0.com"
@@ -124,16 +153,34 @@ else
         echo "🌱 Application du seed complet..."
         if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/complete-seed.ts; then
             echo "✅ Seed complet appliqué avec succès!"
+            
+            echo "🚂 Génération des trains pour les 14 prochains jours..."
+            if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/generate-train-instances.ts; then
+                echo "✅ Trains générés avec succès!"
+            else
+                echo "⚠️ Erreur lors de la génération des trains, mais l'app fonctionne"
+            fi
+            
             echo "🎉 Déploiement HTTPS complet sur Freebox Delta!"
             echo "🌐 Application accessible sur : https://beben0.com"
             echo "👤 Login admin : admin@beben0.com / admin123"
             echo "📚 Système d'aide initialisé avec articles de démonstration"
+            echo "🚂 Trains automatiques générés et schedulers actifs"
         else
             echo "⚠️ Erreur lors du seed complet, tentative avec le seed simple..."
             if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/simple-seed.ts; then
                 echo "✅ Seed simple appliqué en fallback!"
+                
+                echo "🚂 Génération des trains pour les 14 prochains jours..."
+                if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx tsx scripts/generate-train-instances.ts; then
+                    echo "✅ Trains générés avec succès!"
+                else
+                    echo "⚠️ Erreur lors de la génération des trains, mais l'app fonctionne"
+                fi
+                
                 echo "🌐 Application accessible sur : https://beben0.com"
                 echo "👤 Login admin : admin@beben0.com / admin123"
+                echo "🚂 Trains automatiques générés et schedulers actifs"
             else
                 echo "⚠️ Erreur lors du seed, mais l'app fonctionne"
                 echo "🌐 Application accessible sur : https://beben0.com"
