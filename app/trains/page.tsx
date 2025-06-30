@@ -21,7 +21,7 @@ export default function TrainsPage() {
   useEffect(() => {
     const loadMembers = async () => {
       try {
-        const response = await fetch("/api/members");
+        const response = await fetch("/api/members?status=ACTIVE&limit=1000");
         if (response.ok) {
           const data = await response.json();
           setMembers(data.members || []);
