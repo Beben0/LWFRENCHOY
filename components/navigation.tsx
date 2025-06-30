@@ -29,18 +29,12 @@ export function Navigation() {
 
   const navigationItems = [
     {
-      href: "/officer",
-      label: "Dashboard Officier",
+      href: "/dashboard",
+      label: "Dashboard",
       icon: Shield,
       permission: "view_dashboard" as const,
-      requiresOfficerRole: true,
-    },
-    {
-      href: "/admin",
-      label: "Espace Admin",
-      icon: Shield,
-      permission: "view_admin_panel" as const,
-      requiresAdminRole: true,
+      requiresAdminRole: false,
+      requiresOfficerRole: false,
     },
     {
       href: "/members-crud",
@@ -141,11 +135,7 @@ export function Navigation() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`flex items-center space-x-2 ${
-                        item.permission === "view_admin_panel"
-                          ? "text-lastwar-orange hover:text-lastwar-red"
-                          : ""
-                      }`}
+                      className="flex items-center space-x-2"
                     >
                       <Icon className="w-4 h-4" />
                       <span className="whitespace-nowrap">{item.label}</span>
@@ -227,14 +217,7 @@ export function Navigation() {
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <Button
-                      variant="ghost"
-                      className={`w-full justify-start ${
-                        item.permission === "view_admin_panel"
-                          ? "text-lastwar-orange"
-                          : ""
-                      }`}
-                    >
+                    <Button variant="ghost" className="w-full justify-start">
                       <Icon className="w-4 h-4 mr-2" />
                       {item.label}
                     </Button>
