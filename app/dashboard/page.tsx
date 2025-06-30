@@ -155,6 +155,11 @@ export default function UnifiedDashboard() {
       ? new Date(eventsNext(stats)).toLocaleDateString()
       : "—";
 
+  const member = (session?.user as any)?.member;
+  const displayName = member?.pseudo || session?.user?.email || "Utilisateur";
+  const adminRole = (session?.user?.role as string) || "";
+  const allianceRole = member?.allianceRole || "";
+
   // ────────────────────────────────────────────────────────────────────────────
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -166,6 +171,18 @@ export default function UnifiedDashboard() {
           </h1>
           <p className="text-muted-foreground">
             Bienvenue sur votre centre de contrôle
+            {displayName && (
+              <span className="ml-1 font-semibold text-foreground">
+                {displayName}
+              </span>
+            )}
+            {(adminRole || allianceRole) && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                [{adminRole && <span>{adminRole}</span>}
+                {adminRole && allianceRole && <span> • </span>}
+                {allianceRole && <span>{allianceRole}</span>}]
+              </span>
+            )}
           </p>
         </div>
       </div>
