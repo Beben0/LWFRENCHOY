@@ -1,10 +1,10 @@
 # 🎮 LWFRENCHOY - Last War Alliance Manager
 
-**Gestionnaire d'alliance professionnel pour Last War: Survival Game**
+**Gestionnaire d'alliance pour Last War: Survival Game**
 
 Application web complète développée avec Next.js 15, TypeScript et PostgreSQL pour gérer efficacement votre alliance Last War. Système de permissions avancé, dashboard unifié, gestion VS, trains automatisés et bien plus.
 
-## 🚀 Nouvelles Fonctionnalités (2025)
+## 🚀 Nouvelles Fonctionnalités
 
 ### 🛡️ Système de Permissions Unifié
 
