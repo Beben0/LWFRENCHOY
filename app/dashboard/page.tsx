@@ -10,6 +10,7 @@ import {
   Calendar,
   Clock,
   Database,
+  Download,
   Shield,
   Sword,
   Train,
@@ -441,6 +442,18 @@ export default function UnifiedDashboard() {
               href="/admin/alerts"
               icon={Bell}
               label="Alertes"
+            />
+          )}
+          {(can("export_data") || can("import_data")) && (
+            <Tile
+              permission={
+                can("export_data")
+                  ? ("export_data" as any)
+                  : ("import_data" as any)
+              }
+              href="/admin/import-export"
+              icon={Download}
+              label="Sauvegarde"
             />
           )}
         </Section>
