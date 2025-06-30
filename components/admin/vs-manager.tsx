@@ -10,6 +10,7 @@ import {
   Skull,
   Sword,
   Target,
+  Trash2,
   Trophy,
   X,
 } from "lucide-react";
@@ -234,6 +235,34 @@ export default function VSManager({ vsWeekId }: { vsWeekId: string }) {
       result: week.result,
     });
     setShowForm(true);
+  };
+
+  const handleDelete = async (week: VSWeek) => {
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir supprimer la semaine VS "${
+          week.title || `Semaine ${week.weekNumber}`
+        }" contre ${week.enemyName} ?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/vs/${week.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la suppression");
+      }
+
+      // Recharger la liste des VS
+      await loadVSWeeks();
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      setError("Erreur lors de la suppression du VS");
+    }
   };
 
   const getResultColor = (result?: string) => {
@@ -637,6 +666,13 @@ export default function VSManager({ vsWeekId }: { vsWeekId: string }) {
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(week)}
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>

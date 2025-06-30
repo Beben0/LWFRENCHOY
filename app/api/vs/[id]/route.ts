@@ -135,3 +135,44 @@ export async function PUT(request: NextRequest, context: any) {
     );
   }
 }
+
+// DELETE - Supprimer une semaine VS
+export async function DELETE(request: NextRequest, context: any) {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    if (!hasPermission(session, "edit_vs")) {
+      return NextResponse.json(
+        { error: "Permission refusée" },
+        { status: 403 }
+      );
+    }
+
+    const { id } = context.params;
+
+    // Vérifier que le VS existe
+    const vsWeek = await prisma.vSWeek.findUnique({
+      where: { id },
+    });
+
+    if (!vsWeek) {
+      return NextResponse.json({ error: "VS introuvable" }, { status: 404 });
+    }
+
+    // Supprimer le VS (cela supprimera aussi les jours et participants grâce aux cascades)
+    await prisma.vSWeek.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: "VS supprimé avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la suppression du VS:", error);
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
+  }
+}
