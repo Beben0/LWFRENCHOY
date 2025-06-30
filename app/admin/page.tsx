@@ -320,6 +320,22 @@ export default function AdminPage() {
 
         {/* Statut Train Scheduler */}
         <TrainSchedulerStatus />
+
+        {/* Scheduler automatique */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-blue-500" /> Scheduler automatique
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Link href="/trains-v2" className="w-full">
+              <Button variant="outline" className="w-full justify-start">
+                <Zap className="w-4 h-4 mr-2" /> Ouvrir le scheduler
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Actions rapides */}
@@ -357,7 +373,7 @@ export default function AdminPage() {
         </Card>
 
         {/* Gestion des Événements */}
-        <Card>
+        <Card className="hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-green-500" />
@@ -395,7 +411,7 @@ export default function AdminPage() {
         </Card>
 
         {/* Gestion VS */}
-        <Card>
+        <Card className="hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               ⚔️
@@ -432,8 +448,7 @@ export default function AdminPage() {
         </Card>
 
         {/* Gestion Officiers */}
-
-        <Card>
+        <Card className="hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               🛡️ <span className="text-green-400">Gestion Officiers</span>
@@ -494,7 +509,7 @@ export default function AdminPage() {
         </Card>
 
         {/* Aide et Documentation */}
-        <Card>
+        <Card className="hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-amber-500" />

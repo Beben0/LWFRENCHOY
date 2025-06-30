@@ -83,7 +83,8 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
 // Récupérer tous les rôles d'alliance depuis le référentiel
 export async function getAllianceRoles(): Promise<string[]> {
   try {
-    const allianceRoles = await prisma.referenceData.findMany({
+    // Rôles depuis referenceData
+    const allianceRolesData = await prisma.referenceData.findMany({
       where: {
         category: "ALLIANCE_ROLE",
         isActive: true,
@@ -92,7 +93,26 @@ export async function getAllianceRoles(): Promise<string[]> {
       orderBy: { sortOrder: "asc" },
     });
 
-    return allianceRoles.map((role) => role.key);
+    const rolesFromRef = allianceRolesData.map((r) => r.key);
+
+    // Rôles détectés dans rolePermission (ex: R4/R5 créés mais pas encore dans referenceData)
+    const rolesFromPermissionsRaw = await prisma.rolePermission.findMany({
+      where: {
+        NOT: {
+          roleType: { in: ["ADMIN", "GUEST"] },
+        },
+      },
+      distinct: ["roleType"],
+      select: { roleType: true },
+    });
+
+    const rolesFromPermissions = rolesFromPermissionsRaw.map((r) => r.roleType);
+
+    const combined = Array.from(
+      new Set([...rolesFromRef, ...rolesFromPermissions])
+    );
+
+    return combined.length > 0 ? combined : ["R5", "R4", "MEMBER"];
   } catch (error) {
     console.error("Error fetching alliance roles:", error);
     return ["R5", "R4", "MEMBER"]; // Fallback

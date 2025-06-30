@@ -49,3 +49,4 @@ logs/
 backups/
 *.backup
 *.sql *.tar.gz
+alliance-manager-*.tar.gz

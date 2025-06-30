@@ -30,5 +30,5 @@ export default async function MembersSimplePage() {
 
   const members = await getMembers();
 
-  return <MembersSearchSimple members={members} />;
+  return <MembersSearchSimple members={members as any} />;
 }

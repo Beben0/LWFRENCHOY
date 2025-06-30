@@ -29,10 +29,18 @@ export function Navigation() {
 
   const navigationItems = [
     {
+      href: "/officer",
+      label: "Dashboard Officier",
+      icon: Shield,
+      permission: "view_dashboard" as const,
+      requiresOfficerRole: true,
+    },
+    {
       href: "/admin",
-      label: "Dashboard",
+      label: "Espace Admin",
       icon: Shield,
       permission: "view_admin_panel" as const,
+      requiresAdminRole: true,
     },
     {
       href: "/members-crud",
@@ -76,6 +84,25 @@ export function Navigation() {
     },
   ];
 
+  // Filtrer les éléments de navigation selon les rôles
+  const filteredNavigationItems = navigationItems.filter((item) => {
+    if (item.requiresAdminRole && session?.user?.role !== "ADMIN") {
+      return false;
+    }
+    if (item.requiresOfficerRole) {
+      const member = (session?.user as any)?.member;
+      const allianceRole = member?.allianceRole;
+      if (
+        allianceRole !== "R4" &&
+        allianceRole !== "R5" &&
+        session?.user?.role !== "ADMIN"
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
       <div className="container mx-auto px-4">
@@ -102,7 +129,7 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {navigationItems.map((item) => {
+            {filteredNavigationItems.map((item) => {
               const Icon = item.icon;
               return (
                 <PermissionGuard
@@ -188,7 +215,7 @@ export function Navigation() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2 border-t border-border">
-            {navigationItems.map((item) => {
+            {filteredNavigationItems.map((item) => {
               const Icon = item.icon;
               return (
                 <PermissionGuard
