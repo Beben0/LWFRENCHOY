@@ -491,10 +491,6 @@ function TrainRow({
                       </span>
                     </>
                   )}
-                  <span className="hidden sm:inline">•</span>
-                  <span className="text-xs">
-                    {train.metadata.passengerCount} passagers
-                  </span>
                 </div>
               </div>
             </div>
@@ -884,10 +880,6 @@ function TrainScheduleContent({
                                   </span>
                                 </>
                               )}
-                              <span className="hidden sm:inline">•</span>
-                              <span className="text-xs">
-                                {train.metadata.passengerCount} passagers
-                              </span>
                             </div>
                           </div>
                         </div>

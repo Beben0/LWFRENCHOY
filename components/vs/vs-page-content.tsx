@@ -60,6 +60,7 @@ interface VSParticipant {
   rewards: string[];
   dailyResults?: VSParticipantDay[];
   points: number;
+  victoryPercentage?: number;
 }
 
 interface VSParticipantDay {
@@ -177,6 +178,22 @@ export function VSPageContent() {
   const formatKDRatio = (kills: number, deaths: number) => {
     return deaths > 0 ? (kills / deaths).toFixed(2) : kills.toString();
   };
+
+  function calculateVictoryPercentage(participant: VSParticipant): number {
+    if (!participant.dailyResults || participant.dailyResults.length === 0)
+      return 0;
+
+    const participatedDays = participant.dailyResults.filter(
+      (day) => day.participated
+    ).length;
+    if (participatedDays === 0) return 0;
+
+    const victoriesCount = participant.dailyResults.filter(
+      (day) => day.participated && day.mvpPoints > 0
+    ).length;
+
+    return Math.round((victoriesCount / participatedDays) * 100);
+  }
 
   useEffect(() => {
     loadVSData();
@@ -338,7 +355,12 @@ export function VSPageContent() {
                       </h4>
                       <div className="flex items-center justify-center gap-4 text-3xl font-bold">
                         <span className="text-blue-400">
-                          {currentWeek.allianceScore}
+                          {currentWeek.allianceScore > 0
+                            ? currentWeek.allianceScore
+                            : currentWeek.participants.reduce(
+                                (sum, p) => sum + (p.points || 0),
+                                0
+                              )}
                         </span>
                         <span className="text-gray-500">-</span>
                         <span className="text-red-400">
@@ -524,7 +546,12 @@ export function VSPageContent() {
                       </h4>
                       <div className="flex items-center justify-center gap-4 text-xl font-bold">
                         <span className="text-blue-400">
-                          {week.allianceScore}
+                          {week.allianceScore > 0
+                            ? week.allianceScore
+                            : week.participants.reduce(
+                                (s, p) => s + (p.points || 0),
+                                0
+                              )}
                         </span>
                         <span className="text-gray-500">-</span>
                         <span className="text-red-400">{week.enemyScore}</span>
@@ -707,7 +734,7 @@ export function VSPageContent() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-orange-400">
-                          {participant.participation}%
+                          {participant.victoryPercentage}%
                         </div>
                         <div className="text-xs text-gray-400">
                           participation

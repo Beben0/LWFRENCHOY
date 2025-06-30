@@ -48,4 +48,4 @@ nginx/ssl/
 logs/
 backups/
 *.backup
-*.sql 
+*.sql *.tar.gz

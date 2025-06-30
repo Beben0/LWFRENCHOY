@@ -289,6 +289,63 @@ export async function POST(request: NextRequest) {
         }
         break;
 
+      case "VS":
+        for (const [index, item] of data.entries()) {
+          processedCount++;
+          try {
+            if (!item.weekNumber || !item.year) {
+              errorCount++;
+              errorDetails.push({
+                line: item._lineNumber || index + 1,
+                error: "weekNumber et year requis",
+                data: item,
+              });
+              continue;
+            }
+
+            // upsert week unique by composite key
+            await prisma.vSWeek.upsert({
+              where: {
+                year_weekNumber: {
+                  year: Number(item.year),
+                  weekNumber: Number(item.weekNumber),
+                },
+              },
+              update: {
+                title: item.title || undefined,
+                enemyName: item.enemyName || undefined,
+                allianceScore: Number(item.allianceScore) || 0,
+                enemyScore: Number(item.enemyScore) || 0,
+                status: item.status || "ACTIVE",
+                result: item.result || null,
+              },
+              create: {
+                weekNumber: Number(item.weekNumber),
+                year: Number(item.year),
+                title: item.title || undefined,
+                enemyName: item.enemyName || undefined,
+                allianceScore: Number(item.allianceScore) || 0,
+                enemyScore: Number(item.enemyScore) || 0,
+                status: item.status || "ACTIVE",
+                result: item.result || null,
+                startDate: new Date(),
+                endDate: new Date(),
+              },
+            });
+
+            successCount++;
+          } catch (error) {
+            errorCount++;
+            errorDetails.push({
+              line: item._lineNumber || index + 1,
+              error: error instanceof Error ? error.message : "Erreur inconnue",
+              data: item,
+            });
+            console.error("Error importing VS week", error);
+          }
+        }
+        break;
+
       default:
         throw new Error(`Type d'import non supporté: ${type}`);
     }

@@ -149,7 +149,67 @@ export async function POST(request: NextRequest, context: any) {
             date: dayDate,
           },
         });
+
+        // Recalculer les points totaux du participant
+        const participantDays = await tx.vSParticipantDay.findMany({
+          where: { participantId: participant.id },
+        });
+
+        const totalPoints = participantDays.reduce(
+          (sum, day) => sum + (day.mvpPoints || 0),
+          0
+        );
+        const totalKills = participantDays.reduce(
+          (sum, day) => sum + (day.kills || 0),
+          0
+        );
+        const totalDeaths = participantDays.reduce(
+          (sum, day) => sum + (day.deaths || 0),
+          0
+        );
+        const participatedDays = participantDays.filter(
+          (day) => day.participated
+        ).length;
+        const participation = Math.round((participatedDays / 6) * 100); // 6 jours par semaine
+
+        await tx.vSParticipant.update({
+          where: { id: participant.id },
+          data: {
+            points: totalPoints,
+            kills: totalKills,
+            deaths: totalDeaths,
+            participation: participation,
+          },
+        });
       }
+
+      // Recalculer les scores de l'alliance et de l'ennemi
+      const days = await tx.vSDay.findMany({
+        where: { weekId: vsWeekId },
+      });
+
+      const totalAllianceScore = days.reduce(
+        (sum, day) => sum + day.allianceScore,
+        0
+      );
+      const totalEnemyScore = days.reduce(
+        (sum, day) => sum + day.enemyScore,
+        0
+      );
+
+      let result: "VICTORY" | "DEFEAT" | "DRAW" | null = null;
+      if (totalAllianceScore > totalEnemyScore) result = "VICTORY";
+      else if (totalAllianceScore < totalEnemyScore) result = "DEFEAT";
+      else if (totalAllianceScore === totalEnemyScore) result = "DRAW";
+
+      await tx.vSWeek.update({
+        where: { id: vsWeekId },
+        data: {
+          allianceScore: totalAllianceScore,
+          enemyScore: totalEnemyScore,
+          result: result,
+        },
+      });
     });
 
     return NextResponse.json({

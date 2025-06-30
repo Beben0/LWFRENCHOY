@@ -1,9 +1,9 @@
 "use client";
 
+import VSManager from "@/components/admin/vs-manager";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { hasPermission } from "@/lib/permissions";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { redirect, useParams } from "next/navigation";
@@ -36,7 +36,9 @@ interface VSWeekDetails {
 export default function VSWeekDetailPage() {
   const { data: session, status } = useSession();
   const params = useParams();
+  console.log("DEBUG - Params reçus:", params);
   const vsWeekId = params.id as string;
+  console.log("DEBUG - VS Week ID:", vsWeekId);
 
   const [weekDetails, setWeekDetails] = useState<VSWeekDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,118 +120,17 @@ export default function VSWeekDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <Link
-        href="/admin/vs/history"
-        className="text-blue-400 flex items-center gap-1 hover:underline"
-      >
-        <ArrowLeft className="w-4 h-4" /> Retour à l'historique
-      </Link>
-
-      {session && hasPermission(session, "edit_vs") && (
-        <div className="flex justify-end">
-          <Link href="/admin/vs/quick-entry">
-            <Button className="bg-green-600 hover:bg-green-700" size="sm">
-              Saisie rapide des points
-            </Button>
-          </Link>
-        </div>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">{weekDetails.title}</CardTitle>
-          <p className="text-gray-400">
-            VS contre {weekDetails.enemyName} du{" "}
-            {new Date(weekDetails.startDate).toLocaleDateString("fr-FR")} au{" "}
-            {new Date(weekDetails.endDate).toLocaleDateString("fr-FR")}
-          </p>
-        </CardHeader>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-400">Score Alliance</p>
-            <p className="text-2xl font-bold text-green-400">
-              {(weekDetails.allianceScore ?? 0).toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-400">Score Ennemi</p>
-            <p className="text-2xl font-bold text-red-400">
-              {(weekDetails.enemyScore ?? 0).toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-400">Participants</p>
-            <p className="text-2xl font-bold">
-              {weekDetails.participants?.length ?? 0}
-            </p>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto p-4">
+      <div className="mb-4">
+        <Link
+          href="/admin/vs"
+          className="text-blue-500 hover:text-blue-400 flex items-center gap-2"
+        >
+          <ArrowLeft size={16} />
+          Retour à la liste
+        </Link>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Détails par membre
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left p-2 font-semibold">Membre</th>
-                  {[...Array(6).keys()].map((i) => (
-                    <th key={i} className="text-center p-2 font-semibold">
-                      {getDayLabel(i + 1)}
-                    </th>
-                  ))}
-                  <th className="text-center p-2 font-semibold text-yellow-400">
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {weekDetails.participants?.map((p) => {
-                  const totalPoints = p.dailyResults.reduce(
-                    (sum, day) => sum + day.mvpPoints,
-                    0
-                  );
-                  return (
-                    <tr
-                      key={p.memberId}
-                      className="border-b border-gray-800 hover:bg-gray-800/30"
-                    >
-                      <td className="p-2 font-medium">{p.member.pseudo}</td>
-                      {[...Array(6).keys()].map((i) => {
-                        const dayData = p.dailyResults.find(
-                          (d) => d.dayNumber === i + 1
-                        );
-                        return (
-                          <td key={i} className="text-center p-2">
-                            {dayData?.mvpPoints || 0}
-                          </td>
-                        );
-                      })}
-                      <td className="text-center p-2 text-yellow-400 font-bold">
-                        {totalPoints.toLocaleString()}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <VSManager vsWeekId={vsWeekId} />
     </div>
   );
 }

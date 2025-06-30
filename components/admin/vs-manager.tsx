@@ -17,22 +17,22 @@ import { useEffect, useState } from "react";
 
 interface VSWeek {
   id: string;
+  title: string;
   weekNumber: number;
   year: number;
   startDate: string;
   endDate: string;
-  title?: string;
+  enemyName: string;
   allianceScore: number;
   enemyScore: number;
-  enemyName?: string;
   status: string;
-  isCompleted: boolean;
   result?: string;
   days: VSDay[];
+  participants: VSParticipant[];
   _count: {
     participants: number;
+    days: number;
   };
-  participants?: VSParticipant[];
 }
 
 interface VSDay {
@@ -41,8 +41,6 @@ interface VSDay {
   date: string;
   allianceScore: number;
   enemyScore: number;
-  result?: string;
-  events: string[];
 }
 
 interface VSFormData {
@@ -60,7 +58,13 @@ interface VSParticipant {
   id: string;
   memberPseudo: string;
   points: number;
+  kills: number;
+  deaths: number;
+  participation: number;
   dailyResults?: VSParticipantDay[];
+  member?: {
+    pseudo: string;
+  };
 }
 
 interface VSParticipantDay {
@@ -79,7 +83,8 @@ interface VSParticipantDay {
   notes?: string;
 }
 
-export function VSManager() {
+export default function VSManager({ vsWeekId }: { vsWeekId: string }) {
+  console.log("DEBUG VSManager - vsWeekId reçu:", vsWeekId);
   const [vsWeeks, setVSWeeks] = useState<VSWeek[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -95,23 +100,75 @@ export function VSManager() {
     status: "PREPARATION",
     result: undefined,
   });
+  const [error, setError] = useState<string | null>(null);
+  const [vsWeek, setVSWeek] = useState<VSWeek | null>(null);
+  const [participants, setParticipants] = useState<VSParticipant[]>([]);
+  const [globalScores, setGlobalScores] = useState({
+    allianceScore: 0,
+    enemyScore: 0,
+  });
+
+  useEffect(() => {
+    console.log(
+      "DEBUG VSManager - useEffect déclenché avec vsWeekId:",
+      vsWeekId
+    );
+    if (vsWeekId) {
+      loadData();
+    }
+  }, [vsWeekId]);
 
   const loadVSWeeks = async () => {
     setLoading(true);
-    const res = await fetch(
-      "/api/vs?limit=20&includeParticipants=true&includeDays=true"
-    );
-    const data = await res.json();
-    console.log("🐞 DEBUG - API Response:", data);
-    console.log("🐞 DEBUG - Weeks:", data.weeks);
-    if (data.weeks?.[0]) {
-      console.log(
-        "🐞 DEBUG - First week participants:",
-        data.weeks[0].participants
+    try {
+      const res = await fetch(
+        "/api/vs?limit=20&includeParticipants=true&includeDays=true"
       );
+      const data = await res.json();
+      console.log("🐞 DEBUG - API Response:", data);
+      // data is an array
+      setVSWeeks(Array.isArray(data) ? data : data.weeks || []);
+    } catch (err) {
+      console.error("Erreur lors du chargement des VS:", err);
+      setVSWeeks([]);
+    } finally {
+      setLoading(false);
     }
-    setVSWeeks(data.weeks || []);
-    setLoading(false);
+  };
+
+  // Charger la liste des VS au montage
+  useEffect(() => {
+    loadVSWeeks();
+  }, []);
+
+  // Calcul automatique du score alliance dès que la liste des participants change
+  useEffect(() => {
+    const allianceScoreCalc = participants.reduce(
+      (sum, p) => sum + (p.points || 0),
+      0
+    );
+    setGlobalScores((prev) => ({ ...prev, allianceScore: allianceScoreCalc }));
+  }, [participants]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/vs/${vsWeekId}`);
+      if (!response.ok)
+        throw new Error("Erreur lors du chargement des données");
+      const data = await response.json();
+      setVSWeek(data);
+      setGlobalScores({
+        allianceScore: data.allianceScore || 0,
+        enemyScore: data.enemyScore || 0,
+      });
+      setParticipants(data.participants || []);
+    } catch (err) {
+      setError("Erreur lors du chargement des données");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -203,9 +260,29 @@ export function VSManager() {
     }
   };
 
-  useEffect(() => {
-    loadVSWeeks();
-  }, []);
+  const updateGlobalScores = async () => {
+    try {
+      // Recalculer allianceScore par sécurité
+      const allianceScoreCalc = participants.reduce(
+        (sum, p) => sum + (p.points || 0),
+        0
+      );
+      const response = await fetch(`/api/vs/${vsWeekId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          allianceScore: allianceScoreCalc,
+          enemyScore: globalScores.enemyScore,
+        }),
+      });
+      if (!response.ok)
+        throw new Error("Erreur lors de la mise à jour des scores");
+      await loadData(); // Recharger les données
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la mise à jour des scores globaux");
+    }
+  };
 
   if (loading) {
     return (
@@ -215,6 +292,28 @@ export function VSManager() {
             <Sword className="w-6 h-6 animate-spin mr-2 text-orange-400" />
             <span className="text-gray-300">Chargement...</span>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="bg-gray-800/50 border-gray-700">
+        <CardContent className="p-6 text-red-500">{error}</CardContent>
+      </Card>
+    );
+  }
+
+  if (!vsWeek) {
+    return (
+      <Card className="bg-gray-800/50 border-gray-700">
+        <CardContent className="p-6 text-center">
+          <Sword className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white mb-2">
+            Semaine VS non trouvée
+          </h3>
+          <p className="text-gray-400">Veuillez réessayer plus tard.</p>
         </CardContent>
       </Card>
     );
@@ -424,6 +523,74 @@ export function VSManager() {
         </Card>
       )}
 
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-xl font-bold mb-4">Scores Globaux</h2>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-gray-400 mb-1">Score Alliance</label>
+            <input
+              type="number"
+              value={globalScores.allianceScore}
+              disabled
+              readOnly
+              className="w-full bg-gray-700 rounded px-3 py-2 text-gray-400 cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 mb-1">Score Ennemis</label>
+            <input
+              type="number"
+              value={globalScores.enemyScore}
+              onChange={(e) =>
+                setGlobalScores({
+                  ...globalScores,
+                  enemyScore: parseInt(e.target.value) || 0,
+                })
+              }
+              className="w-full bg-gray-700 rounded px-3 py-2"
+            />
+          </div>
+        </div>
+        <button
+          onClick={updateGlobalScores}
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Mettre à jour les scores
+        </button>
+      </div>
+
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-xl font-bold mb-4">Participants</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left">
+                <th className="p-2">Membre</th>
+                <th className="p-2">Points</th>
+                <th className="p-2">Kills</th>
+                <th className="p-2">Deaths</th>
+                <th className="p-2">Participation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {participants.map((participant) => (
+                <tr key={participant.id}>
+                  <td className="p-2">
+                    {participant.member?.pseudo ||
+                      participant.memberPseudo ||
+                      "-"}
+                  </td>
+                  <td className="p-2">{participant.points}</td>
+                  <td className="p-2">{participant.kills}</td>
+                  <td className="p-2">{participant.deaths}</td>
+                  <td className="p-2">{participant.participation}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Liste des semaines VS */}
       <div className="space-y-4">
         {vsWeeks.length === 0 ? (
@@ -536,7 +703,7 @@ export function VSManager() {
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <span className="font-bold text-orange-400">
-                        {participant.memberPseudo}
+                        {participant.member?.pseudo || participant.memberPseudo}
                       </span>
                       <span className="text-xs text-gray-400">
                         ({participant.points} pts)
@@ -585,6 +752,8 @@ function DailyResultAdminCell({
     mvpPoints: day?.mvpPoints || 0,
     notes: day?.notes || "",
     events: day?.events?.join(", ") || "",
+    allianceScore: day?.allianceScore || 0,
+    enemyScore: day?.enemyScore || 0,
   });
   const [loading, setLoading] = useState(false);
 
@@ -607,6 +776,8 @@ function DailyResultAdminCell({
             .split(",")
             .map((e: string) => e.trim())
             .filter(Boolean),
+          allianceScore: Number(form.allianceScore),
+          enemyScore: Number(form.enemyScore),
         },
       }),
     });
@@ -619,101 +790,133 @@ function DailyResultAdminCell({
     return (
       <div className="bg-gray-900/30 p-2 rounded text-xs text-gray-500">-</div>
     );
-  if (!edit)
+
+  if (!edit) {
     return (
-      <div className="bg-gray-900/30 p-2 rounded text-xs text-center relative group">
-        <div className="font-semibold text-gray-300">J{day.dayNumber}</div>
-        <div>
-          {day.participated ? (
-            <span className="text-green-400">✔</span>
-          ) : (
-            <span className="text-gray-500">✗</span>
-          )}
-        </div>
-        <div className="text-xs text-orange-400">{day.kills}K</div>
-        <div className="text-xs text-red-400">{day.deaths}D</div>
-        <button
-          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-yellow-400"
-          onClick={() => setEdit(true)}
-          title="Éditer"
-        >
-          ✏️
-        </button>
+      <div
+        className="bg-gray-900/30 p-2 rounded text-xs cursor-pointer hover:bg-gray-900/50"
+        onClick={() => setEdit(true)}
+      >
+        <div className="font-bold">{form.mvpPoints} pts</div>
+        {form.events && (
+          <div className="text-orange-400 mt-1">{form.events}</div>
+        )}
+        {form.notes && (
+          <div className="text-gray-500 italic mt-1">{form.notes}</div>
+        )}
       </div>
     );
+  }
+
   return (
-    <div className="bg-gray-900/50 p-2 rounded text-xs">
-      <div className="mb-1 font-semibold text-gray-300">J{day.dayNumber}</div>
-      <div className="flex flex-col gap-1">
-        <input
-          type="number"
-          className="bg-gray-800 rounded px-1 py-0.5 text-xs"
-          value={form.kills}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setForm((f) => ({ ...f, kills: e.target.value }))
-          }
-          placeholder="Kills"
-        />
-        <input
-          type="number"
-          className="bg-gray-800 rounded px-1 py-0.5 text-xs"
-          value={form.deaths}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setForm((f) => ({ ...f, deaths: e.target.value }))
-          }
-          placeholder="Morts"
-        />
-        <input
-          type="number"
-          className="bg-gray-800 rounded px-1 py-0.5 text-xs"
-          value={form.mvpPoints}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setForm((f) => ({ ...f, mvpPoints: e.target.value }))
-          }
-          placeholder="MVP"
-        />
-        <input
-          type="text"
-          className="bg-gray-800 rounded px-1 py-0.5 text-xs"
-          value={form.events}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setForm((f) => ({ ...f, events: e.target.value }))
-          }
-          placeholder="Events (virgule)"
-        />
-        <input
-          type="text"
-          className="bg-gray-800 rounded px-1 py-0.5 text-xs"
-          value={form.notes}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setForm((f) => ({ ...f, notes: e.target.value }))
-          }
-          placeholder="Notes"
-        />
-        <label className="flex items-center gap-1 text-xs mt-1">
+    <div className="bg-gray-900/30 p-2 rounded text-xs">
+      <div className="space-y-2">
+        <div>
+          <label className="block text-gray-400 mb-1">Points MVP</label>
           <input
-            type="checkbox"
-            checked={form.participated}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setForm((f) => ({ ...f, participated: e.target.checked }))
+            type="number"
+            value={form.mvpPoints}
+            onChange={(e) =>
+              setForm({ ...form, mvpPoints: parseInt(e.target.value) || 0 })
             }
-          />{" "}
-          Participé
-        </label>
-        <div className="flex gap-1 mt-1">
+            className="w-full bg-gray-800 rounded px-2 py-1"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-gray-400 mb-1">Kills</label>
+            <input
+              type="number"
+              value={form.kills}
+              onChange={(e) =>
+                setForm({ ...form, kills: parseInt(e.target.value) || 0 })
+              }
+              className="w-full bg-gray-800 rounded px-2 py-1"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 mb-1">Deaths</label>
+            <input
+              type="number"
+              value={form.deaths}
+              onChange={(e) =>
+                setForm({ ...form, deaths: parseInt(e.target.value) || 0 })
+              }
+              className="w-full bg-gray-800 rounded px-2 py-1"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-gray-400 mb-1">Score Alliance</label>
+            <input
+              type="number"
+              value={form.allianceScore}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  allianceScore: parseInt(e.target.value) || 0,
+                })
+              }
+              className="w-full bg-gray-800 rounded px-2 py-1"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 mb-1">Score Ennemis</label>
+            <input
+              type="number"
+              value={form.enemyScore}
+              onChange={(e) =>
+                setForm({ ...form, enemyScore: parseInt(e.target.value) || 0 })
+              }
+              className="w-full bg-gray-800 rounded px-2 py-1"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-400 mb-1">Événements</label>
+          <input
+            type="text"
+            value={form.events}
+            onChange={(e) => setForm({ ...form, events: e.target.value })}
+            className="w-full bg-gray-800 rounded px-2 py-1"
+            placeholder="event1, event2, ..."
+          />
+        </div>
+        <div>
+          <label className="block text-gray-400 mb-1">Notes</label>
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            className="w-full bg-gray-800 rounded px-2 py-1"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-gray-400">
+            <input
+              type="checkbox"
+              checked={form.participated}
+              onChange={(e) =>
+                setForm({ ...form, participated: e.target.checked })
+              }
+              className="mr-2"
+            />
+            A participé
+          </label>
+        </div>
+        <div className="flex justify-end gap-2">
           <button
-            className="bg-green-700 hover:bg-green-800 text-white rounded px-2 py-0.5 text-xs"
-            onClick={save}
-            disabled={loading}
-          >
-            OK
-          </button>
-          <button
-            className="bg-gray-700 hover:bg-gray-800 text-white rounded px-2 py-0.5 text-xs"
             onClick={() => setEdit(false)}
-            disabled={loading}
+            className="px-2 py-1 bg-gray-700 rounded hover:bg-gray-600"
           >
             Annuler
+          </button>
+          <button
+            onClick={save}
+            disabled={loading}
+            className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-500"
+          >
+            {loading ? "..." : "Sauvegarder"}
           </button>
         </div>
       </div>

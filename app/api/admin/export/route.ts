@@ -108,6 +108,27 @@ export async function GET(request: NextRequest) {
         filename = "export_complet";
         break;
 
+      case "VS":
+        data = await prisma.vSWeek.findMany({
+          include: {
+            days: true,
+            participants: {
+              include: {
+                member: {
+                  select: { pseudo: true },
+                },
+                dailyResults: true,
+              },
+            },
+            _count: true,
+          },
+          orderBy: { startDate: "desc" },
+        });
+        // Cast BigInt, none expected but just in case
+        data = data.map((w: any) => ({ ...w }));
+        filename = "vs_weeks";
+        break;
+
       default:
         return NextResponse.json(
           { error: "Type not supported" },
@@ -129,7 +150,9 @@ export async function GET(request: NextRequest) {
     let finalFilename: string;
 
     if (format === "json") {
-      content = JSON.stringify(data, null, 2);
+      const replacer = (_key: string, value: any) =>
+        typeof value === "bigint" ? value.toString() : value;
+      content = JSON.stringify(data, replacer, 2);
       contentType = "application/json";
       finalFilename = `${filename}.json`;
     } else {

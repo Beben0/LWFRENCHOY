@@ -11,6 +11,7 @@ import {
   Download,
   FileText,
   RefreshCw,
+  Sword,
   Train,
   Upload,
   Users,
@@ -150,77 +151,134 @@ export default function ImportExportPage() {
     input.click();
   };
 
-  const handleDownloadTemplate = (type: string) => {
-    let csvContent = "";
+  type TemplateFormat = "csv" | "json";
+
+  const handleDownloadTemplate = (
+    type: string,
+    format: TemplateFormat = "csv"
+  ) => {
+    let content = "";
     let filename = "";
+
+    const makeDownload = (data: string, name: string, mime = "text/plain") => {
+      const blob = new Blob([data], { type: mime + ";charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    };
 
     switch (type) {
       case "membres":
-        csvContent =
-          "pseudo,level,power,kills,specialty,allianceRole,status,notes\n";
-        csvContent +=
-          "ExempleJoueur,50,1000000,500,Sniper,MEMBER,ACTIVE,Notes exemple\n";
-        filename = "modele_membres.csv";
+        if (format === "csv") {
+          content =
+            "pseudo,level,power,kills,specialty,allianceRole,status,notes\n" +
+            "ExempleJoueur,50,1000000,500,Sniper,MEMBER,ACTIVE,Notes exemple\n";
+          filename = "modele_membres.csv";
+        } else {
+          content = JSON.stringify(
+            [
+              {
+                pseudo: "ExempleJoueur",
+                level: 50,
+                power: 1000000,
+                kills: 500,
+                specialty: "Sniper",
+                allianceRole: "MEMBER",
+                status: "ACTIVE",
+                notes: "Notes exemple",
+              },
+            ],
+            null,
+            2
+          );
+          filename = "modele_membres.json";
+        }
         break;
       case "trains":
-        csvContent = "day,timeSlot,memberPseudo\n";
-        csvContent += "monday,08:00,ExempleJoueur\n";
-        csvContent += "tuesday,14:00,\n";
-        filename = "modele_trains.csv";
+        if (format === "csv") {
+          content =
+            "day,timeSlot,memberPseudo\n" + "monday,08:00,ExempleJoueur\n";
+          filename = "modele_trains.csv";
+        } else {
+          content = JSON.stringify(
+            [
+              {
+                day: "monday",
+                timeSlot: "08:00",
+                memberPseudo: "ExempleJoueur",
+              },
+              { day: "tuesday", timeSlot: "14:00", memberPseudo: null },
+            ],
+            null,
+            2
+          );
+          filename = "modele_trains.json";
+        }
         break;
       case "evenements":
-        csvContent = "title,description,type,startDate,endDate\n";
-        csvContent +=
-          "Guerre Alliance,Description exemple,ALLIANCE_WAR,2024-02-01T20:00:00,2024-02-01T22:00:00\n";
-        filename = "modele_evenements.csv";
+        if (format === "csv") {
+          content =
+            "title,description,type,startDate,endDate\n" +
+            "Guerre Alliance,Description exemple,ALLIANCE_WAR,2024-02-01T20:00:00,2024-02-01T22:00:00\n";
+          filename = "modele_evenements.csv";
+        } else {
+          content = JSON.stringify(
+            [
+              {
+                title: "Guerre Alliance",
+                description: "Description exemple",
+                type: "ALLIANCE_WAR",
+                startDate: "2024-02-01T20:00:00",
+                endDate: "2024-02-01T22:00:00",
+              },
+            ],
+            null,
+            2
+          );
+          filename = "modele_evenements.json";
+        }
         break;
       case "guide":
-        // Créer un petit guide PDF/texte
-        csvContent = `Guide d'importation - FROY Frenchoy
-
-FORMAT CSV:
-- Séparez les colonnes par des virgules
-- Utilisez des guillemets pour les valeurs contenant des virgules
-- Première ligne = en-têtes de colonnes
-- Dates au format: YYYY-MM-DDTHH:MM:SS
-
-MEMBRES:
-- pseudo: Nom unique du joueur (requis)
-- level: Niveau du joueur (nombre)
-- power: Puissance totale (nombre)
-- kills: Nombre de kills (nombre)
-- specialty: Sniper, Tank, Farmer, Defense
-- allianceRole: R5, R4, MEMBER
-- status: ACTIVE, INACTIVE
-
-TRAINS:
-- day: monday, tuesday, wednesday, thursday, friday, saturday, sunday
-- timeSlot: Format HH:MM (ex: 08:00, 14:00, 20:00)
-- memberPseudo: Nom du conducteur (doit exister dans les membres)
-
-ÉVÉNEMENTS:
-- title: Titre de l'événement (requis)
-- description: Description optionnelle
-- type: ALLIANCE_WAR, BOSS_FIGHT, SERVER_WAR, SEASONAL
-- startDate: Date/heure de début (requis)
-- endDate: Date/heure de fin (optionnel)
-
-Conseil: Testez avec quelques lignes avant d'importer en masse !`;
+        content = `Guide d'importation - FROY Frenchoy\n\nFORMAT CSV:\n- Séparez les colonnes par des virgules\n- Utilisez des guillemets pour les valeurs contenant des virgules\n- Première ligne = en-têtes de colonnes\n- Dates au format: YYYY-MM-DDTHH:MM:SS\n\nMEMBRES:\n- pseudo: Nom unique du joueur (requis)\n- level: Niveau du joueur (nombre)\n- power: Puissance totale (nombre)\n- kills: Nombre de kills (nombre)\n- specialty: Sniper, Tank, Farmer, Defense\n- allianceRole: R5, R4, MEMBER\n- status: ACTIVE, INACTIVE\n\nTRAINS:\n- day: monday, tuesday, wednesday, thursday, friday, saturday, sunday\n- timeSlot: Format HH:MM (ex: 08:00, 14:00, 20:00)\n- memberPseudo: Nom du conducteur (doit exister dans les membres)\n\nÉVÉNEMENTS:\n- title: Titre de l'événement (requis)\n- description: Description optionnelle\n- type: ALLIANCE_WAR, BOSS_FIGHT, SERVER_WAR, SEASONAL\n- startDate: Date/heure de début (requis)\n- endDate: Date/heure de fin (optionnel)\n\nConseil: Testez avec quelques lignes avant d'importer en masse !`;
         filename = "guide_importation.txt";
+        break;
+      case "vs":
+        if (format === "csv") {
+          content =
+            "weekNumber,year,title,enemyName,allianceScore,enemyScore,status,result\n" +
+            "27,2025,VS Semaine 27,Alliance Test,100000,95000,ACTIVE,\n";
+          filename = "modele_vs.csv";
+        } else {
+          content = JSON.stringify(
+            [
+              {
+                weekNumber: 27,
+                year: 2025,
+                title: "VS Semaine 27",
+                enemyName: "Alliance Test",
+                allianceScore: 100000,
+                enemyScore: 95000,
+                status: "ACTIVE",
+                result: null,
+              },
+            ],
+            null,
+            2
+          );
+          filename = "modele_vs.json";
+        }
         break;
       default:
         return;
     }
 
-    const blob = new Blob([csvContent], { type: "text/plain;charset=utf-8" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const mime = format === "json" ? "application/json" : "text/plain";
+    makeDownload(content, filename, mime);
   };
 
   const exportOptions = [
@@ -252,6 +310,13 @@ Conseil: Testez avec quelques lignes avant d'importer en masse !`;
       description: "Exporter les comptes utilisateurs (sans mots de passe)",
       fields: "Email, Rôle, Statut, Dernière connexion, Créé le",
       color: "text-red-600",
+    },
+    {
+      type: "VS",
+      icon: Sword,
+      description: "Exporter l'historique des VS avec participants",
+      fields: "Semaine, Scores, Participants, Jours, Résultat",
+      color: "text-yellow-600",
     },
   ];
 
@@ -476,6 +541,46 @@ Conseil: Testez avec quelques lignes avant d'importer en masse !`;
             >
               <FileText className="w-4 h-4 mr-2" />
               Guide d'importation (TXT)
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => handleDownloadTemplate("membres", "json")}
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Modèle JSON Membres
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => handleDownloadTemplate("trains", "json")}
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Modèle JSON Trains
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => handleDownloadTemplate("evenements", "json")}
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Modèle JSON Événements
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => handleDownloadTemplate("vs")}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Modèle CSV VS
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => handleDownloadTemplate("vs", "json")}
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Modèle JSON VS
             </Button>
           </div>
         </CardContent>

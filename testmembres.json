@@ -1,0 +1,32 @@
+[
+  {
+    "pseudo": "DragonSlayer",
+    "level": 60,
+    "power": 2500000,
+    "kills": 1200,
+    "specialty": "Sniper",
+    "allianceRole": "R4",
+    "status": "ACTIVE",
+    "notes": "Leader offensif"
+  },
+  {
+    "pseudo": "MedicAngel",
+    "level": 48,
+    "power": 1600000,
+    "kills": 450,
+    "specialty": "Farmer",
+    "allianceRole": "MEMBER",
+    "status": "ACTIVE",
+    "notes": "Toujours dispo pour soigner"
+  },
+  {
+    "pseudo": "TankMaster",
+    "level": 55,
+    "power": 2100000,
+    "kills": 800,
+    "specialty": "Tank",
+    "allianceRole": "MEMBER",
+    "status": "INACTIVE",
+    "notes": "Revient la saison prochaine"
+  }
+]

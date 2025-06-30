@@ -62,7 +62,7 @@ export function MarkdownEditor({
             lineHeight: 1.5,
           },
         }}
-        preview="edit"
+        preview="live"
         hideToolbar={false}
         visibleDragbar={false}
       />
@@ -77,6 +77,18 @@ export function MarkdownEditor({
         .markdown-editor-wrapper .w-md-editor-text-input,
         .markdown-editor-wrapper .w-md-editor-text {
           background-color: hsl(var(--background)) !important;
+          color: hsl(var(--foreground)) !important;
+          font-size: 14px !important;
+          line-height: 1.5 !important;
+        }
+
+        .markdown-editor-wrapper .w-md-editor-text-input {
+          caret-color: hsl(var(--foreground)) !important;
+        }
+
+        .markdown-editor-wrapper
+          .w-md-editor.w-md-editor-focus
+          .w-md-editor-text-input {
           color: hsl(var(--foreground)) !important;
         }
 
