@@ -58,8 +58,28 @@ export async function GET(request: NextRequest) {
       prisma.member.count({ where }),
     ]);
 
-    // Convertir les BigInt en string
-    const serializedMembers = members.map(serializeMember);
+    // Fetch users that match member pseudos to get roles
+    const users = await prisma.user.findMany({
+      where: {
+        pseudo: {
+          in: members.map((m) => m.pseudo),
+        },
+      },
+      select: {
+        pseudo: true,
+        role: true,
+        email: true,
+      },
+    });
+
+    // Create user map for quick lookup
+    const userMap = new Map(users.map((u) => [u.pseudo, u]));
+
+    // Convertir les BigInt en string et ajouter les infos user
+    const serializedMembers = members.map((member) => ({
+      ...serializeMember(member),
+      user: userMap.get(member.pseudo) || null,
+    }));
 
     return NextResponse.json({
       members: serializedMembers,

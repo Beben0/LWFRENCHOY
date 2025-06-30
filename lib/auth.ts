@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
+import { getUserPermissionsAsync } from "./permissions";
 import { prisma } from "./prisma";
 
 const loginSchema = z.object({
@@ -72,6 +73,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as string;
         session.user.pseudo = token.pseudo as string;
         session.user.allianceRole = token.allianceRole as string;
+
+        // Récupérer les informations du membre si le pseudo existe
+        if (session.user.pseudo) {
+          try {
+            const member = await prisma.member.findUnique({
+              where: { pseudo: session.user.pseudo },
+              select: {
+                id: true,
+                pseudo: true,
+                allianceRole: true,
+                power: true,
+              },
+            });
+
+            if (member) {
+              session.user.member = {
+                id: member.id,
+                pseudo: member.pseudo,
+                allianceRole: member.allianceRole,
+                power: member.power.toString(), // Convert BigInt to string
+              };
+
+              // Récupérer les permissions combinées
+              const permissions = await getUserPermissionsAsync(session);
+              session.user.permissions = permissions;
+            }
+          } catch (error) {
+            console.error("Error loading member data in session:", error);
+          }
+        }
       }
       return session;
     },

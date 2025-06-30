@@ -8,6 +8,13 @@ declare module "next-auth" {
       pseudo?: string;
       role: string;
       allianceRole?: string;
+      member?: {
+        id: string;
+        pseudo: string;
+        allianceRole: string;
+        power: string;
+      };
+      permissions?: string[];
     };
   }
 

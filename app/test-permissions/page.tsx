@@ -33,6 +33,8 @@ export default function TestPermissionsPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [selectedMember, setSelectedMember] = useState<any | null>(null);
 
+  const [mockPermissions, setMockPermissions] = useState<string[]>([]);
+
   // Load members (first 500)
   useEffect(() => {
     fetch("/api/members?limit=500")
@@ -48,6 +50,22 @@ export default function TestPermissionsPage() {
     setSelectedMember(m || null);
   };
 
+  // Fetch permissions via API to get alliance role permissions too
+  const fetchPermissions = async (session: any) => {
+    try {
+      const response = await fetch("/api/permissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session }),
+      });
+      const data = await response.json();
+      return data.permissions || [];
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      return [];
+    }
+  };
+
   // Create mock session for selected member
   const createMockSession = (member: any) => {
     if (!member) return null;
@@ -55,7 +73,7 @@ export default function TestPermissionsPage() {
       user: {
         id: member.userId || "mock",
         email: member.email,
-        role: "GUEST", // assume non-admin by default
+        role: member.user?.role || "GUEST", // Use real role from user relation
         member: {
           id: member.id,
           pseudo: member.pseudo,
@@ -68,12 +86,21 @@ export default function TestPermissionsPage() {
   };
 
   const mockSession = selectedMember ? createMockSession(selectedMember) : null;
-  const mockPermissions = mockSession ? getUserPermissions(mockSession) : [];
-  const mockRole = mockSession ? getUserRole(mockSession) : "GUEST";
+
+  // Update permissions when session changes
+  useEffect(() => {
+    if (selectedMember) {
+      const session = createMockSession(selectedMember);
+      if (session) {
+        fetchPermissions(session).then(setMockPermissions);
+      }
+    } else {
+      setMockPermissions([]);
+    }
+  }, [selectedMember?.id]);
 
   // Helper to check mock permission
-  const mockCan = (perm: Permission) =>
-    mockSession ? hasPermission(mockSession, perm) : false;
+  const mockCan = (perm: Permission) => mockPermissions.includes(perm);
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -155,7 +182,7 @@ export default function TestPermissionsPage() {
           </div>
           {selectedMember && (
             <div className="space-y-4">
-              <div className="text-sm bg-slate-50 p-3 rounded">
+              <div className="text-sm bg-gray-100 dark:bg-gray-800 p-3 rounded border">
                 <p>
                   <strong>Pseudo:</strong> {selectedMember.pseudo}
                 </p>
@@ -171,29 +198,34 @@ export default function TestPermissionsPage() {
                   {selectedMember.power?.toLocaleString()}
                 </p>
                 <p>
-                  <strong>Rôle Système:</strong> {mockRole}
+                  <strong>Rôle Système:</strong> {mockSession?.user.role}
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm mb-2">
-                  Permissions de ce membre ({mockPermissions.length})
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {mockPermissions.length > 0 ? (
-                    mockPermissions.map((perm) => (
-                      <span
-                        key={perm}
-                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
-                      >
-                        {perm}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      Aucune permission
+                <h3 className="text-lg font-semibold mb-2">
+                  Permissions de ce membre ({mockPermissions?.length || 0})
+                </h3>
+                <div className="mb-2 text-sm text-gray-600">
+                  Rôle système:{" "}
+                  <span className="font-mono bg-gray-100 px-1 rounded">
+                    {mockSession?.user.role}
+                  </span>
+                  {" | "}
+                  Rôle alliance:{" "}
+                  <span className="font-mono bg-gray-100 px-1 rounded">
+                    {selectedMember?.allianceRole}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {mockPermissions?.map((permission) => (
+                    <span
+                      key={permission}
+                      className="bg-green-600 text-white px-2 py-1 rounded text-sm"
+                    >
+                      {permission}
                     </span>
-                  )}
+                  ))}
                 </div>
               </div>
 

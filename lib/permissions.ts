@@ -253,6 +253,12 @@ export function hasPermission(
   session: Session | null,
   permission: Permission
 ): boolean {
+  // Si les permissions sont déjà dans la session, les utiliser
+  if (session?.user?.permissions) {
+    return session.user.permissions.includes(permission);
+  }
+
+  // Sinon, fallback sur la méthode synchrone
   const userPermissions = getUserCombinedPermissionsSync(session);
   return userPermissions.has(permission);
 }
@@ -262,6 +268,12 @@ export function hasAllPermissions(
   session: Session | null,
   permissions: Permission[]
 ): boolean {
+  // Si les permissions sont déjà dans la session, les utiliser
+  if (session?.user?.permissions) {
+    return permissions.every((p) => session.user.permissions!.includes(p));
+  }
+
+  // Sinon, fallback sur la méthode synchrone
   const userPermissions = getUserCombinedPermissionsSync(session);
   return permissions.every((p) => userPermissions.has(p));
 }
@@ -271,12 +283,24 @@ export function hasAnyPermission(
   session: Session | null,
   permissions: Permission[]
 ): boolean {
+  // Si les permissions sont déjà dans la session, les utiliser
+  if (session?.user?.permissions) {
+    return permissions.some((p) => session.user.permissions!.includes(p));
+  }
+
+  // Sinon, fallback sur la méthode synchrone
   const userPermissions = getUserCombinedPermissionsSync(session);
   return permissions.some((p) => userPermissions.has(p));
 }
 
 // Obtenir toutes les permissions d'un utilisateur (version synchrone)
 export function getUserPermissions(session: Session | null): Permission[] {
+  // Si les permissions sont déjà dans la session, les utiliser
+  if (session?.user?.permissions) {
+    return session.user.permissions as Permission[];
+  }
+
+  // Sinon, fallback sur la méthode synchrone
   const userPermissions = getUserCombinedPermissionsSync(session);
   return Array.from(userPermissions);
 }
