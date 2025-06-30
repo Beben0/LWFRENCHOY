@@ -1,5 +1,5 @@
 import { Session } from "next-auth";
-import { getUserRole } from "./permissions";
+import { getUserRole, hasPermission } from "./permissions";
 
 /**
  * Détermine où rediriger l'utilisateur après connexion
@@ -15,14 +15,18 @@ export function getRedirectUrl(
 
   const userRole = getUserRole(session);
 
-  switch (userRole) {
-    case "ADMIN":
-      return "/admin";
-    case "GUEST":
-    default:
-      // Les invités vont vers les trains (accessible publiquement)
-      return "/trains";
+  // Si l'utilisateur (admin ou membre) possède la permission view_dashboard -> dashboard
+  if (session && hasPermission(session, "view_dashboard")) {
+    return "/dashboard";
   }
+
+  // Admin sans permission explicite (legacy) : dashboard aussi
+  if (userRole === "ADMIN") {
+    return "/dashboard";
+  }
+
+  // Invités : trains public
+  return "/trains";
 }
 
 /**
