@@ -196,7 +196,7 @@ async function getUserCombinedPermissions(
   }
 
   // Ajouter les permissions du rôle d'alliance si présent
-  const allianceRole = (session.user as any)?.allianceRole;
+  const allianceRole = (session.user as any)?.member?.allianceRole;
   if (allianceRole && rolePermissions[allianceRole]) {
     rolePermissions[allianceRole].forEach((p) => combinedPermissions.add(p));
   }
@@ -220,7 +220,7 @@ function getUserCombinedPermissionsSync(
   }
 
   // Ajouter les permissions du rôle d'alliance si présent
-  const allianceRole = (session.user as any)?.allianceRole;
+  const allianceRole = (session.user as any)?.member?.allianceRole;
   if (allianceRole && rolePermissions[allianceRole]) {
     rolePermissions[allianceRole].forEach((p) => combinedPermissions.add(p));
   }
