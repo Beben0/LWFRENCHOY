@@ -399,8 +399,10 @@ export function EnhancedTrainSchedule({
                         {/* Date et statut */}
                         <div className="flex items-center justify-between">
                           <div className="text-xs font-medium">
-                            {new Date(train.date).getDate()}/
-                            {new Date(train.date).getMonth() + 1}
+                            {new Date(train.date).toLocaleDateString("fr-FR", {
+                              day: "2-digit",
+                              month: "short",
+                            })}
                           </div>
                           <div className="flex items-center gap-1">
                             <StatusIcon className="w-3 h-3" />
