@@ -175,13 +175,13 @@ async function updateTrainStatuses() {
   for (const train of trainsToCheck) {
     const [hours, minutes] = train.departureTime.split(":").map(Number);
     const departureDateTime = new Date(train.date);
-    departureDateTime.setHours(hours, minutes, 0, 0);
+    departureDateTime.setUTCHours(hours, minutes, 0, 0);
 
     const [realHours, realMinutes] = train.realDepartureTime
       .split(":")
       .map(Number);
     const realDepartureDateTime = new Date(train.date);
-    realDepartureDateTime.setHours(realHours, realMinutes, 0, 0);
+    realDepartureDateTime.setUTCHours(realHours, realMinutes, 0, 0);
 
     // Ajustement si l'heure réelle franchit minuit (ex: 20:00 -> 00:00 le lendemain)
     if (realDepartureDateTime < departureDateTime) {

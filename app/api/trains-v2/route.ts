@@ -92,14 +92,14 @@ export async function GET(request: NextRequest) {
       const trainDate = new Date(train.date);
       const [hours, minutes] = train.departureTime.split(":").map(Number);
       const departureDateTime = new Date(trainDate);
-      departureDateTime.setHours(hours, minutes, 0, 0);
+      departureDateTime.setUTCHours(hours, minutes, 0, 0);
 
       const [realHours, realMinutes] = train.realDepartureTime
         .split(":")
         .map(Number);
 
       const realDepartureDateTime = new Date(trainDate);
-      realDepartureDateTime.setHours(realHours, realMinutes, 0, 0);
+      realDepartureDateTime.setUTCHours(realHours, realMinutes, 0, 0);
 
       // Si l'heure réelle est avant l'heure d'inscription (franchissement de minuit), on avance d'un jour
       if (realDepartureDateTime < departureDateTime) {
