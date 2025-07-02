@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import {
   getTrainSchedulerStatus,
   runTrainMaintenanceNow,
@@ -108,6 +109,20 @@ export async function POST(request: NextRequest) {
           success: true,
           message: "Mise à jour des statuts déclenchée",
           info: "La mise à jour s'exécute en arrière-plan.",
+        });
+
+      case "wipe_future_trains":
+        console.log(
+          `🗑️ Admin ${session.user.email} triggered wipe of future trains`
+        );
+
+        const del = await prisma.trainInstance.deleteMany({
+          where: { isArchived: false, date: { gte: new Date() } },
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: `${del.count} trains futurs supprimés`,
         });
 
       default:

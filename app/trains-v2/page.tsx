@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Settings,
   Train,
+  Trash,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
@@ -446,6 +447,15 @@ export default function TrainSchedulerPage() {
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 <Translate>MàJ Statuts Immédiate</Translate>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleSchedulerAction("wipe_future_trains")}
+                disabled={actionLoading}
+                className="w-full justify-start text-red-600 hover:bg-red-600/10"
+              >
+                <Trash className="w-4 h-4 mr-2" />
+                <Translate>Purger trains futurs</Translate>
               </Button>
               <div className="text-xs text-muted-foreground mt-2">
                 <Translate>
