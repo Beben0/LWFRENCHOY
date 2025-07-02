@@ -205,11 +205,15 @@ function TrainDateInfo({ train }: { train: TrainInstance }) {
     });
   }, [train.date]);
 
-  if (!mounted || !dateInfo.isToday) return null;
+  if (!mounted) return null;
 
   return (
     <div>
-      <div className="text-sm text-gray-400">
+      <div
+        className={`text-sm ${
+          dateInfo.isToday ? "text-orange-400 font-semibold" : "text-gray-400"
+        }`}
+      >
         <Translate>
           {dateInfo.dayNum} {dateInfo.month}
         </Translate>
