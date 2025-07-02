@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import { hasPermission } from "@/lib/permissions";
 import { VSWeekStatus } from "@prisma/client";
 import { BarChart, Calendar, History, Plus, Users } from "lucide-react";
@@ -51,17 +52,23 @@ export default function VSAdminPage() {
   };
 
   if (loading) {
-    return <div className="text-center p-8">Chargement du dashboard VS...</div>;
+    return (
+      <div className="text-center p-8">
+        <Translate>Chargement du dashboard VS...</Translate>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-red-400">⚔️ Gestion VS</h1>
+        <h1 className="text-3xl font-bold text-red-400">
+          ⚔️ <Translate>Gestion VS</Translate>
+        </h1>
         <Link href="/admin/vs/new">
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            Nouveau VS
+            <Translate>Nouveau VS</Translate>
           </Button>
         </Link>
       </div>
@@ -73,7 +80,7 @@ export default function VSAdminPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
-                VS en cours
+                <Translate>VS en cours</Translate>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -101,18 +108,19 @@ export default function VSAdminPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4" />
-                          {week._count.participants} Participants
+                          {week._count.participants}{" "}
+                          <Translate>Participants</Translate>
                         </div>
                       </div>
                       <div className="mt-4 flex gap-2">
                         <Link href={`/admin/vs/${week.id}`}>
                           <Button variant="outline" size="sm">
-                            Voir les détails
+                            <Translate>Voir les détails</Translate>
                           </Button>
                         </Link>
                         <Link href="/admin/vs/quick-entry">
                           <Button variant="default" size="sm">
-                            Saisie des points
+                            <Translate>Saisie des points</Translate>
                           </Button>
                         </Link>
                       </div>
@@ -121,12 +129,14 @@ export default function VSAdminPage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-400">
-                  <p>Aucun VS en cours.</p>
+                  <p>
+                    <Translate>Aucun VS en cours.</Translate>
+                  </p>
                   <Link
                     href="/admin/vs/new"
                     className="mt-2 text-blue-400 hover:underline"
                   >
-                    Lancer un nouveau VS
+                    <Translate>Lancer un nouveau VS</Translate>
                   </Link>
                 </div>
               )}
@@ -138,24 +148,26 @@ export default function VSAdminPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Actions Rapides</CardTitle>
+              <CardTitle>
+                <Translate>Actions Rapides</Translate>
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               <Link href="/admin/vs/quick-entry">
                 <Button variant="outline" className="w-full justify-start">
-                  ⚡ Saisie Rapide des Points
+                  ⚡ <Translate>Saisie Rapide des Points</Translate>
                 </Button>
               </Link>
               <Link href="/admin/vs/history">
                 <Button variant="outline" className="w-full justify-start">
                   <History className="w-4 h-4 mr-2" />
-                  Historique complet
+                  <Translate>Historique complet</Translate>
                 </Button>
               </Link>
               <Link href="/vs">
                 <Button variant="outline" className="w-full justify-start">
                   <BarChart className="w-4 h-4 mr-2" />
-                  Voir les classements publics
+                  <Translate>Voir les classements publics</Translate>
                 </Button>
               </Link>
             </CardContent>

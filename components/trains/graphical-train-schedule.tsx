@@ -205,13 +205,7 @@ function TrainDateInfo({ train }: { train: TrainInstance }) {
     });
   }, [train.date]);
 
-  if (!mounted) {
-    return (
-      <div>
-        <div className="text-sm text-gray-400">...</div>
-      </div>
-    );
-  }
+  if (!mounted || !dateInfo.isToday) return null;
 
   return (
     <div>
@@ -357,26 +351,26 @@ function TodayBadge({ train }: { train: TrainInstance }) {
     setMounted(true);
   }, []);
 
-  // Utiliser directement les métadonnées calculées côté serveur
-  const isToday = train.metadata.isToday;
+  // Recalcule en local pour éviter les décalages
+  const isToday = (() => {
+    const d = new Date(train.date);
+    const n = new Date();
+    return (
+      d.getFullYear() === n.getFullYear() &&
+      d.getMonth() === n.getMonth() &&
+      d.getDate() === n.getDate()
+    );
+  })();
 
-  console.log("🔥 DEBUG TodayBadge:", {
-    trainDate: train.date,
-    dayOfWeek: train.dayOfWeek,
-    isToday: train.metadata.isToday,
-    isPast: train.metadata.isPast,
-    metadata: train.metadata,
-  });
+  const isDeparted = train.status === "DEPARTED";
 
   if (!mounted || !isToday) return null;
 
-  // Affichage différent selon si le train est parti ou pas
-  const isPast = train.metadata.isPast;
-  const badgeClass = isPast
+  const badgeClass = isDeparted
     ? "bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg"
     : "bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse";
 
-  const badgeText = isPast ? "🕐 AUJOURD'HUI (PARTI)" : "🔥 AUJOURD'HUI";
+  const badgeText = isDeparted ? "🕐 AUJOURD'HUI (PARTI)" : "🔥 AUJOURD'HUI";
 
   return (
     <div className="absolute -top-1 -right-1 z-10">
@@ -412,8 +406,16 @@ function TrainRow({
     setMounted(true);
 
     if (train) {
-      // Utiliser les métadonnées calculées côté serveur
-      const isToday = train.metadata.isToday;
+      // Recalcule en local pour éviter les décalages
+      const isToday = (() => {
+        const d = new Date(train.date);
+        const n = new Date();
+        return (
+          d.getFullYear() === n.getFullYear() &&
+          d.getMonth() === n.getMonth() &&
+          d.getDate() === n.getDate()
+        );
+      })();
 
       if (isToday) {
         setBorderClass("bg-orange-500/10 border-l-orange-500");
@@ -443,7 +445,16 @@ function TrainRow({
       className={`relative border-l-4 hover:bg-gray-800/30 transition-colors ${borderClass}`}
     >
       {/* Badge AUJOURD'HUI flottant */}
-      {train && <TodayBadge train={train} />}
+      {train &&
+        (() => {
+          const d = new Date(train.date);
+          const n = new Date();
+          return (
+            d.getFullYear() === n.getFullYear() &&
+            d.getMonth() === n.getMonth() &&
+            d.getDate() === n.getDate()
+          );
+        })() && <TodayBadge train={train} />}
 
       {/* Layout responsive : mobile stack, desktop inline */}
       <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -808,16 +819,16 @@ function TrainScheduleContent({
                   className="bg-gray-700 text-white border border-gray-600 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[100px]"
                 >
                   <option value={7}>
-                    <Translate>7 jours</Translate>
+                    <Translate>7 days</Translate>
                   </option>
                   <option value={14}>
-                    <Translate>14 jours</Translate>
+                    <Translate>14 days</Translate>
                   </option>
                   <option value={21}>
-                    <Translate>3 semaines</Translate>
+                    <Translate>3 weeks</Translate>
                   </option>
                   <option value={30}>
-                    <Translate>1 mois</Translate>
+                    <Translate>1 month</Translate>
                   </option>
                 </select>
               </div>
@@ -850,7 +861,16 @@ function TrainScheduleContent({
                 <div
                   key={train.id}
                   className={`relative border-l-4 hover:bg-gray-800/30 transition-colors ${
-                    train.metadata.isToday
+                    train &&
+                    (() => {
+                      const d = new Date(train.date);
+                      const n = new Date();
+                      return (
+                        d.getFullYear() === n.getFullYear() &&
+                        d.getMonth() === n.getMonth() &&
+                        d.getDate() === n.getDate()
+                      );
+                    })()
                       ? "bg-orange-500/10 border-l-orange-500"
                       : train?.conductor
                       ? "bg-green-500/10 border-l-green-500"
@@ -858,7 +878,16 @@ function TrainScheduleContent({
                   }`}
                 >
                   {/* Badge AUJOURD'HUI flottant */}
-                  {train.metadata.isToday && <TodayBadge train={train} />}
+                  {train &&
+                    (() => {
+                      const d = new Date(train.date);
+                      const n = new Date();
+                      return (
+                        d.getFullYear() === n.getFullYear() &&
+                        d.getMonth() === n.getMonth() &&
+                        d.getDate() === n.getDate()
+                      );
+                    })() && <TodayBadge train={train} />}
 
                   {/* Layout responsive : mobile stack, desktop inline */}
                   <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">

@@ -24,18 +24,15 @@ export async function GET(request: NextRequest) {
     const includeArchived = url.searchParams.get("includeArchived") === "true";
     const status = url.searchParams.get("status") as TrainStatus | null;
 
-    // Calculer les dates - toujours inclure aujourd'hui et les jours à venir
     const now = new Date();
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
 
-    // Commencer à partir d'aujourd'hui (pas début de semaine)
-    const startDate = new Date(today);
+    // Normaliser les bornes sur UTC pour éviter les problèmes de fuseau horaire (ex: UTC+2)
+    const startDate = new Date(now);
+    startDate.setUTCHours(0, 0, 0, 0);
 
-    // Aller jusqu'à daysAhead jours dans le futur
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + daysAhead);
-    endDate.setHours(23, 59, 59, 999);
+    const endDate = new Date(startDate);
+    endDate.setUTCDate(startDate.getUTCDate() + daysAhead);
+    endDate.setUTCHours(23, 59, 59, 999);
 
     // Requête avec filtres - partir d'aujourd'hui
     const where: any = {
@@ -100,11 +97,17 @@ export async function GET(request: NextRequest) {
       const [realHours, realMinutes] = train.realDepartureTime
         .split(":")
         .map(Number);
+
       const realDepartureDateTime = new Date(trainDate);
       realDepartureDateTime.setHours(realHours, realMinutes, 0, 0);
 
-      // Calculer isPast correctement basé sur l'heure de départ complète
-      const isPast = departureDateTime < now;
+      // Si l'heure réelle est avant l'heure d'inscription (franchissement de minuit), on avance d'un jour
+      if (realDepartureDateTime < departureDateTime) {
+        realDepartureDateTime.setDate(realDepartureDateTime.getDate() + 1);
+      }
+
+      // Considérer le train passé seulement après le départ réel
+      const isPast = realDepartureDateTime < now;
 
       return {
         ...train,
@@ -114,12 +117,9 @@ export async function GET(request: NextRequest) {
           canRegister:
             now < departureDateTime && train.status === TrainStatus.SCHEDULED,
           isBoarding: train.status === TrainStatus.BOARDING,
-          timeUntilDeparture: isPast
-            ? 0
-            : departureDateTime.getTime() - now.getTime(),
-          timeUntilRealDeparture: isPast
-            ? 0
-            : realDepartureDateTime.getTime() - now.getTime(),
+          timeUntilDeparture: departureDateTime.getTime() - now.getTime(),
+          timeUntilRealDeparture:
+            realDepartureDateTime.getTime() - now.getTime(),
           passengerCount: train._count.passengers,
         },
       };

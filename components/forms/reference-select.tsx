@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Translate } from "@/components/ui/translate";
 import React, { useEffect, useState } from "react";
 
 interface ReferenceOption {
@@ -70,7 +71,7 @@ export function ReferenceSelect({
         disabled
         className={`w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white ${className}`}
       >
-        <option>Chargement...</option>
+        <option>Chargement…</option>
       </select>
     );
   }
@@ -83,10 +84,14 @@ export function ReferenceSelect({
         disabled={disabled}
         className={`w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 ${className}`}
       >
-        {allowEmpty && <option value="">{placeholder}</option>}
+        {allowEmpty && (
+          <option value="">
+            <Translate>{placeholder}</Translate>
+          </option>
+        )}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            <Translate>{option.label}</Translate>
           </option>
         ))}
       </select>
@@ -193,7 +198,7 @@ export function ReferenceMultiSelect({
                 className="flex items-center gap-1 cursor-pointer hover:opacity-80"
                 onClick={() => handleRemoveValue(value)}
               >
-                {option?.label || value}
+                <Translate>{option?.label || value}</Translate>
                 <span className="ml-1 text-xs">×</span>
               </Badge>
             );
@@ -209,12 +214,14 @@ export function ReferenceMultiSelect({
           disabled={disabled || loading}
           className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
         >
-          <option value="">{loading ? "Chargement..." : placeholder}</option>
+          <option value="">
+            {loading ? "Chargement…" : <Translate>{placeholder}</Translate>}
+          </option>
           {options
             .filter((option) => !values.includes(option.value))
             .map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                <Translate>{option.label}</Translate>
               </option>
             ))}
         </select>

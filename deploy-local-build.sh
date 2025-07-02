@@ -81,6 +81,7 @@ NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 NODE_ENV=production
 AUTO_START_TRAINS=true
 AUTO_START_ALERTS=true
+LIBRETRANSLATE_ENDPOINT=http://libretranslate:5000/translate
 ENVEOF
     echo "✅ .env.production créé avec schedulers auto-start"
 else
@@ -90,6 +91,9 @@ else
     fi
     if ! grep -q "AUTO_START_ALERTS" .env.production; then
         echo "AUTO_START_ALERTS=true" >> .env.production
+    fi
+    if ! grep -q "LIBRETRANSLATE_ENDPOINT" .env.production; then
+        echo "LIBRETRANSLATE_ENDPOINT=http://libretranslate:5000/translate" >> .env.production
     fi
     echo "✅ .env.production mis à jour avec schedulers auto-start"
 fi

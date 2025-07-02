@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import {
   AlertCircle,
   Calendar,
@@ -137,7 +138,7 @@ export function FutureTrainSchedule({
   }, [daysAhead]);
 
   const formatTimeRemaining = (milliseconds: number): string => {
-    if (milliseconds <= 0) return "Terminé";
+    if (milliseconds <= 0) return "0min";
 
     const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
     const hours = Math.floor(
@@ -243,11 +244,13 @@ export function FutureTrainSchedule({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Train className="w-6 h-6" />
-              Planning des Trains - Nouveau Système
+              <Translate>Planning des Trains - Nouveau Système</Translate>
             </CardTitle>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Jours à afficher:</label>
+                <label className="text-sm font-medium">
+                  <Translate>Jours à afficher:</Translate>
+                </label>
                 <select
                   value={daysAhead}
                   onChange={(e) => setDaysAhead(Number(e.target.value))}
@@ -259,20 +262,38 @@ export function FutureTrainSchedule({
                   <option value={30}>30 jours</option>
                 </select>
               </div>
-              <Badge variant="outline">{trains.length} trains</Badge>
+              <Badge variant="outline">
+                {trains.length} <Translate>trains</Translate>
+              </Badge>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              ✨ <strong>Nouveau système automatique :</strong>
+              ✨{" "}
+              <strong>
+                <Translate>Nouveau système automatique :</Translate>
+              </strong>
             </p>
             <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Trains générés automatiquement chaque jour</li>
-              <li>Planning futur sur {daysAhead} jours</li>
-              <li>Statuts en temps réel (Programmé → Embarquement → Parti)</li>
-              <li>Historique automatique des trains passés</li>
+              <li>
+                <Translate>
+                  Trains générés automatiquement chaque jour
+                </Translate>
+              </li>
+              <li>
+                <Translate>Planning futur sur</Translate> {daysAhead}{" "}
+                <Translate>jours</Translate>
+              </li>
+              <li>
+                <Translate>
+                  Statuts en temps réel (Programmé → Embarquement → Parti)
+                </Translate>
+              </li>
+              <li>
+                <Translate>Historique automatique des trains passés</Translate>
+              </li>
             </ul>
           </div>
         </CardContent>
@@ -283,6 +304,18 @@ export function FutureTrainSchedule({
         {sortedDates.map((date) => {
           const dayTrains = groupedTrains[date];
           const train = dayTrains[0]; // Un seul train par jour
+
+          // Recalcule en local pour éviter les décalages de fuseau horaire (le backend envoie en UTC)
+          const localIsToday = (() => {
+            const d = new Date(train.date);
+            const nowLocal = new Date();
+            return (
+              d.getFullYear() === nowLocal.getFullYear() &&
+              d.getMonth() === nowLocal.getMonth() &&
+              d.getDate() === nowLocal.getDate()
+            );
+          })();
+
           const statusConfig =
             STATUS_CONFIG[train.status as keyof typeof STATUS_CONFIG];
           const StatusIcon = statusConfig.icon;
@@ -291,9 +324,7 @@ export function FutureTrainSchedule({
             <Card
               key={date}
               className={`transition-all duration-200 ${
-                train.metadata.isToday
-                  ? "ring-2 ring-orange-500 bg-orange-50/50"
-                  : ""
+                localIsToday ? "ring-2 ring-orange-500 bg-orange-50/50" : ""
               }`}
             >
               <CardHeader className="pb-3">
@@ -312,9 +343,9 @@ export function FutureTrainSchedule({
                     <div>
                       <h3 className="text-lg font-semibold capitalize">
                         {train.dayOfWeek}
-                        {train.metadata.isToday && (
+                        {localIsToday && (
                           <Badge className="ml-2 bg-orange-500">
-                            Aujourd'hui
+                            <Translate>Aujourd'hui</Translate>
                           </Badge>
                         )}
                       </h3>
@@ -341,7 +372,11 @@ export function FutureTrainSchedule({
                       }}
                       disabled={train.metadata.isPast}
                     >
-                      {train.conductor ? "Modifier" : "Assigner"}
+                      {train.conductor ? (
+                        <Translate>Modifier</Translate>
+                      ) : (
+                        <Translate>Assigner</Translate>
+                      )}
                     </Button>
                   )}
                 </div>
@@ -351,19 +386,27 @@ export function FutureTrainSchedule({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Horaires */}
                   <div className="space-y-2">
-                    <h4 className="font-medium text-sm">Horaires</h4>
+                    <h4 className="font-medium text-sm">
+                      <Translate>Horaires</Translate>
+                    </h4>
                     <div className="space-y-1 text-sm">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-500" />
-                        <span>Inscription: {train.departureTime}</span>
+                        <span>
+                          <Translate>Inscription:</Translate>{" "}
+                          {train.departureTime}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Train className="w-4 h-4 text-green-500" />
-                        <span>Départ: {train.realDepartureTime}</span>
+                        <span>
+                          <Translate>Départ:</Translate>{" "}
+                          {train.realDepartureTime}
+                        </span>
                       </div>
                       {train.metadata.timeUntilDeparture > 0 && (
                         <div className="text-xs text-muted-foreground">
-                          Dans{" "}
+                          <Translate>Dans</Translate>{" "}
                           {formatTimeRemaining(
                             train.metadata.timeUntilDeparture
                           )}
@@ -374,7 +417,9 @@ export function FutureTrainSchedule({
 
                   {/* Conducteur */}
                   <div className="space-y-2">
-                    <h4 className="font-medium text-sm">Conducteur</h4>
+                    <h4 className="font-medium text-sm">
+                      <Translate>Conducteur</Translate>
+                    </h4>
                     {train.conductor ? (
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4" />
@@ -383,14 +428,16 @@ export function FutureTrainSchedule({
                             {train.conductor.pseudo}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Lvl {train.conductor.level} •{" "}
-                            {train.conductor.specialty || "Aucune"}
+                            <Translate>Lvl</Translate> {train.conductor.level} •{" "}
+                            <Translate from="auto">
+                              {train.conductor.specialty || "Aucune"}
+                            </Translate>
                           </div>
                         </div>
                       </div>
                     ) : (
                       <div className="text-sm text-muted-foreground italic">
-                        Aucun conducteur assigné
+                        <Translate>Aucun conducteur assigné</Translate>
                       </div>
                     )}
                   </div>
@@ -399,7 +446,8 @@ export function FutureTrainSchedule({
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      Passagers ({train.metadata.passengerCount})
+                      <Translate>Passagers</Translate> (
+                      {train.metadata.passengerCount})
                     </h4>
                     {train.passengers.length > 0 ? (
                       <div className="space-y-1">
@@ -410,13 +458,14 @@ export function FutureTrainSchedule({
                         ))}
                         {train.passengers.length > 3 && (
                           <div className="text-xs text-muted-foreground">
-                            +{train.passengers.length - 3} autres...
+                            +{train.passengers.length - 3}{" "}
+                            <Translate>autres...</Translate>
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="text-sm text-muted-foreground italic">
-                        Aucun passager inscrit
+                        <Translate>Aucun passager inscrit</Translate>
                       </div>
                     )}
                   </div>
@@ -428,11 +477,11 @@ export function FutureTrainSchedule({
                     <div className="flex items-center gap-2 text-orange-700">
                       <PlayCircle className="w-5 h-5 animate-pulse" />
                       <span className="font-medium">
-                        Embarquement en cours !
+                        <Translate>Embarquement en cours !</Translate>
                       </span>
                     </div>
                     <div className="text-sm text-orange-600 mt-1">
-                      Plus que{" "}
+                      <Translate>Plus que</Translate>{" "}
                       {formatTimeRemaining(
                         train.metadata.timeUntilRealDeparture
                       )}{" "}
@@ -480,8 +529,8 @@ export function FutureTrainSchedule({
                     >
                       <div className="font-medium">{member.pseudo}</div>
                       <div className="text-sm text-muted-foreground">
-                        Lvl {member.level} • {member.specialty || "Aucune"} •{" "}
-                        {member.allianceRole}
+                        <Translate>Lvl</Translate> {member.level} •{" "}
+                        {member.specialty || "Aucune"} • {member.allianceRole}
                       </div>
                     </button>
                   ))}

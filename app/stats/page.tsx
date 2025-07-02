@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPower, getTimeAgo } from "@/lib/utils";
@@ -178,10 +179,12 @@ export default async function StatsPage() {
       <div>
         <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
           <BarChart3 className="w-8 h-8 text-lastwar-orange" />
-          Statistiques d'Alliance
+          <Translate>Statistiques d'Alliance</Translate>
         </h1>
         <p className="text-muted-foreground">
-          Analyses de performance et classements des membres
+          <Translate>
+            Analyses de performance et classements des membres
+          </Translate>
         </p>
       </div>
 
@@ -193,7 +196,9 @@ export default async function StatsPage() {
               <Users className="w-8 h-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{stats.totalStats._count}</p>
-                <p className="text-sm text-muted-foreground">Membres actifs</p>
+                <p className="text-sm text-muted-foreground">
+                  <Translate>Membres actifs</Translate>
+                </p>
               </div>
             </div>
           </CardContent>
@@ -208,7 +213,7 @@ export default async function StatsPage() {
                   {formatPower(stats.totalStats._sum.power || 0n)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Puissance totale
+                  <Translate>Puissance totale</Translate>
                 </p>
               </div>
             </div>
@@ -223,7 +228,9 @@ export default async function StatsPage() {
                 <p className="text-2xl font-bold">
                   {(stats.totalStats._sum.kills || 0).toLocaleString()}
                 </p>
-                <p className="text-sm text-muted-foreground">Kills totaux</p>
+                <p className="text-sm text-muted-foreground">
+                  <Translate>Kills totaux</Translate>
+                </p>
               </div>
             </div>
           </CardContent>
@@ -237,7 +244,9 @@ export default async function StatsPage() {
                 <p className="text-2xl font-bold">
                   {Math.round(stats.totalStats._avg.level || 0)}
                 </p>
-                <p className="text-sm text-muted-foreground">Niveau moyen</p>
+                <p className="text-sm text-muted-foreground">
+                  <Translate>Niveau moyen</Translate>
+                </p>
               </div>
             </div>
           </CardContent>
@@ -251,9 +260,11 @@ export default async function StatsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-lastwar-orange" />
-              Top Puissance
+              <Translate>Top Puissance</Translate>
             </CardTitle>
-            <CardDescription>Membres les plus puissants</CardDescription>
+            <CardDescription>
+              <Translate>Membres les plus puissants</Translate>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -290,9 +301,11 @@ export default async function StatsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5 text-red-500" />
-              Top Kills
+              <Translate>Top Kills</Translate>
             </CardTitle>
-            <CardDescription>Meilleurs combattants PvP</CardDescription>
+            <CardDescription>
+              <Translate>Meilleurs combattants PvP</Translate>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -329,9 +342,11 @@ export default async function StatsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-500" />
-              Top Niveau
+              <Translate>Top Niveau</Translate>
             </CardTitle>
-            <CardDescription>Membres les plus avancés</CardDescription>
+            <CardDescription>
+              <Translate>Membres les plus avancés</Translate>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -367,9 +382,11 @@ export default async function StatsPage() {
         {/* Specialty Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Répartition par Spécialité</CardTitle>
+            <CardTitle>
+              <Translate>Répartition par Spécialité</Translate>
+            </CardTitle>
             <CardDescription>
-              Distribution des rôles dans l'alliance
+              <Translate>Distribution des rôles dans l'alliance</Translate>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -382,10 +399,12 @@ export default async function StatsPage() {
                         stat.specialty
                       )}`}
                     >
-                      {stat.specialty || "Non définie"}
+                      <Translate from="auto">
+                        {stat.specialty || "Non définie"}
+                      </Translate>
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      {stat._count} membres
+                      <Translate>{stat._count} membres</Translate>
                     </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
@@ -400,9 +419,13 @@ export default async function StatsPage() {
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
-                      Puissance moy: {formatPower(stat._avg.power || 0)}
+                      <Translate>Puissance moy:</Translate>{" "}
+                      {formatPower(stat._avg.power || 0)}
                     </span>
-                    <span>Kills moy: {Math.round(stat._avg.kills || 0)}</span>
+                    <span>
+                      <Translate>Kills moy:</Translate>{" "}
+                      {Math.round(stat._avg.kills || 0)}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -416,10 +439,10 @@ export default async function StatsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-destructive" />
-                Membres Inactifs
+                <Translate>Membres Inactifs</Translate>
               </CardTitle>
               <CardDescription>
-                Membres inactifs depuis plus de 7 jours
+                <Translate>Membres inactifs depuis plus de 7 jours</Translate>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -447,7 +470,9 @@ export default async function StatsPage() {
                 ))}
                 {stats.inactiveMembers.length > 8 && (
                   <p className="text-sm text-muted-foreground text-center">
-                    ... et {stats.inactiveMembers.length - 8} autres
+                    <Translate>
+                      ... et {stats.inactiveMembers.length - 8} autres
+                    </Translate>
                   </p>
                 )}
               </div>

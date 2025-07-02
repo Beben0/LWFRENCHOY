@@ -69,7 +69,18 @@ export async function translate(
     if (!res.ok) throw new Error(`LibreTranslate API responded ${res.status}`);
 
     const json = (await res.json()) as { translatedText: string };
-    const translated = json.translatedText ?? text;
+    let translated = json.translatedText ?? text;
+
+    // Fix : Certains moteurs retirent l'espace après les tokens Markdown (###, ##, #, "1.", "-", "*").
+    // On réinsère une espace pour préserver le rendu Markdown.
+    translated = translated
+      // Titres #, ##, ###
+      .replace(/^(#+)(\S)/gm, "$1 $2")
+      // Listes numérotées "1." "2."
+      .replace(/^(\d+\.)(\S)/gm, "$1 $2")
+      // Puces "-" ou "*"
+      .replace(/^([*-])(\S)/gm, "$1 $2");
+
     translationCache.set(cacheKey, translated);
     persistCache();
     return translated;

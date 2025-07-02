@@ -8,9 +8,12 @@ services:
       NEXTAUTH_URL: "${NEXTAUTH_URL}"
       NEXTAUTH_SECRET: "${NEXTAUTH_SECRET}"
       NODE_ENV: "production"
+      LIBRETRANSLATE_ENDPOINT: "http://libretranslate:5000/translate"
     depends_on:
       postgres:
         condition: service_healthy
+      libretranslate:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test:
@@ -72,6 +75,10 @@ services:
       - ./nginx/nginx-freebox.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
+    restart: unless-stopped
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
     restart: unless-stopped
 
 volumes:

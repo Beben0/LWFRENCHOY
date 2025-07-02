@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import { hasPermission } from "@/lib/permissions";
 import {
   Calendar,
@@ -134,25 +135,25 @@ export default function VSHistoryPage() {
       case "VICTORY":
         return (
           <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full">
-            Victoire
+            <Translate>Victoire</Translate>
           </span>
         );
       case "DEFEAT":
         return (
           <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full">
-            Défaite
+            <Translate>Défaite</Translate>
           </span>
         );
       case "DRAW":
         return (
           <span className="px-2 py-1 bg-yellow-600 text-white text-xs rounded-full">
-            Égalité
+            <Translate>Égalité</Translate>
           </span>
         );
       default:
         return (
           <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded-full">
-            En cours
+            <Translate>En cours</Translate>
           </span>
         );
     }
@@ -163,19 +164,19 @@ export default function VSHistoryPage() {
       case "ACTIVE":
         return (
           <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
-            Actif
+            <Translate>Actif</Translate>
           </span>
         );
       case "COMPLETED":
         return (
           <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded-full">
-            Terminé
+            <Translate>Terminé</Translate>
           </span>
         );
       case "PREPARATION":
         return (
           <span className="px-2 py-1 bg-orange-600 text-white text-xs rounded-full">
-            Préparation
+            <Translate>Préparation</Translate>
           </span>
         );
       default:
@@ -193,7 +194,9 @@ export default function VSHistoryPage() {
         <Card>
           <CardContent className="p-6 text-center">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            <p>Chargement de l'historique...</p>
+            <p>
+              <Translate>Chargement de l'historique…</Translate>
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -223,7 +226,9 @@ export default function VSHistoryPage() {
                 <p className="text-2xl font-bold text-blue-400">
                   {vsWeeks.length}
                 </p>
-                <p className="text-xs text-gray-400">VS total</p>
+                <p className="text-xs text-gray-400">
+                  <Translate>VS total</Translate>
+                </p>
               </div>
               <Calendar className="h-8 w-8 text-gray-400" />
             </div>
@@ -237,7 +242,9 @@ export default function VSHistoryPage() {
                 <p className="text-2xl font-bold text-green-400">
                   {vsWeeks.filter((w) => w.result === "VICTORY").length}
                 </p>
-                <p className="text-xs text-gray-400">Victoires</p>
+                <p className="text-xs text-gray-400">
+                  <Translate>Victoires</Translate>
+                </p>
               </div>
               <Trophy className="h-8 w-8 text-gray-400" />
             </div>
@@ -251,7 +258,9 @@ export default function VSHistoryPage() {
                 <p className="text-2xl font-bold text-red-400">
                   {vsWeeks.filter((w) => w.result === "DEFEAT").length}
                 </p>
-                <p className="text-xs text-gray-400">Défaites</p>
+                <p className="text-xs text-gray-400">
+                  <Translate>Défaites</Translate>
+                </p>
               </div>
               <Target className="h-8 w-8 text-gray-400" />
             </div>
@@ -272,7 +281,9 @@ export default function VSHistoryPage() {
                     : 0}
                   %
                 </p>
-                <p className="text-xs text-gray-400">Taux victoire</p>
+                <p className="text-xs text-gray-400">
+                  <Translate>Taux victoire</Translate>
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-gray-400" />
             </div>
@@ -291,7 +302,7 @@ export default function VSHistoryPage() {
                 size="sm"
               >
                 <Calendar className="w-4 h-4 mr-2" />
-                Semaines VS
+                <Translate>Semaines VS</Translate>
               </Button>
               <Button
                 variant={view === "members" ? "default" : "outline"}
@@ -299,7 +310,7 @@ export default function VSHistoryPage() {
                 size="sm"
               >
                 <Users className="w-4 h-4 mr-2" />
-                Classement Membres
+                <Translate>Classement Membres</Translate>
               </Button>
             </div>
 
@@ -327,10 +338,18 @@ export default function VSHistoryPage() {
                     onChange={(e) => setSelectedStatus(e.target.value)}
                     className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm"
                   >
-                    <option value="ALL">Tous</option>
-                    <option value="ACTIVE">Actif</option>
-                    <option value="COMPLETED">Terminé</option>
-                    <option value="PREPARATION">Préparation</option>
+                    <option value="ALL">
+                      <Translate>Tous</Translate>
+                    </option>
+                    <option value="ACTIVE">
+                      <Translate>Actif</Translate>
+                    </option>
+                    <option value="COMPLETED">
+                      <Translate>Terminé</Translate>
+                    </option>
+                    <option value="PREPARATION">
+                      <Translate>Préparation</Translate>
+                    </option>
                   </select>
                 </div>
               )}
@@ -345,7 +364,8 @@ export default function VSHistoryPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Historique des semaines VS ({filteredWeeks.length})
+              <Translate>Historique des semaines VS</Translate> (
+              {filteredWeeks.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -353,15 +373,27 @@ export default function VSHistoryPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left p-3 font-semibold">Semaine</th>
-                    <th className="text-left p-3 font-semibold">Période</th>
-                    <th className="text-left p-3 font-semibold">Ennemi</th>
-                    <th className="text-center p-3 font-semibold">Score</th>
-                    <th className="text-center p-3 font-semibold">
-                      Participants
+                    <th className="text-left p-3 font-semibold">
+                      <Translate>Semaine</Translate>
                     </th>
-                    <th className="text-center p-3 font-semibold">Résultat</th>
-                    <th className="text-center p-3 font-semibold">Statut</th>
+                    <th className="text-left p-3 font-semibold">
+                      <Translate>Période</Translate>
+                    </th>
+                    <th className="text-left p-3 font-semibold">
+                      <Translate>Ennemi</Translate>
+                    </th>
+                    <th className="text-center p-3 font-semibold">
+                      <Translate>Score</Translate>
+                    </th>
+                    <th className="text-center p-3 font-semibold">
+                      <Translate>Participants</Translate>
+                    </th>
+                    <th className="text-center p-3 font-semibold">
+                      <Translate>Résultat</Translate>
+                    </th>
+                    <th className="text-center p-3 font-semibold">
+                      <Translate>Statut</Translate>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -374,7 +406,9 @@ export default function VSHistoryPage() {
                         <Link href={`/admin/vs/${week.id}`}>
                           <div>
                             <div className="font-medium">
-                              {week.title || `Semaine ${week.weekNumber}`}
+                              <Translate from="auto">
+                                {week.title || `Semaine ${week.weekNumber}`}
+                              </Translate>
                             </div>
                             <div className="text-sm text-gray-400">
                               {week.year} - S{week.weekNumber}
@@ -453,7 +487,8 @@ export default function VSHistoryPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Classement des membres ({filteredMembers.length})
+              <Translate>Classement des membres</Translate> (
+              {filteredMembers.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -461,13 +496,17 @@ export default function VSHistoryPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left p-3 font-semibold">Rang</th>
-                    <th className="text-left p-3 font-semibold">Membre</th>
-                    <th className="text-center p-3 font-semibold">
-                      Points Total
+                    <th className="text-left p-3 font-semibold">
+                      <Translate>Rang</Translate>
+                    </th>
+                    <th className="text-left p-3 font-semibold">
+                      <Translate>Membre</Translate>
                     </th>
                     <th className="text-center p-3 font-semibold">
-                      Moyenne/VS
+                      <Translate>Points Total</Translate>
+                    </th>
+                    <th className="text-center p-3 font-semibold">
+                      <Translate>Moyenne/VS</Translate>
                     </th>
                     <th className="text-center p-3 font-semibold">
                       Participation
@@ -475,8 +514,8 @@ export default function VSHistoryPage() {
                     <th className="text-center p-3 font-semibold">
                       VS Participés
                     </th>
-                    <th className="text-left p-3 font-semibold">
-                      Meilleure Semaine
+                    <th className="text-center p-3 font-semibold">
+                      <Translate>Meilleure Semaine</Translate>
                     </th>
                   </tr>
                 </thead>
@@ -527,6 +566,7 @@ export default function VSHistoryPage() {
                       <td className="p-3">
                         <div className="text-sm">
                           <div className="font-medium">
+                            <Translate>Week</Translate>{" "}
                             {member.bestWeek.weekTitle}
                           </div>
                           <div className="text-orange-400">

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import { Download, Filter, Plus, Search, Upload, Users, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -65,7 +66,9 @@ export function MembersHeader({
                 Gestion des Membres
               </h1>
               <p className="text-sm text-gray-400 mt-2">
-                {totalMembers} membres dans votre alliance • Gestion complète
+                {totalMembers}{" "}
+                <Translate>membres dans votre alliance</Translate> •{" "}
+                <Translate>Gestion complète</Translate>
               </p>
             </div>
 
@@ -130,7 +133,9 @@ export function MembersHeader({
               }`}
             >
               <Filter className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Filtres</span>
+              <span className="hidden sm:inline">
+                <Translate>Filtres</Translate>
+              </span>
               {hasActiveFilters && (
                 <span className="ml-2 w-2 h-2 bg-orange-500 rounded-full" />
               )}
@@ -144,7 +149,9 @@ export function MembersHeader({
                 className="text-gray-400 hover:text-white hover:bg-gray-700"
               >
                 <X className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Effacer</span>
+                <span className="hidden sm:inline">
+                  <Translate>Effacer</Translate>
+                </span>
               </Button>
             )}
           </div>
@@ -156,7 +163,7 @@ export function MembersHeader({
                 {/* Specialty Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Spécialité
+                    <Translate>Spécialité</Translate>
                   </label>
                   <select
                     value={currentSpecialty}
@@ -165,10 +172,12 @@ export function MembersHeader({
                     }
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 text-white"
                   >
-                    <option value="">Toutes les spécialités</option>
+                    <option value="">
+                      <Translate>Toutes les spécialités</Translate>
+                    </option>
                     {filterOptions.specialties.map((specialty) => (
                       <option key={specialty} value={specialty}>
-                        {specialty}
+                        <Translate>{specialty}</Translate>
                       </option>
                     ))}
                   </select>
@@ -177,7 +186,7 @@ export function MembersHeader({
                 {/* Status Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Statut
+                    <Translate>Statut</Translate>
                   </label>
                   <select
                     value={currentStatus}
@@ -186,16 +195,22 @@ export function MembersHeader({
                     }
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 text-white"
                   >
-                    <option value="">Tous les statuts</option>
-                    <option value="ACTIVE">Actif</option>
-                    <option value="INACTIVE">Inactif</option>
+                    <option value="">
+                      <Translate>Tous les statuts</Translate>
+                    </option>
+                    <option value="ACTIVE">
+                      <Translate>Actif</Translate>
+                    </option>
+                    <option value="INACTIVE">
+                      <Translate>Inactif</Translate>
+                    </option>
                   </select>
                 </div>
 
                 {/* Role Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Rôle Alliance
+                    <Translate>Rôle Alliance</Translate>
                   </label>
                   <select
                     value={currentRole}
@@ -204,14 +219,18 @@ export function MembersHeader({
                     }
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 text-white"
                   >
-                    <option value="">Tous les rôles</option>
+                    <option value="">
+                      <Translate>Tous les rôles</Translate>
+                    </option>
                     {filterOptions.roles.map((role) => (
                       <option key={role} value={role}>
-                        {role === "R5"
-                          ? "Leader (R5)"
-                          : role === "R4"
-                          ? "Officier (R4)"
-                          : "Membre"}
+                        {role === "R5" ? (
+                          <Translate>Leader (R5)</Translate>
+                        ) : role === "R4" ? (
+                          <Translate>Officier (R4)</Translate>
+                        ) : (
+                          <Translate>Membre</Translate>
+                        )}
                       </option>
                     ))}
                   </select>

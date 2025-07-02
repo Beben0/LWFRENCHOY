@@ -11,9 +11,12 @@ services:
       NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
       NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-super-secret-key-change-in-production}"
       NODE_ENV: "production"
+      LIBRETRANSLATE_ENDPOINT: "http://libretranslate:5000/translate"
     depends_on:
       postgres:
         condition: service_healthy
+      libretranslate:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test:
@@ -52,6 +55,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    ports:
+      - "5005:5000"
+    restart: unless-stopped
 
 volumes:
   postgres_data:

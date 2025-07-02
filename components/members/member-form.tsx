@@ -6,6 +6,7 @@ import {
 } from "@/components/forms/reference-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -95,14 +96,17 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>{member?.id ? "Modifier" : "Nouveau"} Membre</CardTitle>
+        <CardTitle>
+          <Translate>{member?.id ? "Modifier" : "Nouveau"}</Translate>{" "}
+          <Translate>Membre</Translate>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-                Pseudo *
+                <Translate>Pseudo</Translate> *
               </label>
               <input
                 type="text"
@@ -117,7 +121,7 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-                Level *
+                <Translate>Level</Translate> *
               </label>
               <input
                 type="number"
@@ -134,7 +138,7 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-                Power *
+                <Translate>Power</Translate> *
               </label>
               <input
                 type="text"
@@ -150,7 +154,7 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-                Kills
+                <Translate>Kills</Translate>
               </label>
               <input
                 type="number"
@@ -165,7 +169,7 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-                Spécialité
+                <Translate>Spécialité</Translate>
               </label>
               <ReferenceSelect
                 category="MEMBER_SPECIALTY"
@@ -179,7 +183,7 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-                Rôle Alliance
+                <Translate>Rôle Alliance</Translate>
               </label>
               <ReferenceSelect
                 category="ALLIANCE_ROLE"
@@ -194,7 +198,7 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-                Statut
+                <Translate>Statut</Translate>
               </label>
               <select
                 value={formData.status}
@@ -203,15 +207,19 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
                 }
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-red-500 focus:border-red-500"
               >
-                <option value="ACTIVE">Actif</option>
-                <option value="INACTIVE">Inactif</option>
+                <option value="ACTIVE">
+                  <Translate>Actif</Translate>
+                </option>
+                <option value="INACTIVE">
+                  <Translate>Inactif</Translate>
+                </option>
               </select>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
-              Tags
+              <Translate>Tags</Translate>
             </label>
             <ReferenceMultiSelect
               category="MEMBER_TAG"
@@ -225,7 +233,7 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
 
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
-              Notes
+              <Translate>Notes</Translate>
             </label>
             <textarea
               value={formData.notes}
@@ -246,17 +254,26 @@ export function MemberForm({ member, onClose }: MemberFormProps) {
                   onClick={handleDelete}
                   disabled={loading}
                 >
-                  Supprimer
+                  <Translate>Supprimer</Translate>
                 </Button>
               )}
             </div>
 
             <div className="space-x-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Annuler
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={loading}
+              >
+                <Translate>Annuler</Translate>
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? "..." : member?.id ? "Modifier" : "Créer"}
+                {loading ? (
+                  "..."
+                ) : (
+                  <Translate>{member?.id ? "Modifier" : "Créer"}</Translate>
+                )}
               </Button>
             </div>
           </div>

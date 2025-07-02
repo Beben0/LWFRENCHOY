@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import {
   BarChart3,
   Crown,
@@ -206,7 +207,7 @@ export function VSPageContent() {
           <CardContent className="p-8 text-center">
             <Sword className="w-16 h-16 animate-spin text-orange-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">
-              Chargement des VS...
+              <Translate>Chargement des VS…</Translate>
             </h3>
           </CardContent>
         </Card>
@@ -221,10 +222,12 @@ export function VSPageContent() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-2xl text-white">
             <Sword className="w-8 h-8 text-orange-400" />
-            VS (Versus Wars)
+            <Translate>VS (Versus Wars)</Translate>
           </CardTitle>
           <p className="text-gray-400">
-            Historique des guerres, classements et détails des participants
+            <Translate>
+              Historique des guerres, classements et détails des participants
+            </Translate>
           </p>
 
           {/* Stats globales */}
@@ -233,25 +236,33 @@ export function VSPageContent() {
               <div className="text-2xl font-bold text-white">
                 {metadata.total || 0}
               </div>
-              <div className="text-sm text-gray-400">Total VS</div>
+              <div className="text-sm text-gray-400">
+                <Translate>Total VS</Translate>
+              </div>
             </div>
             <div className="text-center bg-green-600/20 p-4 rounded-lg">
               <div className="text-2xl font-bold text-green-400">
                 {metadata.victories || 0}
               </div>
-              <div className="text-sm text-gray-400">Victoires</div>
+              <div className="text-sm text-gray-400">
+                <Translate>Victoires</Translate>
+              </div>
             </div>
             <div className="text-center bg-red-600/20 p-4 rounded-lg">
               <div className="text-2xl font-bold text-red-400">
                 {metadata.defeats || 0}
               </div>
-              <div className="text-sm text-gray-400">Défaites</div>
+              <div className="text-sm text-gray-400">
+                <Translate>Défaites</Translate>
+              </div>
             </div>
             <div className="text-center bg-blue-600/20 p-4 rounded-lg">
               <div className="text-2xl font-bold text-blue-400">
                 {metadata.winRate || 0}%
               </div>
-              <div className="text-sm text-gray-400">Taux victoire</div>
+              <div className="text-sm text-gray-400">
+                <Translate>Taux victoire</Translate>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -269,8 +280,12 @@ export function VSPageContent() {
           }`}
         >
           <Zap className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">VS Actuel</span>
-          <span className="sm:hidden">Actuel</span>
+          <span className="hidden sm:inline">
+            <Translate>VS Actuel</Translate>
+          </span>
+          <span className="sm:hidden">
+            <Translate>Actuel</Translate>
+          </span>
         </Button>
         <Button
           variant="ghost"
@@ -282,8 +297,12 @@ export function VSPageContent() {
           }`}
         >
           <History className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">Historique</span>
-          <span className="sm:hidden">Hist.</span>
+          <span className="hidden sm:inline">
+            <Translate>Historique</Translate>
+          </span>
+          <span className="sm:hidden">
+            <Translate>Hist.</Translate>
+          </span>
         </Button>
         <Button
           variant="ghost"
@@ -295,8 +314,12 @@ export function VSPageContent() {
           }`}
         >
           <Crown className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">Classements</span>
-          <span className="sm:hidden">Rank</span>
+          <span className="hidden sm:inline">
+            <Translate>Classements</Translate>
+          </span>
+          <span className="sm:hidden">
+            <Translate>Rank</Translate>
+          </span>
         </Button>
         <Button
           variant="ghost"
@@ -308,8 +331,12 @@ export function VSPageContent() {
           }`}
         >
           <BarChart3 className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">Détails</span>
-          <span className="sm:hidden">Dét.</span>
+          <span className="hidden sm:inline">
+            <Translate>Détails</Translate>
+          </span>
+          <span className="sm:hidden">
+            <Translate>Dét.</Translate>
+          </span>
         </Button>
       </div>
 
@@ -324,13 +351,15 @@ export function VSPageContent() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <CardTitle className="text-xl text-white">
-                        Semaine {currentWeek.weekNumber}/{currentWeek.year}
+                        <Translate>Semaine</Translate> {currentWeek.weekNumber}/
+                        {currentWeek.year}
                         {currentWeek.title && ` - ${currentWeek.title}`}
                       </CardTitle>
                       <p className="text-gray-400 mt-1">
-                        {currentWeek.enemyName &&
-                          `vs ${currentWeek.enemyName} • `}
-                        {currentWeek._count.participants} participants •{" "}
+                        {currentWeek.enemyName && <Translate>vs</Translate>}{" "}
+                        {currentWeek.enemyName && `${currentWeek.enemyName} • `}
+                        {currentWeek._count.participants}{" "}
+                        <Translate>participants</Translate> •{" "}
                         {currentWeek.status}
                       </p>
                     </div>
@@ -338,9 +367,15 @@ export function VSPageContent() {
                       <Badge className={getResultColor(currentWeek.result)}>
                         {getResultIcon(currentWeek.result)}
                         <span className="ml-1">
-                          {currentWeek.result === "VICTORY" && "Victoire"}
-                          {currentWeek.result === "DEFEAT" && "Défaite"}
-                          {currentWeek.result === "DRAW" && "Égalité"}
+                          {currentWeek.result === "VICTORY" && (
+                            <Translate>Victoire</Translate>
+                          )}
+                          {currentWeek.result === "DEFEAT" && (
+                            <Translate>Défaite</Translate>
+                          )}
+                          {currentWeek.result === "DRAW" && (
+                            <Translate>Égalité</Translate>
+                          )}
                         </span>
                       </Badge>
                     )}
@@ -351,7 +386,7 @@ export function VSPageContent() {
                     {/* Score actuel */}
                     <div className="text-center">
                       <h4 className="text-sm font-medium text-gray-300 mb-2">
-                        Score Actuel
+                        <Translate>Score Actuel</Translate>
                       </h4>
                       <div className="flex items-center justify-center gap-4 text-3xl font-bold">
                         <span className="text-blue-400">
@@ -372,7 +407,7 @@ export function VSPageContent() {
                     {/* Résultats par jour (6 jours) */}
                     <div>
                       <h4 className="text-sm font-medium text-gray-300 mb-2">
-                        Résultats par jour
+                        <Translate>Résultats par jour</Translate>
                       </h4>
                       <div className="grid grid-cols-6 gap-1">
                         {Array.from({ length: 6 }, (_, i) => {
@@ -412,7 +447,7 @@ export function VSPageContent() {
                   {/* Top participants */}
                   <div className="mt-6">
                     <h4 className="text-sm font-medium text-gray-300 mb-3">
-                      Top Participants
+                      <Translate>Top Participants</Translate>
                     </h4>
                     <div className="space-y-2">
                       {currentWeek.participants
@@ -469,10 +504,12 @@ export function VSPageContent() {
               <CardContent className="p-8 text-center">
                 <Target className="w-16 h-16 text-gray-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">
-                  Aucun VS en cours
+                  <Translate>Aucun VS en cours</Translate>
                 </h3>
                 <p className="text-gray-400">
-                  Le prochain VS apparaîtra ici quand il sera programmé
+                  <Translate>
+                    Le prochain VS apparaîtra ici quand il sera programmé
+                  </Translate>
                 </p>
               </CardContent>
             </Card>
@@ -485,7 +522,7 @@ export function VSPageContent() {
           <div className="flex items-center gap-2 mb-4">
             <History className="w-5 h-5 text-blue-400" />
             <h3 className="text-lg font-semibold text-white">
-              Historique des VS
+              <Translate>Historique des VS</Translate>
             </h3>
           </div>
 
@@ -494,10 +531,10 @@ export function VSPageContent() {
               <CardContent className="p-8 text-center">
                 <Sword className="w-16 h-16 text-gray-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">
-                  Aucun historique VS
+                  <Translate>Aucun historique VS</Translate>
                 </h3>
                 <p className="text-gray-400">
-                  L'historique des VS apparaîtra ici
+                  <Translate>L'historique des VS apparaîtra ici</Translate>
                 </p>
               </CardContent>
             </Card>
@@ -515,12 +552,15 @@ export function VSPageContent() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <CardTitle className="text-lg text-white">
-                        Semaine {week.weekNumber}/{week.year}
+                        <Translate>Semaine</Translate> {week.weekNumber}/
+                        {week.year}
                         {week.title && ` - ${week.title}`}
                       </CardTitle>
                       <p className="text-sm text-gray-400 mt-1">
-                        {week.enemyName && `vs ${week.enemyName} • `}
-                        {week._count.participants} participants • {week.status}
+                        {week.enemyName && <Translate>vs</Translate>}{" "}
+                        {week.enemyName && `${week.enemyName} • `}
+                        {week._count.participants}{" "}
+                        <Translate>participants</Translate> • {week.status}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -528,9 +568,15 @@ export function VSPageContent() {
                         <Badge className={getResultColor(week.result)}>
                           {getResultIcon(week.result)}
                           <span className="ml-1">
-                            {week.result === "VICTORY" && "Victoire"}
-                            {week.result === "DEFEAT" && "Défaite"}
-                            {week.result === "DRAW" && "Égalité"}
+                            {week.result === "VICTORY" && (
+                              <Translate>Victoire</Translate>
+                            )}
+                            {week.result === "DEFEAT" && (
+                              <Translate>Défaite</Translate>
+                            )}
+                            {week.result === "DRAW" && (
+                              <Translate>Égalité</Translate>
+                            )}
                           </span>
                         </Badge>
                       )}
@@ -542,7 +588,7 @@ export function VSPageContent() {
                     {/* Score final */}
                     <div className="text-center">
                       <h4 className="text-sm font-medium text-gray-300 mb-2">
-                        Score Final
+                        <Translate>Score Final</Translate>
                       </h4>
                       <div className="flex items-center justify-center gap-4 text-xl font-bold">
                         <span className="text-blue-400">
@@ -561,7 +607,7 @@ export function VSPageContent() {
                     {/* Résultats par jour (6 jours) */}
                     <div className="col-span-2">
                       <h4 className="text-sm font-medium text-gray-300 mb-2">
-                        Résultats par jour
+                        <Translate>Résultats par jour</Translate>
                       </h4>
                       <div className="grid grid-cols-6 gap-1">
                         {Array.from({ length: 6 }, (_, i) => {
@@ -608,13 +654,15 @@ export function VSPageContent() {
         <div className="space-y-6">
           <div className="flex items-center gap-2 mb-4">
             <Crown className="w-5 h-5 text-purple-400" />
-            <h3 className="text-lg font-semibold text-white">Classements</h3>
+            <h3 className="text-lg font-semibold text-white">
+              <Translate>Classements</Translate>
+            </h3>
           </div>
 
           <Card className="bg-gray-800/50 border-gray-700">
             <CardHeader>
               <CardTitle className="text-lg text-white">
-                Top Performers
+                <Translate>Top Performers</Translate>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -622,10 +670,12 @@ export function VSPageContent() {
                 <div className="text-center py-8">
                   <Medal className="w-16 h-16 text-gray-500 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-white mb-2">
-                    Aucun classement disponible
+                    <Translate>Aucun classement disponible</Translate>
                   </h3>
                   <p className="text-gray-400">
-                    Les classements apparaîtront quand les VS seront actifs
+                    <Translate>
+                      Les classements apparaîtront quand les VS seront actifs
+                    </Translate>
                   </p>
                 </div>
               ) : (
@@ -668,7 +718,7 @@ export function VSPageContent() {
                                 key={i}
                                 className="text-xs bg-yellow-600/20 text-yellow-400"
                               >
-                                {reward}
+                                <Translate from="auto">{reward}</Translate>
                               </Badge>
                             ))}
                           </div>
@@ -678,7 +728,9 @@ export function VSPageContent() {
                         <div className="text-2xl font-bold text-orange-400">
                           {participant.points}
                         </div>
-                        <div className="text-xs text-gray-400">points</div>
+                        <div className="text-xs text-gray-400">
+                          <Translate>points</Translate>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -694,17 +746,20 @@ export function VSPageContent() {
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5 text-green-400" />
             <h3 className="text-lg font-semibold text-white">
-              Détails - Semaine {selectedWeek.weekNumber}/{selectedWeek.year}
+              <Translate>Détails</Translate> - <Translate>Semaine</Translate>{" "}
+              {selectedWeek.weekNumber}/{selectedWeek.year}
             </h3>
           </div>
 
           <Card className="bg-gray-800/50 border-gray-700">
             <CardHeader>
               <CardTitle className="text-lg text-white">
-                Résultats détaillés par participant
+                <Translate>Résultats détaillés par participant</Translate>
               </CardTitle>
               <p className="text-gray-400">
-                Performance quotidienne de chaque participant (6 jours de VS)
+                <Translate>
+                  Performance quotidienne de chaque participant (6 jours de VS)
+                </Translate>
               </p>
             </CardHeader>
             <CardContent>
@@ -728,7 +783,8 @@ export function VSPageContent() {
                               "?"}
                           </h4>
                           <div className="text-sm text-gray-400">
-                            Total: {participant.points} points
+                            <Translate>Total</Translate>: {participant.points}{" "}
+                            <Translate>points</Translate>
                           </div>
                         </div>
                       </div>
@@ -737,7 +793,7 @@ export function VSPageContent() {
                           {participant.victoryPercentage}%
                         </div>
                         <div className="text-xs text-gray-400">
-                          participation
+                          <Translate>participation</Translate>
                         </div>
                       </div>
                     </div>
@@ -776,10 +832,12 @@ export function VSPageContent() {
                   <div className="text-center py-8">
                     <Users className="w-16 h-16 text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-white mb-2">
-                      Aucun participant
+                      <Translate>Aucun participant</Translate>
                     </h3>
                     <p className="text-gray-400">
-                      Les détails des participants apparaîtront ici
+                      <Translate>
+                        Les détails des participants apparaîtront ici
+                      </Translate>
                     </p>
                   </div>
                 )}

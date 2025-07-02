@@ -3,6 +3,8 @@
 import { PermissionGuard } from "@/components/auth/permission-guard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
+import { translate } from "@/lib/translation";
 import { Edit, Plus, Search, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MemberForm } from "./member-form";
@@ -46,6 +48,38 @@ export function MembersWithCrud() {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
   const [totalMembersCount, setTotalMembersCount] = useState(0);
+
+  // Placeholder translation handling
+  const defaultPlaceholder = "Rechercher un membre...";
+  const [searchPlaceholder, setSearchPlaceholder] =
+    useState<string>(defaultPlaceholder);
+
+  // Detect current locale similarly to <Translate>
+  useEffect(() => {
+    const detectLang = (): string => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("locale");
+        if (stored) return stored;
+      }
+      if (typeof document !== "undefined") {
+        const htmlLang = document.documentElement.lang;
+        if (htmlLang) return htmlLang.split("-")[0];
+      }
+      if (typeof navigator !== "undefined") {
+        return navigator.language.split("-")[0];
+      }
+      return "fr";
+    };
+
+    const lang = detectLang();
+    if (lang === "fr") {
+      setSearchPlaceholder(defaultPlaceholder);
+    } else {
+      translate(defaultPlaceholder, { sourceLang: "fr", targetLang: lang })
+        .then((res) => setSearchPlaceholder(res))
+        .catch(() => setSearchPlaceholder(defaultPlaceholder));
+    }
+  }, []);
 
   const fetchMembers = async () => {
     try {
@@ -131,10 +165,11 @@ export function MembersWithCrud() {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Users className="w-8 h-8" />
-            Gestion des Membres
+            <Translate>Gestion des Membres</Translate>
           </h1>
           <p className="text-muted-foreground">
-            {totalMembersCount} membres dans votre alliance
+            {totalMembersCount}{" "}
+            <Translate>membres dans votre alliance</Translate>
           </p>
         </div>
 
@@ -145,7 +180,7 @@ export function MembersWithCrud() {
             className="lastwar-gradient text-black"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Nouveau Membre
+            <Translate>Nouveau Membre</Translate>
           </Button>
         </PermissionGuard>
       </div>
@@ -157,21 +192,24 @@ export function MembersWithCrud() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Rechercher un membre..."
+              placeholder={searchPlaceholder}
               className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <p className="text-sm text-muted-foreground mt-2">
-            Page {page}/{totalPages} • {members.length} affichés
+            <Translate>Page</Translate> {page}/{totalPages} • {members.length}{" "}
+            <Translate>affichés</Translate>
           </p>
         </CardContent>
       </Card>
 
       {/* Members List */}
       {loading ? (
-        <div className="text-center py-8">Chargement...</div>
+        <div className="text-center py-8">
+          <Translate>Chargement…</Translate>
+        </div>
       ) : (
         <div className="space-y-2">
           {members.map((member) => (
@@ -191,24 +229,39 @@ export function MembersWithCrud() {
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {member.status}
+                        <Translate>
+                          {member.status === "ACTIVE" ? "Actif" : "Inactif"}
+                        </Translate>
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {member.allianceRole === "R5"
-                          ? "Leader (R5)"
-                          : member.allianceRole === "R4"
-                          ? "Officier (R4)"
-                          : "Membre"}
+                        {member.allianceRole === "R5" ? (
+                          <Translate>Leader (R5)</Translate>
+                        ) : member.allianceRole === "R4" ? (
+                          <Translate>Officier (R4)</Translate>
+                        ) : (
+                          <Translate>Membre</Translate>
+                        )}
                       </span>
                     </div>
 
                     <div className="text-sm text-muted-foreground space-x-4">
-                      <span>Level {member.level}</span>
                       <span>
-                        Power: {Number(member.power).toLocaleString()}
+                        <Translate>Level</Translate> {member.level}
                       </span>
-                      <span>Kills: {member.kills}</span>
-                      <span>{member.specialty || "Aucune spécialité"}</span>
+                      <span>
+                        <Translate>Power</Translate>:{" "}
+                        {Number(member.power).toLocaleString()}
+                      </span>
+                      <span>
+                        <Translate>Kills</Translate>: {member.kills}
+                      </span>
+                      <span>
+                        {member.specialty ? (
+                          <Translate>{member.specialty}</Translate>
+                        ) : (
+                          <Translate>Aucune spécialité</Translate>
+                        )}
+                      </span>
                     </div>
 
                     {member.notes && (
@@ -220,7 +273,7 @@ export function MembersWithCrud() {
 
                   <div className="flex flex-col gap-2">
                     <div className="text-right text-xs text-muted-foreground">
-                      Dernière activité:
+                      <Translate>Dernière activité</Translate>:
                       <br />
                       {new Date(member.lastActive).toLocaleDateString()}
                     </div>

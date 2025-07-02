@@ -374,7 +374,17 @@ export function EnhancedTrainSchedule({
                         min-h-[120px] p-3 rounded border-2 cursor-pointer transition-all
                         ${statusConfig?.color || "bg-muted/20 border-muted"}
                         ${
-                          train.metadata.isToday ? "ring-2 ring-orange-500" : ""
+                          (() => {
+                            const d = new Date(train.date);
+                            const nowLocal = new Date();
+                            return (
+                              d.getFullYear() === nowLocal.getFullYear() &&
+                              d.getMonth() === nowLocal.getMonth() &&
+                              d.getDate() === nowLocal.getDate()
+                            );
+                          })()
+                            ? "ring-2 ring-orange-500"
+                            : ""
                         }
                         hover:shadow-lg
                       `}
@@ -394,7 +404,15 @@ export function EnhancedTrainSchedule({
                           </div>
                           <div className="flex items-center gap-1">
                             <StatusIcon className="w-3 h-3" />
-                            {train.metadata.isToday && (
+                            {(() => {
+                              const d = new Date(train.date);
+                              const n = new Date();
+                              return (
+                                d.getFullYear() === n.getFullYear() &&
+                                d.getMonth() === n.getMonth() &&
+                                d.getDate() === n.getDate()
+                              );
+                            })() && (
                               <Badge className="text-xs bg-orange-500">
                                 Aujourd'hui
                               </Badge>

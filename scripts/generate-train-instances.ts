@@ -38,7 +38,7 @@ function calculateRealDepartureTime(departureTime: string): string {
 }
 
 function getDayOfWeek(date: Date): string {
-  const dayIndex = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const dayIndex = date.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
   const dayMapping = {
     0: "sunday",
     1: "monday",
@@ -61,15 +61,17 @@ async function generateTrainInstances(daysAhead: number = 14) {
   const skipped = [];
 
   for (let i = 0; i <= daysAhead; i++) {
-    // Utiliser une approche plus robuste pour calculer la date
+    // Construire la date à 12:00 UTC pour qu'elle reste dans le bon jour quel que soit le fuseau
     const targetDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + i,
-      0,
-      0,
-      0,
-      0
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + i,
+        12, // midi UTC
+        0,
+        0,
+        0
+      )
     );
 
     const dayOfWeek = getDayOfWeek(targetDate);
@@ -161,51 +163,45 @@ async function updateTrainStatuses() {
   const now = new Date();
   let updated = 0;
 
-  // 1. Trains en embarquement (dans les 4h avant le départ)
-  const trainsToBoard = await prisma.trainInstance.findMany({
-    where: {
-      status: TrainStatus.SCHEDULED,
-      isArchived: false,
-      date: {
-        lte: new Date(now.getTime() + 4 * 60 * 60 * 1000), // Dans les 4h
-        gte: now, // Pas encore passé
-      },
-    },
-  });
-
-  for (const train of trainsToBoard) {
-    const [hours, minutes] = train.departureTime.split(":").map(Number);
-    const departureDateTime = new Date(train.date);
-    departureDateTime.setHours(hours, minutes, 0, 0);
-
-    const timeUntilDeparture = departureDateTime.getTime() - now.getTime();
-
-    // Si c'est dans les 4h, passer en BOARDING
-    if (timeUntilDeparture <= 4 * 60 * 60 * 1000 && timeUntilDeparture > 0) {
-      await prisma.trainInstance.update({
-        where: { id: train.id },
-        data: { status: TrainStatus.BOARDING },
-      });
-      updated++;
-    }
-  }
-
-  // 2. Trains partis (heure de départ dépassée)
-  const trainsToDeparture = await prisma.trainInstance.findMany({
+  // 1. Passer en BOARDING si on est entre l'heure d'inscription (departureTime)
+  //    et l'heure réelle de départ (realDepartureTime)
+  const trainsToCheck = await prisma.trainInstance.findMany({
     where: {
       status: { in: [TrainStatus.SCHEDULED, TrainStatus.BOARDING] },
       isArchived: false,
     },
   });
 
-  for (const train of trainsToDeparture) {
+  for (const train of trainsToCheck) {
+    const [hours, minutes] = train.departureTime.split(":").map(Number);
+    const departureDateTime = new Date(train.date);
+    departureDateTime.setHours(hours, minutes, 0, 0);
+
     const [realHours, realMinutes] = train.realDepartureTime
       .split(":")
       .map(Number);
     const realDepartureDateTime = new Date(train.date);
     realDepartureDateTime.setHours(realHours, realMinutes, 0, 0);
 
-    if (now > realDepartureDateTime) {
+    // Ajustement si l'heure réelle franchit minuit (ex: 20:00 -> 00:00 le lendemain)
+    if (realDepartureDateTime < departureDateTime) {
+      realDepartureDateTime.setDate(realDepartureDateTime.getDate() + 1);
+    }
+
+    if (
+      train.status === TrainStatus.SCHEDULED &&
+      now >= departureDateTime &&
+      now < realDepartureDateTime
+    ) {
+      await prisma.trainInstance.update({
+        where: { id: train.id },
+        data: { status: TrainStatus.BOARDING },
+      });
+      updated++;
+    }
+
+    // 2. Passer en DEPARTED si l'heure réelle est dépassée
+    if (train.status !== TrainStatus.DEPARTED && now >= realDepartureDateTime) {
       await prisma.trainInstance.update({
         where: { id: train.id },
         data: { status: TrainStatus.DEPARTED },

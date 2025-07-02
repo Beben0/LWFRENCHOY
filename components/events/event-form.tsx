@@ -6,6 +6,8 @@ import {
 } from "@/components/forms/reference-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
+import { translate } from "@/lib/translation";
 import {
   Calendar,
   CalendarDays,
@@ -17,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface EventFormData {
   title: string;
@@ -71,6 +73,58 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Placeholder translation
+  const defaultPlaceholders = {
+    title: "Titre de l'événement",
+    type: "Sélectionner le type...",
+    shortDesc: "Description courte de l'événement",
+    tags: "Ajouter des tags...",
+    detailed:
+      "Description détaillée avec instructions, objectifs, récompenses...",
+  } as const;
+
+  const [ph, setPh] =
+    useState<Record<keyof typeof defaultPlaceholders, string>>(
+      defaultPlaceholders
+    );
+
+  useEffect(() => {
+    const detectLang = (): string => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("locale");
+        if (stored) return stored;
+      }
+      if (typeof document !== "undefined") {
+        const htmlLang = document.documentElement.lang;
+        if (htmlLang) return htmlLang.split("-")[0];
+      }
+      if (typeof navigator !== "undefined") {
+        return navigator.language.split("-")[0];
+      }
+      return "fr";
+    };
+
+    const lang = detectLang();
+    if (lang === "fr") return; // already default
+
+    (async () => {
+      const entries = await Promise.all(
+        Object.entries(defaultPlaceholders).map(async ([k, v]) => {
+          try {
+            const t = await translate(v, {
+              sourceLang: "fr",
+              targetLang: lang,
+            });
+            return [k, t] as const;
+          } catch {
+            return [k, v] as const;
+          }
+        })
+      );
+      setPh(Object.fromEntries(entries) as any);
+    })();
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -185,12 +239,12 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
           {event ? (
             <>
               <FileText className="w-5 h-5" />
-              Modifier l'événement
+              <Translate>Modifier l'événement</Translate>
             </>
           ) : (
             <>
               <Plus className="w-5 h-5" />
-              Nouvel événement
+              <Translate>Nouvel événement</Translate>
             </>
           )}
         </CardTitle>
@@ -203,7 +257,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Titre *
+                  <Translate>Titre</Translate> *
                 </label>
                 <input
                   type="text"
@@ -212,7 +266,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                   className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                     errors.title ? "border-red-500" : "border-gray-600"
                   }`}
-                  placeholder="Titre de l'événement"
+                  placeholder={ph.title}
                 />
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-400">{errors.title}</p>
@@ -221,13 +275,13 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Type d'événement *
+                  <Translate>Type d'événement</Translate> *
                 </label>
                 <ReferenceSelect
                   category="EVENT_TYPE"
                   value={formData.type}
                   onValueChange={(value) => handleInputChange("type", value)}
-                  placeholder="Sélectionner le type..."
+                  placeholder={ph.type}
                   allowEmpty={false}
                   className={errors.type ? "border-red-500" : ""}
                 />
@@ -238,7 +292,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Description courte
+                  <Translate>Description courte</Translate>
                 </label>
                 <textarea
                   value={formData.description}
@@ -247,7 +301,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                   }
                   rows={3}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  placeholder="Description courte de l'événement"
+                  placeholder={ph.shortDesc}
                 />
               </div>
             </div>
@@ -255,13 +309,13 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Tags
+                  <Translate>Tags</Translate>
                 </label>
                 <ReferenceMultiSelect
                   category="EVENT_TAG"
                   values={formData.tags}
                   onValuesChange={(values) => handleInputChange("tags", values)}
-                  placeholder="Ajouter des tags..."
+                  placeholder={ph.tags}
                 />
               </div>
             </div>
@@ -270,7 +324,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
           {/* Description détaillée */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description détaillée
+              <Translate>Description détaillée</Translate>
             </label>
             <textarea
               value={formData.detailedDescription}
@@ -279,7 +333,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
               }
               rows={4}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              placeholder="Description détaillée avec instructions, objectifs, récompenses..."
+              placeholder={ph.detailed}
             />
           </div>
 
@@ -288,7 +342,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
-                Date et heure de début *
+                <Translate>Date et heure de début</Translate> *
               </label>
               <input
                 type="datetime-local"
@@ -306,7 +360,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 <Clock className="w-4 h-4 inline mr-1" />
-                Date et heure de fin
+                <Translate>Date et heure de fin</Translate>
               </label>
               <input
                 type="datetime-local"
@@ -339,7 +393,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                 className="text-sm font-medium text-gray-300 flex items-center gap-1"
               >
                 <Repeat className="w-4 h-4" />
-                Événement récurrent
+                <Translate>Événement récurrent</Translate>
               </label>
             </div>
 
@@ -348,7 +402,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     <CalendarDays className="w-4 h-4 inline mr-1" />
-                    Jours de récurrence *
+                    <Translate>Jours de récurrence</Translate> *
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {DAYS_OF_WEEK.map((day) => (
@@ -375,7 +429,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Date de fin de récurrence *
+                    <Translate>Date de fin de récurrence</Translate> *
                   </label>
                   <input
                     type="datetime-local"
@@ -409,7 +463,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
               className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
             >
               <X className="w-4 h-4 mr-2" />
-              Annuler
+              <Translate>Annuler</Translate>
             </Button>
             <Button
               type="submit"
@@ -417,7 +471,13 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               <Save className="w-4 h-4 mr-2" />
-              {loading ? "Sauvegarde..." : event ? "Modifier" : "Créer"}
+              {loading ? (
+                <Translate>Sauvegarde…</Translate>
+              ) : event ? (
+                <Translate>Modifier</Translate>
+              ) : (
+                <Translate>Créer</Translate>
+              )}
             </Button>
           </div>
         </form>

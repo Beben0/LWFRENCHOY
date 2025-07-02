@@ -4,6 +4,7 @@ import { FutureTrainSchedule } from "@/components/trains/future-train-schedule";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import {
   Activity,
   AlertCircle,
@@ -296,10 +297,12 @@ export default function TrainSchedulerPage() {
             <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg">
               <Zap className="w-6 h-6 text-white" />
             </div>
-            Scheduler Automatique
+            <Translate>Scheduler Automatique</Translate>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Système de génération et gestion automatique des trains
+            <Translate>
+              Système de génération et gestion automatique des trains
+            </Translate>
           </p>
         </div>
 
@@ -311,12 +314,12 @@ export default function TrainSchedulerPage() {
             className="flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Actualiser
+            <Translate>Actualiser</Translate>
           </Button>
           <Link href="/trains">
             <Button variant="secondary" className="flex items-center gap-2">
               <Train className="w-4 h-4" />
-              Voir les trains
+              <Translate>Voir les trains</Translate>
             </Button>
           </Link>
         </div>
@@ -334,7 +337,7 @@ export default function TrainSchedulerPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="w-5 h-5" />
-              Statut du Scheduler
+              <Translate>Statut du Scheduler</Translate>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -353,7 +356,11 @@ export default function TrainSchedulerPage() {
                         : "bg-red-400"
                     }`}
                   />
-                  {schedulerStatus?.isRunning ? "ACTIF" : "INACTIF"}
+                  {schedulerStatus?.isRunning ? (
+                    <Translate>ACTIF</Translate>
+                  ) : (
+                    <Translate>INACTIF</Translate>
+                  )}
                 </Badge>
               </div>
 
@@ -361,7 +368,7 @@ export default function TrainSchedulerPage() {
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="text-muted-foreground">
-                      Prochaine maintenance:
+                      <Translate>Prochaine maintenance:</Translate>
                     </span>
                     <div className="font-mono">
                       {formatTime(schedulerStatus.nextMaintenanceRun)}
@@ -369,7 +376,7 @@ export default function TrainSchedulerPage() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">
-                      Prochaine MàJ statuts:
+                      <Translate>Prochaine MàJ statuts:</Translate>
                     </span>
                     <div className="font-mono">
                       {formatTime(schedulerStatus.nextStatusUpdate)}
@@ -378,7 +385,7 @@ export default function TrainSchedulerPage() {
                   {schedulerStatus.lastRun && (
                     <div>
                       <span className="text-muted-foreground">
-                        Dernière exécution:
+                        <Translate>Dernière exécution:</Translate>
                       </span>
                       <div className="font-mono">
                         {formatTime(schedulerStatus.lastRun)}
@@ -396,7 +403,7 @@ export default function TrainSchedulerPage() {
                     onClick={() => handleSchedulerAction("stop")}
                     disabled={actionLoading}
                   >
-                    Arrêter
+                    <Translate>Arrêter</Translate>
                   </Button>
                 ) : (
                   <Button
@@ -404,7 +411,7 @@ export default function TrainSchedulerPage() {
                     onClick={() => handleSchedulerAction("start")}
                     disabled={actionLoading}
                   >
-                    Démarrer
+                    <Translate>Démarrer</Translate>
                   </Button>
                 )}
               </div>
@@ -417,7 +424,7 @@ export default function TrainSchedulerPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5" />
-              Actions Manuelles
+              <Translate>Actions Manuelles</Translate>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -429,7 +436,7 @@ export default function TrainSchedulerPage() {
                 className="w-full justify-start"
               >
                 <Database className="w-4 h-4 mr-2" />
-                Maintenance Immédiate
+                <Translate>Maintenance Immédiate</Translate>
               </Button>
               <Button
                 variant="outline"
@@ -438,10 +445,12 @@ export default function TrainSchedulerPage() {
                 className="w-full justify-start"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                MàJ Statuts Immédiate
+                <Translate>MàJ Statuts Immédiate</Translate>
               </Button>
               <div className="text-xs text-muted-foreground mt-2">
-                Les actions manuelles s'exécutent en arrière-plan.
+                <Translate>
+                  Les actions manuelles s'exécutent en arrière-plan.
+                </Translate>
               </div>
             </div>
           </CardContent>
@@ -452,19 +461,21 @@ export default function TrainSchedulerPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              Statistiques
+              <Translate>Statistiques</Translate>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {trainStats ? (
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total trains:</span>
+                  <span className="text-muted-foreground">
+                    <Translate>Total trains:</Translate>
+                  </span>
                   <span className="font-bold">{trainStats.total}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    Avec conducteur:
+                    <Translate>Avec conducteur:</Translate>
                   </span>
                   <span className="font-bold">
                     {trainStats.conductorAssignments}/{trainStats.total}
@@ -474,7 +485,7 @@ export default function TrainSchedulerPage() {
                 {Object.entries(trainStats.byStatus).map(([status, count]) => (
                   <div key={status} className="flex justify-between">
                     <Badge variant="outline" className={getStatusColor(status)}>
-                      {status}
+                      <Translate>{status}</Translate>
                     </Badge>
                     <span className="font-bold">{count}</span>
                   </div>
@@ -483,14 +494,15 @@ export default function TrainSchedulerPage() {
                 {trainStats.nextDeparture && (
                   <div className="pt-2 border-t">
                     <div className="text-xs text-muted-foreground">
-                      Prochain départ:
+                      <Translate>Prochain départ:</Translate>
                     </div>
                     <div className="font-bold">
                       {trainStats.nextDeparture.timeUntil}
                     </div>
                     {trainStats.nextDeparture.conductor && (
                       <div className="text-sm text-muted-foreground">
-                        Conducteur: {trainStats.nextDeparture.conductor}
+                        <Translate>Conducteur:</Translate>{" "}
+                        {trainStats.nextDeparture.conductor}
                       </div>
                     )}
                   </div>
@@ -510,9 +522,9 @@ export default function TrainSchedulerPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="w-5 h-5" />
-            Logs en Temps Réel
+            <Translate>Logs en Temps Réel</Translate>
             <Badge variant="outline" className="ml-auto">
-              {logs.length} entrées
+              {logs.length} <Translate>entrées</Translate>
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -520,7 +532,7 @@ export default function TrainSchedulerPage() {
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {logs.length === 0 ? (
               <div className="text-center text-muted-foreground py-4">
-                Aucun log pour le moment...
+                <Translate>Aucun log pour le moment...</Translate>
               </div>
             ) : (
               logs.map((log, index) => (
@@ -542,7 +554,9 @@ export default function TrainSchedulerPage() {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-sm">{log.message}</div>
+                    <div className="text-sm">
+                      <Translate from="auto">{log.message}</Translate>
+                    </div>
                   </div>
                 </div>
               ))

@@ -197,8 +197,28 @@ async function createVSWeek(
   const participantCount = generateRandomScore(15, 25);
   const participants = [];
 
-  for (let i = 0; i < participantCount; i++) {
+  const used = new Set<string>();
+  while (participants.length < participantCount) {
     const memberPseudo = getRandomElement(memberPseudos);
+    if (used.has(memberPseudo)) continue;
+    used.add(memberPseudo);
+
+    // Ensure member exists in database (match by pseudo)
+    const memberRecord = await prisma.member.upsert({
+      where: { pseudo: memberPseudo },
+      update: {},
+      create: {
+        pseudo: memberPseudo,
+        level: 1,
+        power: 0n,
+        kills: 0,
+        specialty: null,
+        allianceRole: "MEMBER",
+        status: "ACTIVE",
+        tags: [],
+      },
+    });
+
     const stats = generateParticipantStats();
 
     const powerGain = BigInt(
@@ -228,13 +248,13 @@ async function createVSWeek(
     const participant = await prisma.vSParticipant.create({
       data: {
         weekId: vsWeek.id,
-        memberId: `member_${memberPseudo}_${i}`,
+        memberId: memberRecord.id,
         kills: stats.totalKills,
         deaths: stats.totalDeaths,
         powerGain,
         powerLoss,
         participation: stats.participation,
-        rank: i + 1, // Sera recalculé après
+        rank: participants.length + 1, // Sera recalculé après
         rewards,
         points, // Ajout des points VS
       },

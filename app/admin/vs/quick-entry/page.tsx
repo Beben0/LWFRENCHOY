@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 import { hasPermission } from "@/lib/permissions";
 import { Save, Target, Trophy, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -267,10 +268,10 @@ export default function QuickEntryPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-red-400 flex items-center gap-2">
-            ⚡ Saisie Rapide VS
+            ⚡ <Translate>Saisie Rapide VS</Translate>
           </h1>
           <p className="text-gray-400">
-            VS contre {currentVS.enemyName} -{" "}
+            <Translate>VS contre</Translate> {currentVS.enemyName} -{" "}
             {new Date(currentVS.startDate).toLocaleDateString("fr-FR")} au{" "}
             {new Date(currentVS.endDate).toLocaleDateString("fr-FR")}
           </p>
@@ -282,7 +283,11 @@ export default function QuickEntryPage() {
             className="bg-green-600 hover:bg-green-700"
           >
             <Save className="w-4 h-4 mr-2" />
-            {saving ? "Sauvegarde..." : "Sauvegarder"}
+            {saving ? (
+              <Translate>Sauvegarde…</Translate>
+            ) : (
+              <Translate>Sauvegarder</Translate>
+            )}
           </Button>
         </div>
       </div>
@@ -291,7 +296,9 @@ export default function QuickEntryPage() {
       <Card className="md:hidden">
         <CardContent className="p-4">
           <div className="flex justify-between items-center mb-4">
-            <span className="font-semibold">Jour sélectionné :</span>
+            <span className="font-semibold">
+              <Translate>Jour sélectionné :</Translate>
+            </span>
             <select
               value={selectedDay}
               onChange={(e) => setSelectedDay(Number(e.target.value))}
@@ -312,7 +319,7 @@ export default function QuickEntryPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Points par membre et par jour
+            <Translate>Points par membre et par jour</Translate>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -320,7 +327,9 @@ export default function QuickEntryPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-gray-700">
-                  <th className="text-left p-3 font-semibold">Membre</th>
+                  <th className="text-left p-3 font-semibold">
+                    <Translate>Membre</Translate>
+                  </th>
                   {/* Desktop: Tous les jours */}
                   <th className="hidden md:table-cell text-center p-3 font-semibold">
                     Lun
@@ -345,7 +354,7 @@ export default function QuickEntryPage() {
                     {getDayLabel(selectedDay)}
                   </th>
                   <th className="text-center p-3 font-semibold text-yellow-400">
-                    Total
+                    <Translate>Total</Translate>
                   </th>
                 </tr>
               </thead>
@@ -428,7 +437,9 @@ export default function QuickEntryPage() {
                     .reduce((sum, entry) => sum + entry.totalPoints, 0)
                     .toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-400">Points totaux</p>
+                <p className="text-xs text-gray-400">
+                  <Translate>Points totaux</Translate>
+                </p>
               </div>
               <Trophy className="h-8 w-8 text-gray-400" />
             </div>
@@ -442,7 +453,9 @@ export default function QuickEntryPage() {
                 <p className="text-2xl font-bold text-green-400">
                   {entries.filter((entry) => entry.totalPoints > 0).length}
                 </p>
-                <p className="text-xs text-gray-400">Membres actifs</p>
+                <p className="text-xs text-gray-400">
+                  <Translate>Membres actifs</Translate>
+                </p>
               </div>
               <Users className="h-8 w-8 text-gray-400" />
             </div>

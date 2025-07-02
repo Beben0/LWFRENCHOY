@@ -3,7 +3,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
 
+import { translate } from "@/lib/translation";
 import {
   BookOpen,
   Calendar,
@@ -55,16 +57,44 @@ const statusLabels: Record<string, string> = {
   ARCHIVED: "Archivé",
 };
 
+// Placeholder translation state
+const defaultSearchPh = "Rechercher dans les articles...";
+
 export default function HelpPage() {
   const { data: session } = useSession();
   const [articles, setArticles] = useState<HelpArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchPh, setSearchPh] = useState(defaultSearchPh);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
 
   const canManageArticles = session?.user?.role === "ADMIN";
+
+  // translate placeholder once
+  useEffect(() => {
+    const detectLang = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("locale");
+        if (stored) return stored;
+      }
+      if (typeof document !== "undefined") {
+        const lang = document.documentElement.lang;
+        if (lang) return lang.split("-")[0];
+      }
+      if (typeof navigator !== "undefined") {
+        return navigator.language.split("-")[0];
+      }
+      return "fr";
+    };
+
+    const lang = detectLang();
+    if (lang === "fr") return;
+    translate(defaultSearchPh, { sourceLang: "fr", targetLang: lang })
+      .then((t) => setSearchPh(t))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetchArticles();
@@ -137,7 +167,9 @@ export default function HelpPage() {
       <div className="container mx-auto px-4 py-6">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Chargement des articles d'aide...</p>
+          <p>
+            <Translate>Chargement des articles d'aide…</Translate>
+          </p>
         </div>
       </div>
     );
@@ -150,17 +182,19 @@ export default function HelpPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <BookOpen className="w-8 h-8 text-primary" />
-            Centre d'Aide Last War
+            <Translate>Centre d'Aide Last War</Translate>
           </h1>
           <p className="text-muted-foreground">
-            Guides, astuces et documentation pour optimiser votre expérience
+            <Translate>
+              Guides, astuces et documentation pour optimiser votre expérience
+            </Translate>
           </p>
         </div>
         {canManageArticles && (
           <Link href="/help/admin">
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Nouvel Article
+              <Translate>Nouvel Article</Translate>
             </Button>
           </Link>
         )}
@@ -171,7 +205,7 @@ export default function HelpPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="w-5 h-5" />
-            Filtres et Recherche
+            <Translate>Filtres et Recherche</Translate>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -180,7 +214,7 @@ export default function HelpPage() {
             <div className="flex-1 flex gap-2">
               <input
                 type="text"
-                placeholder="Rechercher dans les articles..."
+                placeholder={searchPh}
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setSearchTerm(e.target.value)
@@ -204,7 +238,9 @@ export default function HelpPage() {
                 }
                 className="px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-48"
               >
-                <option value="">Toutes les catégories</option>
+                <option value="">
+                  <Translate>Toutes les catégories</Translate>
+                </option>
                 {Object.entries(categoryLabels).map(([key, label]) => (
                   <option key={key} value={key}>
                     {label}
@@ -220,7 +256,9 @@ export default function HelpPage() {
                   }
                   className="px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-40"
                 >
-                  <option value="">Tous les statuts</option>
+                  <option value="">
+                    <Translate>Tous les statuts</Translate>
+                  </option>
                   {Object.entries(statusLabels).map(([key, label]) => (
                     <option key={key} value={key}>
                       {label}
@@ -233,7 +271,8 @@ export default function HelpPage() {
                 variant={showFeaturedOnly ? "default" : "outline"}
                 onClick={() => setShowFeaturedOnly(!showFeaturedOnly)}
               >
-                <Star className="w-4 h-4 mr-1" />À la une
+                <Star className="w-4 h-4 mr-1" />
+                <Translate>À la une</Translate>
               </Button>
             </div>
           </div>
@@ -245,7 +284,7 @@ export default function HelpPage() {
         <div>
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Star className="w-6 h-6 text-yellow-500" />
-            Articles à la une
+            <Translate>Articles à la une</Translate>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredArticles.map((article) => (
@@ -259,7 +298,11 @@ export default function HelpPage() {
       {regularArticles.length > 0 && (
         <div>
           <h2 className="text-2xl font-bold mb-4">
-            {featuredArticles.length > 0 ? "Autres articles" : "Articles"}
+            {featuredArticles.length > 0 ? (
+              <Translate>Autres articles</Translate>
+            ) : (
+              <Translate>Articles</Translate>
+            )}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {regularArticles.map((article) => (
@@ -274,9 +317,13 @@ export default function HelpPage() {
         <Card>
           <CardContent className="text-center py-12">
             <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Aucun article trouvé</h3>
+            <h3 className="text-xl font-semibold mb-2">
+              <Translate>Aucun article trouvé</Translate>
+            </h3>
             <p className="text-muted-foreground">
-              Essayez de modifier vos critères de recherche ou vos filtres.
+              <Translate>
+                Essayez de modifier vos critères de recherche ou vos filtres.
+              </Translate>
             </p>
           </CardContent>
         </Card>
@@ -305,7 +352,7 @@ function ArticleCard({
               href={`/help/${article.slug}`}
               className="hover:text-primary transition-colors"
             >
-              {article.title}
+              <Translate>{article.title}</Translate>
             </Link>
           </CardTitle>
           {featured && (
@@ -315,10 +362,14 @@ function ArticleCard({
 
         <div className="flex items-center gap-2">
           <Badge variant="secondary">
-            {categoryLabels[article.category] || article.category}
+            <Translate>
+              {categoryLabels[article.category] || article.category}
+            </Translate>
           </Badge>
           {article.priority > 0 && (
-            <Badge variant="destructive">Priorité {article.priority}</Badge>
+            <Badge variant="destructive">
+              <Translate>Priorité</Translate> {article.priority}
+            </Badge>
           )}
           {!article.isPublished && (
             <Badge variant="outline">{statusLabels[article.status]}</Badge>
@@ -329,7 +380,7 @@ function ArticleCard({
       <CardContent className="space-y-4">
         {article.excerpt && (
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {article.excerpt}
+            <Translate>{article.excerpt}</Translate>
           </p>
         )}
 
@@ -337,7 +388,7 @@ function ArticleCard({
           <div className="flex flex-wrap gap-1">
             {article.tags.slice(0, 3).map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs">
-                {tag}
+                <Translate>{tag}</Translate>
               </Badge>
             ))}
             {article.tags.length > 3 && (

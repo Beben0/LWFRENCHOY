@@ -8,9 +8,12 @@ services:
       NEXTAUTH_URL: "https://beben0.com"
       NEXTAUTH_SECRET: "${NEXTAUTH_SECRET}"
       NODE_ENV: "production"
+      LIBRETRANSLATE_ENDPOINT: "http://libretranslate:5000/translate"
     depends_on:
       postgres:
         condition: service_healthy
+      libretranslate:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test:
@@ -84,6 +87,10 @@ services:
         reservations:
           memory: 64M
           cpus: "0.05"
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    restart: unless-stopped
 
 volumes:
   postgres_data:

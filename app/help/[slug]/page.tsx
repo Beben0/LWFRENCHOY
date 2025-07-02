@@ -3,6 +3,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Translate } from "@/components/ui/translate";
+import { translate } from "@/lib/translation";
 import { ArrowLeft, Calendar, Edit, Eye, Star, Tag, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -98,6 +100,7 @@ export default function HelpArticlePage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [article, setArticle] = useState<HelpArticle | null>(null);
+  const [renderContent, setRenderContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -127,6 +130,7 @@ export default function HelpArticlePage() {
 
       const data = await response.json();
       setArticle(data);
+      await translateContent(data.content);
     } catch (error) {
       console.error("Error fetching article:", error);
       setError("Erreur lors du chargement de l'article");
@@ -135,12 +139,55 @@ export default function HelpArticlePage() {
     }
   };
 
+  const detectLang = () => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("locale");
+      if (stored) return stored;
+    }
+    if (typeof document !== "undefined") {
+      const lang = document.documentElement.lang;
+      if (lang) return lang.split("-")[0];
+    }
+    if (typeof navigator !== "undefined")
+      return navigator.language.split("-")[0];
+    return "fr";
+  };
+
+  const translateContent = async (markdown: string) => {
+    const lang = detectLang();
+    if (lang === "fr") {
+      setRenderContent(markdown);
+      return;
+    }
+    try {
+      // Split by double newline to keep paragraphs
+      const chunks = markdown.split(/\n\n+/);
+      const translatedChunks: string[] = [];
+      for (const chunk of chunks) {
+        if (!chunk.trim()) {
+          translatedChunks.push("");
+          continue;
+        }
+        const t = await translate(chunk, {
+          sourceLang: "fr",
+          targetLang: lang,
+        });
+        translatedChunks.push(t);
+      }
+      setRenderContent(translatedChunks.join("\n\n"));
+    } catch {
+      setRenderContent(markdown);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Chargement de l'article...</p>
+          <p>
+            <Translate>Chargement de l'article…</Translate>
+          </p>
         </div>
       </div>
     );
@@ -151,14 +198,18 @@ export default function HelpArticlePage() {
       <div className="container mx-auto px-4 py-6">
         <Card>
           <CardContent className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-4">Article non trouvé</h1>
+            <h1 className="text-2xl font-bold mb-4">
+              <Translate>Article non trouvé</Translate>
+            </h1>
             <p className="text-muted-foreground mb-6">
-              {error || "Cet article n'existe pas ou n'est plus disponible."}
+              <Translate>
+                {error || "Cet article n'existe pas ou n'est plus disponible."}
+              </Translate>
             </p>
             <Link href="/help">
               <Button>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour aux articles
+                <Translate>Retour aux articles</Translate>
               </Button>
             </Link>
           </CardContent>
@@ -174,14 +225,14 @@ export default function HelpArticlePage() {
         <Link href="/help">
           <Button variant="ghost">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux articles
+            <Translate>Retour aux articles</Translate>
           </Button>
         </Link>
         {canEditArticles && (
           <Link href={`/help/admin/${article.slug}/edit`}>
             <Button>
               <Edit className="w-4 h-4 mr-2" />
-              Modifier
+              <Translate>Modifier</Translate>
             </Button>
           </Link>
         )}
@@ -193,7 +244,9 @@ export default function HelpArticlePage() {
           {/* Titre et badges */}
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl font-bold flex-1">{article.title}</h1>
+              <h1 className="text-3xl font-bold flex-1">
+                <Translate>{article.title}</Translate>
+              </h1>
               {article.isFeatured && (
                 <Star className="w-6 h-6 text-yellow-500 flex-shrink-0" />
               )}
@@ -201,21 +254,27 @@ export default function HelpArticlePage() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">
-                {categoryLabels[article.category] || article.category}
+                <Translate>
+                  {categoryLabels[article.category] || article.category}
+                </Translate>
               </Badge>
 
               {article.priority > 0 && (
-                <Badge variant="destructive">Priorité {article.priority}</Badge>
+                <Badge variant="destructive">
+                  <Translate>Priorité</Translate> {article.priority}
+                </Badge>
               )}
 
               {!article.isPublished && (
-                <Badge variant="outline">{statusLabels[article.status]}</Badge>
+                <Badge variant="outline">
+                  <Translate>{statusLabels[article.status]}</Translate>
+                </Badge>
               )}
 
               {article.tags.map((tag) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   <Tag className="w-3 h-3 mr-1" />
-                  {tag}
+                  <Translate from="auto">{tag}</Translate>
                 </Badge>
               ))}
             </div>
@@ -225,7 +284,7 @@ export default function HelpArticlePage() {
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground border-t pt-4">
             <div className="flex items-center gap-1">
               <User className="w-4 h-4" />
-              Par {article.authorEmail.split("@")[0]}
+              <Translate>Par</Translate> {article.authorEmail.split("@")[0]}
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
@@ -243,25 +302,26 @@ export default function HelpArticlePage() {
             </div>
             <div className="flex items-center gap-1">
               <Eye className="w-4 h-4" />
-              {article.views} vue{article.views !== 1 ? "s" : ""}
+              {article.views}{" "}
+              <Translate>{article.views !== 1 ? "vues" : "vue"}</Translate>
             </div>
           </div>
 
           {/* Extrait */}
           {article.excerpt && (
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-muted-foreground italic">{article.excerpt}</p>
-            </div>
+            <p className="italic bg-gray-800/40 px-4 py-2 rounded text-muted-foreground">
+              <Translate>{article.excerpt}</Translate>
+            </p>
           )}
         </CardHeader>
 
         <CardContent>
           {/* Contenu de l'article */}
-          <div className="prose max-w-none">
+          <div className="prose prose-invert max-w-none">
             <div
               dangerouslySetInnerHTML={{
                 __html: `<p class="mb-4">${renderMarkdown(
-                  article.content
+                  renderContent || article.content
                 )}</p>`,
               }}
             />
@@ -274,32 +334,46 @@ export default function HelpArticlePage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              Informations administrateur
+              <Translate>Informations administrateur</Translate>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium">ID:</span> {article.id}
+                <span className="font-medium">
+                  <Translate>ID</Translate>:
+                </span>{" "}
+                {article.id}
               </div>
               <div>
-                <span className="font-medium">Slug:</span> {article.slug}
+                <span className="font-medium">
+                  <Translate>Slug</Translate>:
+                </span>{" "}
+                {article.slug}
               </div>
               <div>
-                <span className="font-medium">Statut:</span>{" "}
-                {statusLabels[article.status]}
+                <span className="font-medium">
+                  <Translate>Statut</Translate>:
+                </span>{" "}
+                <Translate>{statusLabels[article.status]}</Translate>
               </div>
               <div>
-                <span className="font-medium">Créé le:</span>{" "}
+                <span className="font-medium">
+                  <Translate>Créé le</Translate>:
+                </span>{" "}
                 {new Date(article.createdAt).toLocaleString("fr-FR")}
               </div>
               <div>
-                <span className="font-medium">Modifié le:</span>{" "}
+                <span className="font-medium">
+                  <Translate>Modifié le</Translate>:
+                </span>{" "}
                 {new Date(article.updatedAt).toLocaleString("fr-FR")}
               </div>
               {article.publishedAt && (
                 <div>
-                  <span className="font-medium">Publié le:</span>{" "}
+                  <span className="font-medium">
+                    <Translate>Publié le</Translate>:
+                  </span>{" "}
                   {new Date(article.publishedAt).toLocaleString("fr-FR")}
                 </div>
               )}

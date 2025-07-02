@@ -11,9 +11,12 @@ services:
       NEXTAUTH_URL: "${NEXTAUTH_URL}" # https://ton-domaine.com
       NEXTAUTH_SECRET: "${NEXTAUTH_SECRET}" # Généré avec openssl rand -base64 32
       NODE_ENV: "production"
+      LIBRETRANSLATE_ENDPOINT: "http://libretranslate:5000/translate"
     depends_on:
       postgres:
         condition: service_healthy
+      libretranslate:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test:
@@ -80,6 +83,10 @@ services:
       - ./logs:/var/log/nginx
     depends_on:
       - app
+    restart: unless-stopped
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
     restart: unless-stopped
 
 volumes:

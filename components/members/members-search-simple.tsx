@@ -1,5 +1,6 @@
 "use client";
 
+import { Translate } from "@/components/ui/translate";
 import { Search } from "lucide-react";
 import { useState } from "react";
 
@@ -33,7 +34,7 @@ export function MembersSearchSimple({ members }: MembersSearchSimpleProps) {
           🔍 Gestion des Membres
         </h1>
         <p className="text-muted-foreground">
-          {members.length} membres dans votre alliance
+          {members.length} <Translate>membres dans votre alliance</Translate>
         </p>
       </div>
 
