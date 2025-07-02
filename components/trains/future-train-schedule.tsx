@@ -341,8 +341,14 @@ export function FutureTrainSchedule({
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold capitalize">
+                      <h3 className="text-lg font-semibold capitalize flex items-center gap-2">
                         {train.dayOfWeek}
+                        <span className="text-sm text-muted-foreground font-normal">
+                          {new Date(train.date).toLocaleDateString("fr-FR", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
+                        </span>
                         {localIsToday && (
                           <Badge className="ml-2 bg-orange-500">
                             <Translate>Aujourd'hui</Translate>
