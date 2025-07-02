@@ -1,21 +1,12 @@
+import { Permission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { initializeDefaultPermissions } from "@/lib/role-permissions";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Vérifier s'il y a des permissions en base
-    const permissionCount = await prisma.rolePermission.count();
-
-    // Si aucune permission n'existe, initialiser les permissions par défaut
-    if (permissionCount === 0) {
-      console.log(
-        "Aucune permission trouvée, initialisation des permissions par défaut..."
-      );
-      await initializeDefaultPermissions();
-    }
-
-    const guestPermissions = await prisma.rolePermission.findMany({
+    const rows = await prisma.rolePermission.findMany({
       where: {
         roleType: "GUEST",
         isEnabled: true,
@@ -25,15 +16,17 @@ export async function GET() {
       },
     });
 
-    const permissions = guestPermissions.map((p) => p.permission);
+    const permissions = rows.map((r) => r.permission as Permission);
 
     return NextResponse.json({ permissions });
   } catch (error) {
-    console.error("Error fetching guest permissions:", error);
-
-    // Fallback permissions
-    return NextResponse.json({
-      permissions: ["view_trains", "view_events"],
-    });
+    console.error(
+      "Erreur lors de la récupération des permissions GUEST:",
+      error
+    );
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

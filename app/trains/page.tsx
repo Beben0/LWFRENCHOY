@@ -2,6 +2,7 @@
 
 import { GraphicalTrainSchedule } from "@/components/trains/graphical-train-schedule";
 import { Translate } from "@/components/ui/translate";
+import { hasPermission } from "@/lib/permissions";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -50,6 +51,8 @@ export default function TrainsPage() {
     );
   }
 
+  const isEditor = hasPermission(session, "edit_train_slot");
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
@@ -74,7 +77,7 @@ export default function TrainsPage() {
         trainSlots={[]} // Maintenu pour compatibilité mais non utilisé
         members={members}
         currentUserId={session?.user?.id}
-        isAdmin={session?.user?.role === "ADMIN"}
+        isAdmin={isEditor}
       />
     </div>
   );

@@ -3,6 +3,7 @@
 import { UserForm } from "@/components/admin/user-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { hasPermission } from "@/lib/permissions";
 import { AlertTriangle, Edit, Plus, Shield, Trash2, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -30,8 +31,8 @@ export default function UsersPage() {
 
   // Vérifier les permissions
   useEffect(() => {
-    if (session && session.user?.role !== "ADMIN") {
-      router.push("/auth/signin");
+    if (session && !hasPermission(session, "manage_users")) {
+      router.push("/");
       return;
     }
   }, [session, router]);
@@ -53,7 +54,7 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    if (session?.user?.role === "ADMIN") {
+    if (hasPermission(session, "manage_users")) {
       loadUsers();
     }
   }, [session]);
@@ -126,7 +127,7 @@ export default function UsersPage() {
     }
   };
 
-  if (session?.user?.role !== "ADMIN") {
+  if (!hasPermission(session, "manage_users")) {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="text-center">

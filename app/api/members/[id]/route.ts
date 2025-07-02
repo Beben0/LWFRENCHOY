@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { hasPermissionAsync } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -30,7 +31,8 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session) {
+    const canView = await hasPermissionAsync(session, "view_members");
+    if (!canView) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -61,7 +63,8 @@ export async function PUT(
 ) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== "ADMIN") {
+    const canEdit = await hasPermissionAsync(session, "edit_member");
+    if (!canEdit) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -101,7 +104,8 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== "ADMIN") {
+    const canDelete = await hasPermissionAsync(session, "delete_member");
+    if (!canDelete) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

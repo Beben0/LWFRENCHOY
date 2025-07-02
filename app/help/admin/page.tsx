@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { hasPermission } from "@/lib/permissions";
 import {
   ArrowLeft,
   BookOpen,
@@ -65,7 +66,7 @@ export default function HelpAdminPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   // Vérifier les permissions
-  const canManageArticles = session?.user?.role === "ADMIN";
+  const canManageArticles = hasPermission(session, "manage_help_categories");
 
   useEffect(() => {
     if (!canManageArticles) {

@@ -24,9 +24,9 @@ async function getMembers() {
 export default async function MembersSimplePage() {
   const session = await auth();
 
-  if (!session) {
-    redirect("/auth/signin");
-  }
+  const { hasPermissionAsync } = await import("@/lib/permissions");
+  const canView = await hasPermissionAsync(session, "view_members");
+  if (!canView) redirect("/auth/signin");
 
   const members = await getMembers();
 

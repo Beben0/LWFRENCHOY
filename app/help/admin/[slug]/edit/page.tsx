@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { hasPermission } from "@/lib/permissions";
 import { ArrowLeft, BookOpen, Eye, Save, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -80,7 +81,7 @@ export default function EditHelpArticlePage() {
   });
 
   // Vérifier les permissions
-  const canEditArticles = session?.user?.role === "ADMIN";
+  const canEditArticles = hasPermission(session, "edit_help_article");
 
   useEffect(() => {
     if (!canEditArticles) {

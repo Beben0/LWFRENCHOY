@@ -1,5 +1,6 @@
 "use client";
 
+import { useGuestPermissions } from "@/lib/hooks/use-guest-permissions";
 import { hasAnyPermission, hasPermission, Permission } from "@/lib/permissions";
 import { useSession } from "next-auth/react";
 import { ReactNode } from "react";
@@ -22,15 +23,13 @@ export function PermissionGuard({
   showForGuests = false,
 }: PermissionGuardProps) {
   const { data: session } = useSession();
-
-  // Si showForGuests est true, on affiche toujours
-  if (showForGuests) {
-    return <>{children}</>;
-  }
+  const guestPermissions = useGuestPermissions(!session);
 
   // Vérification d'une permission unique
   if (permission) {
-    const hasAccess = hasPermission(session, permission);
+    const hasAccess = session
+      ? hasPermission(session, permission)
+      : guestPermissions.has(permission as any);
     return hasAccess ? <>{children}</> : <>{fallback}</>;
   }
 

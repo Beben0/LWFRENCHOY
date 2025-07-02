@@ -719,6 +719,13 @@ async function main() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   require("../scripts/seed-vs-data");
   console.log("✅ Help articles & VS data seeded");
+
+  // 9. Seed Desert Storm demo data
+  console.log("🏜️ Seeding Desert Storm data...");
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require("../scripts/seed-desert-storm");
+  console.log("✅ Desert Storm data seeded");
+
   console.log("🎉 Seeding completed!");
 }
 

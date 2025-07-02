@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { hasPermission } from "@/lib/permissions";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -25,11 +26,11 @@ export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Seulement pour les admins
-  const isAdmin = session?.user?.role === "ADMIN";
+  // Vérifier permission
+  const canManageAlerts = hasPermission(session, "manage_alerts");
 
   const fetchAlerts = async () => {
-    if (!isAdmin) return;
+    if (!canManageAlerts) return;
 
     try {
       const response = await fetch("/api/admin/alerts/unread");
@@ -46,13 +47,13 @@ export function NotificationDropdown() {
   };
 
   useEffect(() => {
-    if (isAdmin) {
+    if (canManageAlerts) {
       fetchAlerts();
       // Refresh toutes les 30 secondes
       const interval = setInterval(fetchAlerts, 30000);
       return () => clearInterval(interval);
     }
-  }, [isAdmin]);
+  }, [canManageAlerts]);
 
   const markAsRead = async (alertId: string) => {
     try {
@@ -145,7 +146,7 @@ export function NotificationDropdown() {
     return `${diffDays}j`;
   };
 
-  if (!isAdmin) {
+  if (!canManageAlerts) {
     return null;
   }
 

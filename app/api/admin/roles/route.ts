@@ -4,6 +4,7 @@ import {
   getAllianceRoles,
   getAllRolePermissions,
   initializeDefaultPermissions,
+  invalidateMiddlewareCache,
   saveAllRolePermissions,
 } from "@/lib/role-permissions";
 import { NextRequest, NextResponse } from "next/server";
@@ -35,6 +36,8 @@ export async function GET() {
       "view_events",
       "view_stats",
       "view_admin_panel",
+      "view_vs",
+      "view_desert_storm",
       "create_member",
       "edit_member",
       "delete_member",
@@ -44,6 +47,17 @@ export async function GET() {
       "create_event",
       "edit_event",
       "delete_event",
+      "create_vs_week",
+      "edit_vs_week",
+      "delete_vs_week",
+      "manage_vs_participants",
+      "edit_vs_results",
+      "edit_vs",
+      "create_desert_storm",
+      "edit_desert_storm",
+      "delete_desert_storm",
+      "manage_desert_storm_participants",
+      "edit_desert_storm_results",
       "manage_users",
       "manage_permissions",
       "export_data",
@@ -57,6 +71,9 @@ export async function GET() {
       "publish_help_article",
       "manage_help_categories",
     ];
+
+    // Invalider cache permissions middleware
+    invalidateMiddlewareCache();
 
     return NextResponse.json({
       rolePermissions,
@@ -96,6 +113,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Invalider cache permissions middleware
+    invalidateMiddlewareCache();
+
     return NextResponse.json({
       message: "Permissions sauvegardées avec succès",
       rolePermissions: typedRolePermissions,
@@ -121,6 +141,9 @@ export async function PUT() {
     }
 
     await initializeDefaultPermissions();
+
+    // Invalider cache permissions middleware
+    invalidateMiddlewareCache();
 
     return NextResponse.json({
       message: "Permissions par défaut initialisées avec succès",

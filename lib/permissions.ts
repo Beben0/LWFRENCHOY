@@ -12,6 +12,7 @@ export type Permission =
   | "view_admin_panel"
   | "view_help"
   | "view_vs"
+  | "view_desert_storm"
 
   // CRUD permissions
   | "create_member"
@@ -39,6 +40,13 @@ export type Permission =
   | "edit_vs_results"
   | "edit_vs"
 
+  // Desert Storm permissions
+  | "create_desert_storm"
+  | "edit_desert_storm"
+  | "delete_desert_storm"
+  | "manage_desert_storm_participants"
+  | "edit_desert_storm_results"
+
   // Admin permissions
   | "manage_users"
   | "manage_permissions"
@@ -64,6 +72,7 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_admin_panel",
     "view_help",
     "view_vs",
+    "view_desert_storm",
     "create_member",
     "edit_member",
     "delete_member",
@@ -84,6 +93,11 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "manage_vs_participants",
     "edit_vs_results",
     "edit_vs",
+    "create_desert_storm",
+    "edit_desert_storm",
+    "delete_desert_storm",
+    "manage_desert_storm_participants",
+    "edit_desert_storm_results",
     "manage_users",
     "manage_permissions",
     "export_data",
@@ -92,11 +106,7 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "manage_notifications",
   ],
   GUEST: [
-    // Accès public aux trains, événements et aide
-    "view_trains",
-    "view_events",
-    "view_help",
-    "view_vs",
+    // Aucun accès par défaut, doit être défini en base
   ],
 };
 
@@ -126,24 +136,43 @@ async function getRolePermissionsFromDB(): Promise<
       },
     });
 
-    // Pas besoin de disconnect avec l'instance singleton
+    // Récupérer la liste des rôles ayant au moins UNE entrée (enabled ou non)
+    const rolesWithAnyEntryRows = await prisma.rolePermission.findMany({
+      select: { roleType: true },
+    });
+
+    const rolesWithAnyEntrySet = new Set<string>(
+      rolesWithAnyEntryRows.map((r) => r.roleType)
+    );
 
     // Organiser par type de rôle
     const permissions: Record<string, Set<Permission>> = {};
 
+    // Helper pour assurer un Set existant
+    const ensureSet = (role: string) => {
+      if (!permissions[role]) permissions[role] = new Set();
+      return permissions[role]!;
+    };
+
     allRolePermissions.forEach(({ roleType, permission }) => {
-      if (!permissions[roleType]) {
-        permissions[roleType] = new Set();
-      }
-      permissions[roleType].add(permission as Permission);
+      ensureSet(roleType).add(permission as Permission);
     });
 
-    // Ajouter les permissions par défaut si elles n'existent pas
-    if (!permissions.ADMIN) {
-      permissions.ADMIN = new Set(FALLBACK_ROLE_PERMISSIONS.ADMIN);
+    // Appliquer les permissions de secours seulement si aucune entrée DB pour le rôle
+    const applyFallbackIfEmpty = (
+      role: UserRole,
+      fallbackPerms: Permission[]
+    ) => {
+      if (!permissions[role] || permissions[role].size === 0) {
+        permissions[role] = new Set(fallbackPerms);
+      }
+    };
+
+    if (!rolesWithAnyEntrySet.has("ADMIN")) {
+      applyFallbackIfEmpty("ADMIN", FALLBACK_ROLE_PERMISSIONS.ADMIN);
     }
-    if (!permissions.GUEST) {
-      permissions.GUEST = new Set(FALLBACK_ROLE_PERMISSIONS.GUEST);
+    if (!rolesWithAnyEntrySet.has("GUEST")) {
+      applyFallbackIfEmpty("GUEST", FALLBACK_ROLE_PERMISSIONS.GUEST);
     }
 
     // Mettre à jour le cache
@@ -160,7 +189,7 @@ async function getRolePermissionsFromDB(): Promise<
     // Fallback : permissions par défaut
     const fallbackPermissions: Record<string, Set<Permission>> = {
       ADMIN: new Set(FALLBACK_ROLE_PERMISSIONS.ADMIN),
-      GUEST: new Set(FALLBACK_ROLE_PERMISSIONS.GUEST),
+      GUEST: new Set(),
     };
 
     return fallbackPermissions;
@@ -176,7 +205,7 @@ function getRolePermissionsSync(): Record<string, Set<Permission>> {
   // Fallback synchrone
   return {
     ADMIN: new Set(FALLBACK_ROLE_PERMISSIONS.ADMIN),
-    GUEST: new Set(FALLBACK_ROLE_PERMISSIONS.GUEST),
+    GUEST: new Set(),
   };
 }
 
@@ -184,7 +213,11 @@ function getRolePermissionsSync(): Record<string, Set<Permission>> {
 async function getUserCombinedPermissions(
   session: Session | null
 ): Promise<Set<Permission>> {
-  if (!session) return new Set();
+  if (!session || !session.user) {
+    // Visiteur non connecté -> permissions GUEST
+    const rolePermissions = await getRolePermissionsFromDB();
+    return new Set(rolePermissions.GUEST);
+  }
 
   const rolePermissions = await getRolePermissionsFromDB();
   const combinedPermissions = new Set<Permission>();
@@ -208,7 +241,10 @@ async function getUserCombinedPermissions(
 function getUserCombinedPermissionsSync(
   session: Session | null
 ): Set<Permission> {
-  if (!session) return new Set();
+  if (!session || !session.user) {
+    const rolePermissions = getRolePermissionsSync();
+    return new Set(rolePermissions.GUEST);
+  }
 
   const rolePermissions = getRolePermissionsSync();
   const combinedPermissions = new Set<Permission>();
@@ -230,7 +266,7 @@ function getUserCombinedPermissionsSync(
 
 // Déterminer le rôle d'un utilisateur (rôle administratif principal)
 export function getUserRole(session: Session | null): UserRole {
-  if (!session) return "GUEST";
+  if (!session || !session.user) return "GUEST";
 
   // Rôle administratif
   if (session.user?.role === "ADMIN") return "ADMIN";

@@ -209,7 +209,10 @@ async function getFilterOptions() {
 export default async function MembersPage({ searchParams }: MembersPageProps) {
   const session = await auth();
 
-  if (!session) {
+  const { hasPermissionAsync } = await import("@/lib/permissions");
+  const canView = await hasPermissionAsync(session, "view_members");
+
+  if (!canView) {
     redirect("/auth/signin");
   }
 

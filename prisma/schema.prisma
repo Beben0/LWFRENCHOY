@@ -19,25 +19,26 @@ model User {
 }
 
 model Member {
-  id               String           @id @default(cuid())
-  pseudo           String           @unique
-  level            Int              @default(1)
-  power            BigInt           @default(0)
-  kills            Int              @default(0)
-  specialty        String?
-  allianceRole     String           @default("MEMBER") // clé du référentiel ALLIANCE_ROLE
-  status           Status           @default(ACTIVE)
-  tags             String[]
-  notes            String?
-  lastActive       DateTime         @default(now())
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  trainInstances   TrainInstance[]  @relation("TrainConductor")
-  trainSlots       TrainSlot[]      @relation("TrainSlotConductor")
-  trainPassengers  TrainPassenger[] @relation("TrainPassengers")
-  vsParticipations VSParticipant[]
-  HivePlacement    HivePlacement?   @relation(fields: [hivePlacementId], references: [id])
-  hivePlacementId  String?
+  id                     String                   @id @default(cuid())
+  pseudo                 String                   @unique
+  level                  Int                      @default(1)
+  power                  BigInt                   @default(0)
+  kills                  Int                      @default(0)
+  specialty              String?
+  allianceRole           String                   @default("MEMBER") // clé du référentiel ALLIANCE_ROLE
+  status                 Status                   @default(ACTIVE)
+  tags                   String[]
+  notes                  String?
+  lastActive             DateTime                 @default(now())
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  trainInstances         TrainInstance[]          @relation("TrainConductor")
+  trainSlots             TrainSlot[]              @relation("TrainSlotConductor")
+  trainPassengers        TrainPassenger[]         @relation("TrainPassengers")
+  vsParticipations       VSParticipant[]
+  HivePlacement          HivePlacement?           @relation(fields: [hivePlacementId], references: [id])
+  hivePlacementId        String?
+  DesertStormParticipant DesertStormParticipant[]
 }
 
 model TrainInstance {
@@ -570,6 +571,102 @@ enum VSResult {
   VICTORY // Victoire
   DEFEAT // Défaite
   DRAW // Égalité
+}
+
+// Desert Storm Models
+model DesertStormEvent {
+  id                     String                   @id @default(cuid())
+  title                  String // Nom de l'événement
+  description            String? // Description
+  startDate              DateTime // Date de début
+  endDate                DateTime // Date de fin
+  teamAName              String                   @default("Équipe A") // Nom équipe A
+  teamBName              String                   @default("Équipe B") // Nom équipe B
+  teamAScore             Int                      @default(0) // Score équipe A
+  teamBScore             Int                      @default(0) // Score équipe B
+  enemyTeamAAllianceName String?
+  enemyTeamBAllianceName String?
+  enemyTeamAScore        Int                      @default(0)
+  enemyTeamBScore        Int                      @default(0)
+  status                 DesertStormStatus        @default(PREPARATION)
+  result                 DesertStormResult? // Résultat final
+  metadata               Json? // Données additionnelles
+  participants           DesertStormParticipant[]
+  dailyResults           DesertStormDaily[]
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model DesertStormParticipant {
+  id            String             @id @default(cuid())
+  eventId       String
+  event         DesertStormEvent   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        Member?            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  team          DesertStormTeam // A ou B
+  isSubstitute  Boolean            @default(false) // Remplaçant
+  totalKills    Int                @default(0) // Kills total
+  totalDeaths   Int                @default(0) // Morts total
+  totalDamage   BigInt             @default(0) // Dégâts totaux
+  powerGain     BigInt             @default(0) // Gain de puissance
+  powerLoss     BigInt             @default(0) // Perte de puissance
+  participation Int                @default(0) // Score de participation (0-100)
+  rank          Int? // Classement personnel
+  rewards       String[]           @default([]) // Récompenses
+  points        Int                @default(0) // Points personnels
+  dailyResults  DesertStormDaily[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([eventId, memberId])
+  @@index([eventId, team])
+  @@index([totalKills])
+  @@index([points])
+}
+
+model DesertStormDaily {
+  id            String                  @id @default(cuid())
+  eventId       String
+  event         DesertStormEvent        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participantId String?
+  participant   DesertStormParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  date          DateTime // Date du jour
+  teamA         Int                     @default(0) // Score équipe A du jour
+  teamB         Int                     @default(0) // Score équipe B du jour
+  kills         Int                     @default(0) // Kills personnels du jour
+  deaths        Int                     @default(0) // Morts personnelles du jour
+  damage        BigInt                  @default(0) // Dégâts du jour
+  participated  Boolean                 @default(false) // A participé
+  events        String[]                @default([]) // Événements spéciaux
+  notes         String? // Notes
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([eventId, date])
+  @@index([participantId, date])
+  @@index([date])
+}
+
+enum DesertStormStatus {
+  PREPARATION // Préparation
+  ACTIVE // En cours
+  COMPLETED // Terminé
+  CANCELLED // Annulé
+}
+
+enum DesertStormResult {
+  TEAM_A_VICTORY // Victoire équipe A
+  TEAM_B_VICTORY // Victoire équipe B
+  DRAW // Égalité
+}
+
+enum DesertStormTeam {
+  TEAM_A
+  TEAM_B
 }
 
 model HivePlacement {

@@ -163,12 +163,10 @@ const getSpecialtyColor = (specialty: string | null) => {
 export default async function StatsPage() {
   const session = await auth();
 
-  if (!session) {
+  const { hasPermissionAsync } = await import("@/lib/permissions");
+  const canView = await hasPermissionAsync(session, "view_stats");
+  if (!canView) {
     redirect("/auth/signin");
-  }
-
-  if (session.user.role !== "ADMIN") {
-    redirect("/dashboard");
   }
 
   const stats = await getStatsData();

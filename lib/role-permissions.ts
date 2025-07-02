@@ -14,6 +14,7 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "view_admin_panel",
     "view_help",
     "view_vs",
+    "view_desert_storm",
     "create_member",
     "edit_member",
     "delete_member",
@@ -28,6 +29,11 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "delete_vs_week",
     "manage_vs_participants",
     "edit_vs_results",
+    "create_desert_storm",
+    "edit_desert_storm",
+    "delete_desert_storm",
+    "manage_desert_storm_participants",
+    "edit_desert_storm_results",
     "manage_users",
     "manage_permissions",
     "export_data",
@@ -35,7 +41,13 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "manage_alerts",
     "manage_notifications",
   ],
-  GUEST: ["view_trains", "view_events", "view_help", "view_vs"],
+  GUEST: [
+    "view_trains",
+    "view_events",
+    "view_help",
+    "view_vs",
+    "view_desert_storm",
+  ],
 };
 
 // Permissions par défaut pour les rôles d'alliance
@@ -47,6 +59,7 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_events",
     "view_stats",
     "view_vs",
+    "view_desert_storm",
     "create_member",
     "edit_member",
     "create_train_slot",
@@ -57,6 +70,10 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "edit_vs_week",
     "manage_vs_participants",
     "edit_vs_results",
+    "create_desert_storm",
+    "edit_desert_storm",
+    "manage_desert_storm_participants",
+    "edit_desert_storm_results",
     "manage_alerts",
   ],
   R4: [
@@ -66,9 +83,11 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_events",
     "view_stats",
     "view_vs",
+    "view_desert_storm",
     "create_train_slot",
     "edit_train_slot",
     "edit_vs_results",
+    "edit_desert_storm_results",
   ],
   MEMBER: [
     "view_dashboard",
@@ -77,6 +96,7 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_events",
     "view_stats",
     "view_vs",
+    "view_desert_storm",
   ],
 };
 

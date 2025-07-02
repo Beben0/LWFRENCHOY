@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Translate } from "@/components/ui/translate";
 
+import { hasPermission } from "@/lib/permissions";
 import { translate } from "@/lib/translation";
 import {
   BookOpen,
@@ -70,7 +71,7 @@ export default function HelpPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
 
-  const canManageArticles = session?.user?.role === "ADMIN";
+  const canManageArticles = hasPermission(session, "manage_help_categories");
 
   // translate placeholder once
   useEffect(() => {

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Translate } from "@/components/ui/translate";
+import { hasPermission } from "@/lib/permissions";
 import { translate } from "@/lib/translation";
 import { ArrowLeft, Calendar, Edit, Eye, Star, Tag, User } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -105,7 +106,7 @@ export default function HelpArticlePage() {
   const [error, setError] = useState<string | null>(null);
 
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
-  const canEditArticles = session?.user?.role === "ADMIN";
+  const canEditArticles = hasPermission(session, "edit_help_article");
 
   useEffect(() => {
     if (!slug) return;

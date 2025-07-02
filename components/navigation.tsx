@@ -14,6 +14,7 @@ import {
   Menu,
   Shield,
   Sword,
+  Target,
   Train,
   Users,
 } from "lucide-react";
@@ -49,28 +50,30 @@ export function Navigation() {
       label: "Trains",
       icon: Train,
       permission: "view_trains" as const,
-      showForGuests: true,
     },
     {
       href: "/vs",
       label: "VS Wars",
       icon: Sword,
       permission: "view_vs" as const,
-      showForGuests: true,
+    },
+    {
+      href: "/desert-storm",
+      label: "Desert Storm",
+      icon: Target,
+      permission: "view_desert_storm" as const,
     },
     {
       href: "/events",
       label: "Événements",
       icon: Calendar,
       permission: "view_events" as const,
-      showForGuests: true,
     },
     {
       href: "/help",
       label: "Aide",
       icon: BookOpen,
       permission: "view_help" as const,
-      showForGuests: true,
     },
     {
       href: "/stats",
@@ -130,11 +133,7 @@ export function Navigation() {
             {filteredNavigationItems.map((item) => {
               const Icon = item.icon;
               return (
-                <PermissionGuard
-                  key={item.href}
-                  permission={item.permission}
-                  showForGuests={item.showForGuests}
-                >
+                <PermissionGuard key={item.href} permission={item.permission}>
                   <Link href={item.href}>
                     <Button
                       variant="ghost"
@@ -222,11 +221,7 @@ export function Navigation() {
             {filteredNavigationItems.map((item) => {
               const Icon = item.icon;
               return (
-                <PermissionGuard
-                  key={item.href}
-                  permission={item.permission}
-                  showForGuests={item.showForGuests}
-                >
+                <PermissionGuard key={item.href} permission={item.permission}>
                   <Link
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}

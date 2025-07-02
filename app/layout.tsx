@@ -1,6 +1,7 @@
 import { AlertSchedulerInit } from "@/components/alert-scheduler-init";
 import { Navigation } from "@/components/navigation";
 import { NotificationWrapper } from "@/components/notification-wrapper";
+import { preloadPermissions } from "@/lib/permissions";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -25,7 +26,8 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Pas besoin de précharger - le cache se gère automatiquement
+  // Précharger les permissions pour éviter le fallback vide côté client
+  await preloadPermissions();
 
   return (
     <html lang="fr" className="dark" suppressHydrationWarning>

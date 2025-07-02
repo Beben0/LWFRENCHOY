@@ -10,10 +10,12 @@ import {
   BookOpen,
   Calendar,
   Clock,
+  Crown,
   Database,
   Download,
   Shield,
   Sword,
+  Target,
   Train,
   Users,
   Zap,
@@ -26,6 +28,7 @@ import type { ReactNode } from "react";
 import { Children, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useGuestPermissions } from "@/lib/hooks/use-guest-permissions";
 import { hasPermission, type Permission } from "@/lib/permissions";
 
 // Lazy-loaded status components (admin tools)
@@ -57,18 +60,20 @@ interface StatsResponse {
 
 export default function UnifiedDashboard() {
   const { data: session, status } = useSession();
+  const guestPermissions = useGuestPermissions();
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Helper util
-  const can = (p: Permission) => hasPermission(session, p);
+  const can = (p: Permission) =>
+    session ? hasPermission(session, p) : guestPermissions.has(p as any);
 
   // ────────────────────────────────────────────────────────────────────────────
   // Guard: user must at least have view_dashboard perm to access page
   useEffect(() => {
     if (status === "loading") return;
-    if (!session || !can("view_dashboard")) redirect("/auth/signin");
+    if (!can("view_dashboard")) redirect("/auth/signin");
   }, [status, session]);
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -365,6 +370,26 @@ export default function UnifiedDashboard() {
               href="/admin/vs/history"
               icon={Activity}
               label={<Translate>Historique</Translate>}
+            />
+          )}
+        </Section>
+      )}
+
+      {/* ---- 2.5. Desert Storm ---- */}
+      {can("view_desert_storm") && (
+        <Section title={<Translate>Desert Storm</Translate>}>
+          <Tile
+            permission="view_desert_storm"
+            href="/desert-storm"
+            icon={Target}
+            label={<Translate>Événements</Translate>}
+          />
+          {can("create_desert_storm") && (
+            <Tile
+              permission="create_desert_storm"
+              href="/admin/desert-storm"
+              icon={Crown}
+              label={<Translate>Administration</Translate>}
             />
           )}
         </Section>

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { hasPermissionAsync } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -13,7 +14,8 @@ const trainSlotSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session) {
+    const canView = await hasPermissionAsync(session, "view_trains");
+    if (!canView) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -60,7 +62,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session || session.user.role !== "ADMIN") {
+    const canCreate = await hasPermissionAsync(session, "create_train_slot");
+    if (!canCreate) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

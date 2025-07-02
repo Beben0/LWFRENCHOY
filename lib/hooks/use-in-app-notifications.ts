@@ -1,6 +1,7 @@
 "use client";
 
 import { useToast } from "@/components/ui/toast";
+import { hasPermission } from "@/lib/permissions";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 
@@ -18,12 +19,12 @@ export function useInAppNotifications() {
   const lastCheckRef = useRef<Date | null>(null);
   const processedAlertsRef = useRef<Set<string>>(new Set());
 
-  // Vérifier si l'utilisateur est admin
-  const isAdmin = session?.user?.role === "ADMIN";
+  // Vérifier permission de gérer les alertes
+  const canManageAlerts = hasPermission(session, "manage_alerts");
 
   const checkForNewAlerts = async () => {
-    // Ne rien faire si l'utilisateur n'est pas admin
-    if (!isAdmin) return;
+    // Ne rien faire si l'utilisateur n'a pas la permission
+    if (!canManageAlerts) return;
 
     try {
       const response = await fetch("/api/admin/alerts/unread");
@@ -100,8 +101,8 @@ export function useInAppNotifications() {
   };
 
   useEffect(() => {
-    // Ne rien faire si l'utilisateur n'est pas admin
-    if (!isAdmin) return;
+    // Ne rien faire si l'utilisateur n'a pas la permission
+    if (!canManageAlerts) return;
 
     // Vérifier immédiatement
     checkForNewAlerts();
@@ -110,7 +111,7 @@ export function useInAppNotifications() {
     const interval = setInterval(checkForNewAlerts, 30000);
 
     return () => clearInterval(interval);
-  }, [isAdmin]);
+  }, [canManageAlerts]);
 
   return {
     checkForNewAlerts,

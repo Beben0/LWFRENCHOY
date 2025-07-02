@@ -172,6 +172,8 @@ export function RolePermissionsManager() {
       "view_stats",
       "view_admin_panel",
       "view_help",
+      "view_vs",
+      "view_desert_storm",
     ],
     "Gestion des Membres": ["create_member", "edit_member", "delete_member"],
     "Gestion des Trains": [
@@ -195,6 +197,13 @@ export function RolePermissionsManager() {
       "manage_vs_participants",
       "edit_vs_results",
       "edit_vs",
+    ],
+    "Gestion Desert Storm": [
+      "create_desert_storm",
+      "edit_desert_storm",
+      "delete_desert_storm",
+      "manage_desert_storm_participants",
+      "edit_desert_storm_results",
     ],
     Administration: [
       "manage_users",
@@ -374,6 +383,20 @@ function getPermissionDescription(permission: string): string {
       return "Modifier les résultats et scores d'un VS";
     case "edit_vs":
       return "Permission générale pour modifier les données VS";
+
+    // Desert Storm
+    case "view_desert_storm":
+      return "Voir les événements Desert Storm";
+    case "create_desert_storm":
+      return "Créer de nouveaux événements Desert Storm";
+    case "edit_desert_storm":
+      return "Modifier les événements Desert Storm";
+    case "delete_desert_storm":
+      return "Supprimer les événements Desert Storm";
+    case "manage_desert_storm_participants":
+      return "Gérer les participants aux événements Desert Storm";
+    case "edit_desert_storm_results":
+      return "Modifier les résultats des événements Desert Storm";
 
     // Gestion des Membres
     case "create_member":

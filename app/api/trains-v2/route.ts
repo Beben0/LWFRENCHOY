@@ -8,10 +8,6 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
-
     if (!hasPermission(session, "view_trains")) {
       return NextResponse.json(
         { error: "Permission refusée" },
