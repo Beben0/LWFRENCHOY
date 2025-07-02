@@ -61,18 +61,22 @@ async function generateTrainInstances(daysAhead: number = 14) {
   const skipped = [];
 
   for (let i = 0; i <= daysAhead; i++) {
-    // Construire la date à 12:00 UTC pour qu'elle reste dans le bon jour quel que soit le fuseau
+    // Construire la date à 00:00 UTC (début de journée) pour avoir une valeur canonique
     const targetDate = new Date(
       Date.UTC(
         now.getUTCFullYear(),
         now.getUTCMonth(),
         now.getUTCDate() + i,
-        12, // midi UTC
+        0,
         0,
         0,
         0
       )
     );
+
+    // Fenêtre pour détecter les doublons : tout train ayant une date entre 00:00 et 23:59 UTC du même jour
+    const nextDay = new Date(targetDate);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
     const dayOfWeek = getDayOfWeek(targetDate);
     const template = TRAIN_TEMPLATES.find((t) => t.dayOfWeek === dayOfWeek);
@@ -82,9 +86,14 @@ async function generateTrainInstances(daysAhead: number = 14) {
       continue;
     }
 
-    // Vérifier si le train existe déjà
-    const existingTrain = await prisma.trainInstance.findUnique({
-      where: { date: targetDate },
+    // Vérifier si un train existe déjà ce jour‐là (indépendamment de l'heure)
+    const existingTrain = await prisma.trainInstance.findFirst({
+      where: {
+        date: {
+          gte: targetDate,
+          lt: nextDay,
+        },
+      },
     });
 
     if (existingTrain) {
