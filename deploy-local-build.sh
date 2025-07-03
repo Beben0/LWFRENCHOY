@@ -104,9 +104,30 @@ docker-compose -f docker-compose.freebox-https.yml --env-file .env.production up
 echo "🏥 Attente du démarrage de l'application..."
 sleep 60
 
-echo "🗄️ Application des migrations Prisma..."
-docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx prisma db push --accept-data-loss 2>/dev/null || echo "⚠️ Erreur migration, continuons..."
-docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx prisma generate 2>/dev/null || echo "⚠️ Erreur génération client, continuons..."
+echo "⏳ Vérification de la disponibilité de Postgres..."
+until docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T postgres pg_isready -U alliance_user >/dev/null 2>&1; do
+  echo "   Postgres pas encore prêt, nouvelle tentative dans 2s..."
+  sleep 2
+done
+
+# Exécuter les migrations Prisma avec jusqu'à 5 tentatives pour éviter les faux négatifs
+echo "🔄 Application des migrations Prisma (max 5 tentatives)..."
+for i in {1..5}; do
+  if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx prisma db push --accept-data-loss; then
+    echo "✅ Migrations appliquées avec succès (tentative $i)"
+    break
+  else
+    if [ "$i" -eq 5 ]; then
+      echo "❌ Impossible d'appliquer les migrations après 5 tentatives, arrêt du déploiement."
+      exit 1
+    fi
+    echo "⚠️ Tentative $i échouée, nouvelle tentative dans 5s..."
+    sleep 5
+  fi
+done
+
+# Génération du client Prisma
+docker-compose -f docker-compose.freebox-https.yml --env-file .env.production exec -T app npx prisma generate || echo "⚠️ Erreur génération client, continuons..."
 
 echo "🔍 Test de santé HTTPS..."
 if curl -k -f https://localhost/api/health 2>/dev/null; then
