@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         email: validatedData.email,
         pseudo: validatedData.pseudo,
         password: hashedPassword,
-        role: "GUEST",
+        role: "MEMBER" as any,
       },
       select: {
         id: true,
