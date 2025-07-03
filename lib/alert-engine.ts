@@ -408,9 +408,11 @@ export class AlertEngine {
   private async getTrainDepartureData(minutesBefore: number) {
     const now = new Date();
 
-    // Récupérer tous les trains avec conducteur
-    const trainSlots = await prisma.trainSlot.findMany({
+    // Nouveau système : utiliser les instances de train encore programmées ou en boarding
+    const upcomingInstances = await prisma.trainInstance.findMany({
       where: {
+        isArchived: false,
+        status: { in: ["SCHEDULED", "BOARDING"] },
         conductorId: { not: null },
       },
       include: {
@@ -418,49 +420,35 @@ export class AlertEngine {
       },
     });
 
-    const departingTrains = [];
-    const dayIndexes = {
-      sunday: 0,
-      monday: 1,
-      tuesday: 2,
-      wednesday: 3,
-      thursday: 4,
-      friday: 5,
-      saturday: 6,
-    };
+    const departingTrains: any[] = [];
 
-    for (const train of trainSlots) {
-      const [hours, minutes] = train.departureTime.split(":").map(Number);
-      const dayIndex = dayIndexes[train.day as keyof typeof dayIndexes];
+    for (const train of upcomingInstances) {
+      // Date du train (UTC) + heure réelle de départ
+      const [realH, realM] = train.realDepartureTime
+        .split(":" as any)
+        .map(Number);
+      const departureDate = new Date(train.date);
+      departureDate.setUTCHours(realH, realM, 0, 0);
 
-      // Calculer la prochaine occurrence de ce train
-      let nextDeparture = new Date();
-      const currentDayIndex = nextDeparture.getDay();
-      let daysUntil = (dayIndex - currentDayIndex + 7) % 7;
-
-      if (daysUntil === 0) {
-        // C'est aujourd'hui, vérifier l'heure
-        const trainToday = new Date();
-        trainToday.setHours(hours, minutes, 0, 0);
-        if (trainToday <= now) {
-          daysUntil = 7; // C'est passé, prendre la semaine prochaine
-        }
+      // Ajustement si l'heure réelle franchit minuit (par ex 20:00 -> 00:00 lendemain)
+      const [regH, regM] = train.departureTime.split(":" as any).map(Number);
+      const regDate = new Date(train.date);
+      regDate.setUTCHours(regH, regM, 0, 0);
+      if (departureDate < regDate) {
+        departureDate.setDate(departureDate.getDate() + 1);
       }
 
-      nextDeparture.setDate(nextDeparture.getDate() + daysUntil);
-      nextDeparture.setHours(hours, minutes, 0, 0);
-
-      // Vérifier si c'est dans la fenêtre d'alerte
-      const timeDiff = nextDeparture.getTime() - now.getTime();
-      const minutesUntil = Math.floor(timeDiff / (1000 * 60));
+      const minutesUntil = Math.floor(
+        (departureDate.getTime() - now.getTime()) / 60000
+      );
 
       if (minutesUntil > 0 && minutesUntil <= minutesBefore) {
         departingTrains.push({
-          day: train.day,
-          time: train.departureTime,
+          date: train.date,
+          time: train.realDepartureTime,
           conductor: train.conductor?.pseudo,
           minutesUntil,
-          departure: nextDeparture,
+          departureDate,
         });
       }
     }
@@ -468,7 +456,10 @@ export class AlertEngine {
     const trainCount = departingTrains.length;
     const trainsList = departingTrains
       .map(
-        (t) => `${t.conductor} (${t.day} ${t.time} - dans ${t.minutesUntil}min)`
+        (t) =>
+          `${t.conductor || "?"} (${new Date(t.date).toLocaleDateString(
+            "fr-FR"
+          )} ${t.time} - dans ${t.minutesUntil}min)`
       )
       .join(", ");
 
@@ -478,7 +469,11 @@ export class AlertEngine {
         trainCount,
         minutesBefore,
         trainsList: trainsList || "Aucun",
-        nextTrains: departingTrains.map((t) => `${t.day} ${t.time}`).join(", "),
+        nextTrains: departingTrains
+          .map(
+            (t) => `${new Date(t.date).toLocaleDateString("fr-FR")} ${t.time}`
+          )
+          .join(", "),
       },
       raw: { departingTrains, minutesBefore },
     };
