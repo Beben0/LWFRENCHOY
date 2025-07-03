@@ -224,11 +224,20 @@ export class AlertEngine {
   }
 
   private async getTrainCoverageData() {
-    // Récupérer tous les créneaux de train
-    const trainSlots = await prisma.trainSlot.findMany();
+    // Utiliser les instances de train à venir (non archivées) sur les 14 prochains jours
+    const today = new Date();
+    const horizon = new Date();
+    horizon.setDate(horizon.getDate() + 14);
 
-    const totalSlots = trainSlots.length;
-    const assignedSlots = trainSlots.filter((slot) => slot.conductorId).length;
+    const trainInstances = await prisma.trainInstance.findMany({
+      where: {
+        isArchived: false,
+        date: { gte: today, lte: horizon },
+      },
+    });
+
+    const totalSlots = trainInstances.length;
+    const assignedSlots = trainInstances.filter((t) => t.conductorId).length;
     const missingSlots = totalSlots - assignedSlots;
     const coveragePercent =
       totalSlots > 0 ? (assignedSlots / totalSlots) * 100 : 100;
@@ -242,7 +251,7 @@ export class AlertEngine {
         missingSlots,
       },
       raw: {
-        trainSlots,
+        trainInstances,
         totalSlots,
         assignedSlots,
         missingSlots,
