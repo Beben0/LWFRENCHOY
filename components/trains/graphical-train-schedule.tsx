@@ -1095,8 +1095,8 @@ function TrainScheduleContent({
                           <div className="flex items-center gap-2">
                             <Check className="w-5 h-5" />
                             {selectedTrain.conductor
-                              ? "✓ Valider les Modifications"
-                              : "✓ Valider l'Assignation"}
+                              ? " Valider les Modifications"
+                              : " Valider l'Assignation"}
                           </div>
                         )}
                       </Button>

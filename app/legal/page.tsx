@@ -13,7 +13,7 @@ export default function LegalPage() {
       <h2>Éditeur</h2>
       <p>
         Webmaster : <strong>#1584 Beben0</strong> (
-        <Link href="mailto:beben0@example.com">beben0@example.com</Link>)
+        <Link href="mailto:admin@beben0.com">admin@beben0.com</Link>)
       </p>
       <h2>Données collectées</h2>
       <p>
@@ -32,7 +32,7 @@ export default function LegalPage() {
         webmaster à l'adresse ci-dessus.
       </p>
       <h2>Hébergement</h2>
-      <p>Hébergé sur un serveur personnel (Freebox Delta) à Paris, France.</p>
+      <p>Hébergé sur un serveur personnel à Paris, France.</p>
       <p>
         <Link href="/">← Retour à l'accueil</Link>
       </p>
