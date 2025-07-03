@@ -229,6 +229,7 @@ model InviteLink {
 
 enum Role {
   ADMIN // Administrateur du système
+  MEMBER // Gestionnaire (droits restreints)
   GUEST // Utilisateur invité/non authentifié
 }
 
