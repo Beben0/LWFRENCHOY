@@ -66,12 +66,26 @@ echo "🧹 Nettoyage des containers existants..."
 docker-compose -f docker-compose.freebox-https.yml --env-file .env.production down 2>/dev/null || true
 docker-compose -f docker-compose.freebox.yml --env-file .env.production down 2>/dev/null || true
 
-echo "🔐 Génération du .env.production..."
+echo "🔐 Génération/mise à jour du .env.production..."
+
+# TOUJOURS sauvegarder l'ancien .env si il existe
+if [ -f ".env.production" ]; then
+    cp .env.production .env.production.backup
+    echo "📋 Sauvegarde .env.production → .env.production.backup"
+fi
+
+# Créer ou mettre à jour le .env.production avec TOUTES les variables critiques
 if [ ! -f ".env.production" ]; then
     NEXTAUTH_SECRET=$(openssl rand -base64 32)
     POSTGRES_PASSWORD=$(openssl rand -base64 32)
-    
-    cat > .env.production << ENVEOF
+else
+    # Récupérer les variables existantes
+    NEXTAUTH_SECRET=$(grep "NEXTAUTH_SECRET=" .env.production | cut -d'=' -f2- || openssl rand -base64 32)
+    POSTGRES_PASSWORD=$(grep "POSTGRES_PASSWORD=" .env.production | cut -d'=' -f2- || openssl rand -base64 32)
+fi
+
+# TOUJOURS régénérer le fichier complet pour éviter les doublons/incohérences
+cat > .env.production << ENVEOF
 # Production Environment - Freebox Delta
 POSTGRES_DB=alliance_manager_prod
 POSTGRES_USER=alliance_user
@@ -83,20 +97,30 @@ AUTO_START_TRAINS=true
 AUTO_START_ALERTS=true
 LIBRETRANSLATE_ENDPOINT=http://libretranslate:5000/translate
 ENVEOF
-    echo "✅ .env.production créé avec schedulers auto-start"
-else
-    # Ajouter les variables si elles n'existent pas
-    if ! grep -q "AUTO_START_TRAINS" .env.production; then
-        echo "AUTO_START_TRAINS=true" >> .env.production
-    fi
-    if ! grep -q "AUTO_START_ALERTS" .env.production; then
-        echo "AUTO_START_ALERTS=true" >> .env.production
-    fi
-    if ! grep -q "LIBRETRANSLATE_ENDPOINT" .env.production; then
-        echo "LIBRETRANSLATE_ENDPOINT=http://libretranslate:5000/translate" >> .env.production
-    fi
-    echo "✅ .env.production mis à jour avec schedulers auto-start"
+
+echo "✅ .env.production généré avec TOUTES les variables critiques"
+
+# Vérification de sécurité : s'assurer que les variables critiques sont présentes
+echo "🔍 Vérification des variables critiques..."
+missing_vars=""
+if ! grep -q "AUTO_START_TRAINS=true" .env.production; then
+    missing_vars="$missing_vars AUTO_START_TRAINS"
 fi
+if ! grep -q "AUTO_START_ALERTS=true" .env.production; then
+    missing_vars="$missing_vars AUTO_START_ALERTS"
+fi
+if ! grep -q "NODE_ENV=production" .env.production; then
+    missing_vars="$missing_vars NODE_ENV"
+fi
+
+if [ -n "$missing_vars" ]; then
+    echo "❌ ERREUR: Variables critiques manquantes:$missing_vars"
+    echo "📋 Contenu de .env.production:"
+    cat .env.production
+    exit 1
+fi
+
+echo "✅ Toutes les variables critiques sont présentes"
 
 echo "🏃 Démarrage des services HTTPS..."
 docker-compose -f docker-compose.freebox-https.yml --env-file .env.production up -d
@@ -211,25 +235,56 @@ else
                 echo "🌐 Application accessible sur : https://beben0.com"
             fi
         fi
-    else
-        echo "⚠️ Déploiement terminé, vérifiez les logs:"
-        docker-compose -f docker-compose.freebox-https.yml --env-file .env.production logs --tail=20
     fi
 fi
 
 echo "🧹 Nettoyage des fichiers d'installation..."
 rm -f alliance-manager-image.tar alliance-manager-project.tar.gz
-EOF
 
-# 7. Nettoyage local
-echo "🧹 Nettoyage des fichiers temporaires..."
-rm -f alliance-manager-image.tar.gz alliance-manager-project.tar.gz
+# Vérification finale des schedulers
+echo "🔍 Vérification finale des schedulers..."
+sleep 10
+if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production logs app --tail=50 | grep -q "Starting train scheduler"; then
+    echo "✅ Train scheduler détecté dans les logs"
+else
+    echo "⚠️ Train scheduler non détecté, vérification manuelle nécessaire"
+fi
 
-echo ""
-echo "🎉 Déploiement terminé!"
-echo "🌐 Application accessible sur : https://$FREEBOX_IP"
+if docker-compose -f docker-compose.freebox-https.yml --env-file .env.production logs app --tail=50 | grep -q "Starting alert scheduler"; then
+    echo "✅ Alert scheduler détecté dans les logs"
+else
+    echo "⚠️ Alert scheduler non détecté, vérification manuelle nécessaire"
+fi
+
+echo "📊 État final des containers:"
+docker-compose -f docker-compose.freebox-https.yml --env-file .env.production ps
+
+echo "🔄 Redémarrage de nginx pour prise en compte du réseau..."
+docker-compose -f docker-compose.freebox-https.yml --env-file .env.production restart nginx
+
+echo "⏳ Attente du démarrage de nginx (5s)..."
+sleep 5
+
+echo "🔍 Test final de santé externe..."
+sleep 5
+
+if curl -I https://$FREEBOX_IP/api/health 2>/dev/null | grep -q "200"; then
+    echo "✅ Site accessible depuis l'extérieur!"
+    echo ""
+    echo "🎉 Déploiement terminé avec succès!"
+    echo "🌐 Application accessible sur : https://$FREEBOX_IP"
+    echo "🚂 Schedulers automatiques activés"
+else
+    echo "⚠️ Site non accessible depuis l'extérieur"
+    echo "🔧 Vérification manuelle recommandée"
+    echo ""
+    echo "🎯 Déploiement terminé (avec avertissement)"
+    echo "🌐 Application supposée accessible sur : https://$FREEBOX_IP"
+fi
+
 echo ""
 echo "📊 Commandes utiles sur la Freebox:"
 echo "   ssh $FREEBOX_USER@$FREEBOX_IP"
 echo "   cd $REMOTE_PATH"
-echo "   docker-compose -f docker-compose.freebox-https.yml --env-file .env.production logs -f" 
+echo "   docker-compose -f docker-compose.freebox-https.yml --env-file .env.production logs -f"
+echo "   docker-compose -f docker-compose.freebox-https.yml --env-file .env.production ps" 
