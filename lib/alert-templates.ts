@@ -1,4 +1,40 @@
+// ===============================================================================
+// SYSTÈME D'ALERTES FRENCHOY - Templates et Configuration
+// ===============================================================================
+//
+// Ce fichier définit tous les types d'alertes disponibles dans le système.
+// Le moteur d'alertes (alert-engine.ts) utilise ces templates pour :
+// 1. Collecter les données depuis la base de données
+// 2. Évaluer les conditions définies par l'utilisateur
+// 3. Générer des messages formatés avec variables dynamiques
+// 4. Envoyer les notifications via Discord/Telegram/In-App
+//
+// MIGRATION 2024+ : Le système utilise maintenant TrainInstance au lieu de TrainSlot
+// pour une gestion plus flexible et précise des horaires de trains.
+//
+// STRUCTURE :
+// - AlertTemplate : définit un type d'alerte (variables, message, exemples)
+// - AlertVariable : une variable dynamique dans le message (ex: {coveragePercent})
+// - AlertExample : exemples de configuration pour aider l'utilisateur
+//
+// COMMENT AJOUTER UN NOUVEAU TYPE D'ALERTE :
+// 1. Ajouter le template dans ALERT_TEMPLATES
+// 2. Ajouter la collecte de données dans alert-engine.ts (collectData method)
+// 3. Optionnellement ajouter des comparaisons spécifiques
+//
+// VARIABLES DYNAMIQUES :
+// Les messages peuvent contenir des variables entre accolades : {variableName}
+// Le formatage est automatique selon le type (percentage, number, date, string)
+//
+// EXEMPLES DE VARIABLES :
+// {coveragePercent} → 85.2%
+// {totalPower:0,0} → 1,234,567,890 (formatage personnalisé)
+// {eventDate} → 15/12/2024 14:30
+//
+// ===============================================================================
+
 // Système de templates pour les alertes avec variables dynamiques
+// Utilise le nouveau système TrainInstance (+ 2024) au lieu de l'ancien TrainSlot
 
 export interface AlertTemplate {
   type: string;
@@ -27,12 +63,13 @@ export interface AlertExample {
   messagePreview: string;
 }
 
-// Templates d'alertes avec documentation
+// Templates d'alertes avec documentation mise à jour
 export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   TRAIN_COVERAGE: {
     type: "TRAIN_COVERAGE",
     name: "Couverture des Trains",
-    description: "Surveille le pourcentage de créneaux de trains assignés",
+    description:
+      "Surveille le pourcentage d'instances de trains assignées à un conducteur (14 prochains jours)",
     category: "Trains",
     icon: "🚂",
     defaultConditions: {
@@ -45,34 +82,34 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       {
         key: "coveragePercent",
         name: "Pourcentage de couverture",
-        description: "Pourcentage de créneaux assignés",
+        description: "Pourcentage d'instances assignées",
         type: "percentage",
         format: "0.0%",
       },
       {
         key: "assignedSlots",
-        name: "Créneaux assignés",
-        description: "Nombre de créneaux avec un conducteur",
+        name: "Instances assignées",
+        description: "Nombre d'instances avec un conducteur",
         type: "number",
         format: "0,0",
       },
       {
         key: "totalSlots",
-        name: "Total créneaux",
-        description: "Nombre total de créneaux de trains",
+        name: "Total instances",
+        description: "Nombre total d'instances de trains (14 jours)",
         type: "number",
         format: "0,0",
       },
       {
         key: "missingSlots",
-        name: "Créneaux manquants",
-        description: "Nombre de créneaux sans conducteur",
+        name: "Instances manquantes",
+        description: "Nombre d'instances sans conducteur",
         type: "number",
         format: "0,0",
       },
     ],
     messageTemplate:
-      "⚠️ Couverture des trains insuffisante !\n\n📊 **Statistiques actuelles :**\n• Couverture : {coveragePercent}\n• Créneaux assignés : {assignedSlots}/{totalSlots}\n• Créneaux manquants : {missingSlots}\n\n🎯 **Seuil configuré :** < {threshold}%",
+      "⚠️ Couverture des trains insuffisante !\n\n📊 **Statistiques actuelles :**\n• Couverture : {coveragePercent}\n• Instances assignées : {assignedSlots}/{totalSlots}\n• Instances manquantes : {missingSlots}\n\n🎯 **Seuil configuré :** < {threshold}%\n\n📅 **Période :** 14 prochains jours",
     examples: [
       {
         condition: { threshold: 80, comparison: "less_than" },
@@ -92,7 +129,8 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   INACTIVE_MEMBERS: {
     type: "INACTIVE_MEMBERS",
     name: "Membres Inactifs",
-    description: "Surveille le nombre de membres inactifs depuis X jours",
+    description:
+      "Surveille le nombre de membres inactifs depuis X jours (basé sur lastActive)",
     category: "Membres",
     icon: "😴",
     defaultConditions: {
@@ -132,7 +170,7 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       },
     ],
     messageTemplate:
-      "😴 **Membres inactifs détectés !**\n\n📊 **Détails :**\n• {inactiveCount} membre(s) inactif(s) depuis plus de {inactiveDays} jours\n• {inactivePercent}% des membres actifs\n• Total membres actifs : {totalActiveMembers}\n\n🎯 **Seuil configuré :** > {threshold} membres",
+      "😴 **Membres inactifs détectés !**\n\n📊 **Détails :**\n• {inactiveCount} membre(s) inactif(s) depuis plus de {inactiveDays} jours\n• {inactivePercent} des membres actifs\n• Total membres actifs : {totalActiveMembers}\n\n🎯 **Seuil configuré :** > {threshold} membres",
     examples: [
       {
         condition: { threshold: 5, comparison: "greater_than", timeframe: 7 },
@@ -153,44 +191,59 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   MISSING_CONDUCTOR: {
     type: "MISSING_CONDUCTOR",
     name: "Conducteurs Manquants",
-    description: "Alerte quand des créneaux n'ont pas de conducteur",
+    description:
+      "Alerte quand des instances de train n'ont pas de conducteur (prochaines 48h)",
     category: "Trains",
     icon: "👤",
     defaultConditions: {
       threshold: 0,
       comparison: "greater_than",
-      timeframe: null,
+      timeframe: 48, // heures à l'avance
     },
     availableComparisons: ["greater_than", "greater_than_or_equal", "equals"],
     variables: [
       {
         key: "missingConductors",
         name: "Conducteurs manquants",
-        description: "Nombre de créneaux sans conducteur",
+        description: "Nombre d'instances sans conducteur",
         type: "number",
         format: "0,0",
       },
       {
-        key: "totalSlots",
-        name: "Total créneaux",
-        description: "Nombre total de créneaux",
+        key: "totalInstances",
+        name: "Total instances",
+        description: "Nombre total d'instances dans la période",
         type: "number",
         format: "0,0",
       },
       {
-        key: "missingDays",
-        name: "Jours concernés",
-        description: "Liste des jours sans conducteur",
+        key: "timeframeHours",
+        name: "Période (heures)",
+        description: "Période de surveillance en heures",
+        type: "number",
+        format: "0",
+      },
+      {
+        key: "missingList",
+        name: "Liste des instances",
+        description: "Détails des instances sans conducteur",
         type: "string",
       },
     ],
     messageTemplate:
-      "👤 **Conducteurs manquants !**\n\n🚂 **Créneaux sans conducteur :**\n• {missingConductors} créneau(x) sur {totalSlots}\n• Jours concernés : {missingDays}\n\n⚡ **Action requise :** Assigner des conducteurs rapidement",
+      "👤 **Conducteurs manquants !**\n\n🚂 **Instances sans conducteur :**\n• {missingConductors} instance(s) sur {totalInstances}\n• Prochaines {timeframeHours}h\n\n📋 **Détails :**\n{missingList}\n\n⚡ **Action requise :** Assigner des conducteurs rapidement",
     examples: [
       {
-        condition: { threshold: 0, comparison: "greater_than" },
-        description: "Alerte dès qu'un créneau n'a pas de conducteur",
-        messagePreview: "👤 Conducteurs manquants ! 2 créneaux sans conducteur",
+        condition: { threshold: 0, comparison: "greater_than", timeframe: 48 },
+        description: "Alerte dès qu'une instance n'a pas de conducteur (48h)",
+        messagePreview:
+          "👤 Conducteurs manquants ! 2 instances sans conducteur",
+      },
+      {
+        condition: { threshold: 1, comparison: "greater_than", timeframe: 24 },
+        description: "Alerte si plus d'une instance manque de conducteur (24h)",
+        messagePreview:
+          "👤 Conducteurs manquants ! 3 instances sans conducteur",
       },
     ],
   },
@@ -198,7 +251,8 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   MEMBER_THRESHOLD: {
     type: "MEMBER_THRESHOLD",
     name: "Seuil de Membres",
-    description: "Surveille le nombre total de membres actifs",
+    description:
+      "Surveille le nombre total de membres actifs (basé sur isActive dans la table Member)",
     category: "Membres",
     icon: "👥",
     defaultConditions: {
@@ -218,7 +272,7 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       {
         key: "maxMembers",
         name: "Limite alliance",
-        description: "Limite maximale de l'alliance",
+        description: "Limite maximale de l'alliance (100 par défaut)",
         type: "number",
         format: "0,0",
       },
@@ -231,7 +285,7 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       },
     ],
     messageTemplate:
-      "👥 **Seuil de membres atteint !**\n\n📊 **Effectifs actuels :**\n• Membres actifs : {activeMembers}\n• Limite alliance : {maxMembers}\n• Taux de remplissage : {memberPercent}%\n\n🎯 **Seuil configuré :** {comparison} {threshold} membres",
+      "👥 **Seuil de membres atteint !**\n\n📊 **Effectifs actuels :**\n• Membres actifs : {activeMembers}\n• Limite alliance : {maxMembers}\n• Taux de remplissage : {memberPercent}\n\n🎯 **Seuil configuré :** {comparison} {threshold} membres",
     examples: [
       {
         condition: { threshold: 50, comparison: "less_than" },
@@ -249,7 +303,8 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   POWER_THRESHOLD: {
     type: "POWER_THRESHOLD",
     name: "Seuil de Puissance",
-    description: "Surveille la puissance totale de l'alliance",
+    description:
+      "Surveille la puissance totale de l'alliance (somme des power de tous les membres actifs)",
     category: "Alliance",
     icon: "⚡",
     defaultConditions: {
@@ -269,21 +324,21 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       {
         key: "averagePower",
         name: "Puissance moyenne",
-        description: "Puissance moyenne par membre",
+        description: "Puissance moyenne par membre actif",
         type: "number",
         format: "0,0",
       },
       {
         key: "activeMembers",
         name: "Membres actifs",
-        description: "Nombre de membres actifs",
+        description: "Nombre de membres actifs inclus dans le calcul",
         type: "number",
         format: "0,0",
       },
       {
         key: "powerGrowth",
         name: "Croissance",
-        description: "Évolution de puissance (si disponible)",
+        description: "Évolution de puissance (non implémenté actuellement)",
         type: "string",
       },
     ],
@@ -308,7 +363,8 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   EVENT_REMINDER: {
     type: "EVENT_REMINDER",
     name: "Rappel d'Événement",
-    description: "Rappels avant les événements importants",
+    description:
+      "Rappels avant les événements importants (VS, Desert Storm, autres événements système)",
     category: "Événements",
     icon: "📅",
     defaultConditions: {
@@ -327,7 +383,7 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       {
         key: "eventType",
         name: "Type d'événement",
-        description: "Catégorie de l'événement",
+        description: "Catégorie de l'événement (VS, Desert Storm, etc.)",
         type: "string",
       },
       {
@@ -368,7 +424,8 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   TRAIN_DEPARTURE: {
     type: "TRAIN_DEPARTURE",
     name: "Départ de Train",
-    description: "Alerte X minutes avant le départ d'un train",
+    description:
+      "Alerte X minutes avant le départ d'instances de train (avec status SCHEDULED/BOARDING)",
     category: "Trains",
     icon: "🚀",
     defaultConditions: {
@@ -381,7 +438,7 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       {
         key: "trainCount",
         name: "Nombre de trains",
-        description: "Nombre de trains qui partent bientôt",
+        description: "Nombre d'instances qui partent bientôt",
         type: "number",
         format: "0",
       },
@@ -395,18 +452,18 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       {
         key: "trainsList",
         name: "Liste des trains",
-        description: "Détails des trains qui partent",
+        description: "Détails des instances qui partent",
         type: "string",
       },
       {
         key: "nextTrains",
         name: "Prochains trains",
-        description: "Horaires des prochains trains",
+        description: "Horaires des prochaines instances",
         type: "string",
       },
     ],
     messageTemplate:
-      "🚀 **Départ de train imminent !**\n\n🚂 **Trains concernés :**\n{trainsList}\n\n⏰ **Dans {minutesBefore} minutes ou moins**\n\n🎯 **Préparez-vous pour le départ !**",
+      "🚀 **Départ de train imminent !**\n\n🚂 **Instances concernées :**\n{trainsList}\n\n⏰ **Dans {minutesBefore} minutes ou moins**\n\n🎯 **Préparez-vous pour le départ !**",
     examples: [
       {
         condition: {
@@ -414,7 +471,7 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
           comparison: "greater_than_or_equal",
           minutesBefore: 30,
         },
-        description: "Alerte 30 minutes avant le départ d'un train",
+        description: "Alerte 30 minutes avant le départ d'une instance",
         messagePreview:
           "🚀 Départ de train imminent ! Conductor123 (lundi 20:00 - dans 25min)",
       },
@@ -434,7 +491,8 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
   MANUAL_MESSAGE: {
     type: "MANUAL_MESSAGE",
     name: "Message Manuel",
-    description: "Envoi d'un message personnalisé avec un niveau d'alerte",
+    description:
+      "Envoi d'un message personnalisé avec un niveau d'alerte (pour communications importantes)",
     category: "Communication",
     icon: "📢",
     defaultConditions: {
@@ -462,21 +520,33 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
     examples: [
       {
         condition: {
-          message: "Maintenance serveur prévue demain 14h",
-          title: "Maintenance",
+          message:
+            "Maintenance serveur prévue demain 14h-16h. Préparez vos actions importantes avant.",
+          title: "Maintenance Programmée",
         },
-        description: "Message de maintenance",
+        description: "Message de maintenance avec détails",
         messagePreview:
-          "📢 Maintenance - Maintenance serveur prévue demain 14h",
+          "📢 Maintenance Programmée - Maintenance serveur prévue demain 14h-16h",
       },
       {
         condition: {
-          message: "Nouvelle version déployée avec succès !",
-          title: "Déploiement",
+          message:
+            "Nouvelle version v2.1 déployée ! Nouvelles fonctionnalités : Desert Storm amélioré, alertes optimisées.",
+          title: "Mise à jour",
         },
-        description: "Message de déploiement",
+        description: "Annonce de nouvelle version",
         messagePreview:
-          "📢 Déploiement - Nouvelle version déployée avec succès !",
+          "📢 Mise à jour - Nouvelle version v2.1 déployée ! Nouvelles fonctionnalités...",
+      },
+      {
+        condition: {
+          message:
+            "Guerre d'alliance importante demain 20h ! Tous les conducteurs doivent être présents.",
+          title: "Événement Critique",
+        },
+        description: "Alerte pour événement critique",
+        messagePreview:
+          "📢 Événement Critique - Guerre d'alliance importante demain 20h !",
       },
     ],
   },

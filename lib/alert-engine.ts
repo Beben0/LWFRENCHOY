@@ -201,7 +201,9 @@ export class AlertEngine {
         return await this.getInactiveMembersData(conditions.timeframe || 7);
 
       case "MISSING_CONDUCTOR":
-        return await this.getMissingConductorData();
+        return await this.getMissingConductorData(
+          conditions.timeframeHours || 48
+        );
 
       case "MEMBER_THRESHOLD":
         return await this.getMemberThresholdData();
@@ -293,40 +295,64 @@ export class AlertEngine {
     };
   }
 
-  private async getMissingConductorData() {
-    // Récupérer les créneaux sans conducteur
-    const missingConductorSlots = await prisma.trainSlot.findMany({
+  private async getMissingConductorData(timeframeHours: number = 48) {
+    const now = new Date();
+    const endTime = new Date(now.getTime() + timeframeHours * 60 * 60 * 1000);
+
+    // Récupérer les instances sans conducteur dans la période donnée
+    const trainInstances = await prisma.trainInstance.findMany({
       where: {
         conductorId: null,
+        isArchived: false,
+        date: {
+          gte: now,
+          lte: endTime,
+        },
+      },
+      orderBy: {
+        date: "asc",
       },
     });
 
-    const totalSlots = await prisma.trainSlot.count();
-
-    const missingConductors = missingConductorSlots.length;
-
-    // Grouper par jour
-    const dayGroups = missingConductorSlots.reduce(
-      (acc: Record<string, number>, slot: any) => {
-        const day = slot.day;
-        acc[day] = (acc[day] || 0) + 1;
-        return acc;
+    const totalInstances = await prisma.trainInstance.count({
+      where: {
+        isArchived: false,
+        date: {
+          gte: now,
+          lte: endTime,
+        },
       },
-      {}
-    );
+    });
 
-    const missingDays = Object.entries(dayGroups)
-      .map(([day, count]) => `${day} (${count})`)
-      .join(", ");
+    const missingConductors = trainInstances.length;
+
+    // Créer une liste formatée des instances manquantes
+    const missingList = trainInstances
+      .map((instance) => {
+        const dateStr = instance.date.toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+        const timeStr = instance.departureTime;
+        return `• ${instance.dayOfWeek} ${dateStr} à ${timeStr}`;
+      })
+      .join("\n");
 
     return {
       value: missingConductors,
       variables: {
         missingConductors,
-        totalSlots,
-        missingDays: missingDays || "Aucun",
+        totalInstances,
+        timeframeHours,
+        missingList: missingList || "Aucune instance sans conducteur",
       },
-      raw: { missingConductorSlots, totalSlots, dayGroups },
+      raw: {
+        trainInstances,
+        totalInstances,
+        missingConductors,
+        timeframeHours,
+      },
     };
   }
 
