@@ -72,7 +72,7 @@ export const ALERT_TEMPLATES: Record<string, AlertTemplate> = {
       },
     ],
     messageTemplate:
-      "⚠️ Couverture des trains insuffisante !\n\n📊 **Statistiques actuelles :**\n• Couverture : {coveragePercent}%\n• Créneaux assignés : {assignedSlots}/{totalSlots}\n• Créneaux manquants : {missingSlots}\n\n🎯 **Seuil configuré :** < {threshold}%",
+      "⚠️ Couverture des trains insuffisante !\n\n📊 **Statistiques actuelles :**\n• Couverture : {coveragePercent}\n• Créneaux assignés : {assignedSlots}/{totalSlots}\n• Créneaux manquants : {missingSlots}\n\n🎯 **Seuil configuré :** < {threshold}%",
     examples: [
       {
         condition: { threshold: 80, comparison: "less_than" },
