@@ -25,8 +25,25 @@ export function getRedirectUrl(
     return "/dashboard";
   }
 
-  // Invités : trains public
-  return "/trains";
+  // Invités : trouver la première route publique qu'ils peuvent voir
+  const guestOrder: { path: string; perm: string }[] = [
+    { path: "/trains", perm: "view_trains" },
+    { path: "/desert-storm", perm: "view_desert_storm" },
+    { path: "/vs", perm: "view_vs" },
+    { path: "/help", perm: "view_help" },
+    { path: "/events", perm: "view_events" },
+    { path: "/members", perm: "view_members" },
+    { path: "/stats", perm: "view_stats" },
+  ];
+
+  for (const { path, perm } of guestOrder) {
+    if (session && hasPermission(session, perm as any)) {
+      return path;
+    }
+  }
+
+  // Fallback neutre
+  return "/welcome";
 }
 
 /**
