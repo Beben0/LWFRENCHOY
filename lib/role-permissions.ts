@@ -103,19 +103,19 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
 // Récupérer tous les rôles d'alliance depuis le référentiel
 export async function getAllianceRoles(): Promise<string[]> {
   try {
-    // Rôles depuis referenceData
-    const allianceRolesData = await prisma.referenceData.findMany({
-      where: {
-        category: "ALLIANCE_ROLE",
-        isActive: true,
-      },
-      select: { key: true },
-      orderBy: { sortOrder: "asc" },
+    // Rôles depuis referenceData (actifs et inactifs)
+    const allRefRoles = await prisma.referenceData.findMany({
+      where: { category: "ALLIANCE_ROLE" },
+      select: { key: true, isActive: true },
     });
 
-    const rolesFromRef = allianceRolesData.map((r) => r.key);
+    const activeRoles = allRefRoles.filter((r) => r.isActive).map((r) => r.key);
 
-    // Rôles détectés dans rolePermission (ex: R4/R5 créés mais pas encore dans referenceData)
+    const inactiveRolesSet = new Set(
+      allRefRoles.filter((r) => !r.isActive).map((r) => r.key)
+    );
+
+    // Rôles détectés dans rolePermission (ex: créés mais pas encore dans referenceData)
     const rolesFromPermissionsRaw = await prisma.rolePermission.findMany({
       where: {
         NOT: {
@@ -126,10 +126,12 @@ export async function getAllianceRoles(): Promise<string[]> {
       select: { roleType: true },
     });
 
-    const rolesFromPermissions = rolesFromPermissionsRaw.map((r) => r.roleType);
+    const rolesFromPermissions = rolesFromPermissionsRaw
+      .map((r) => r.roleType)
+      .filter((role) => !inactiveRolesSet.has(role)); // Exclure si marqué inactif
 
     const combined = Array.from(
-      new Set([...rolesFromRef, ...rolesFromPermissions])
+      new Set([...activeRoles, ...rolesFromPermissions])
     );
 
     return combined.length > 0 ? combined : ["R5", "R4", "MEMBER"];
