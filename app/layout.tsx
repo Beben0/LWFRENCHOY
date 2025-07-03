@@ -1,6 +1,7 @@
 import { AlertSchedulerInit } from "@/components/alert-scheduler-init";
 import { Navigation } from "@/components/navigation";
 import { NotificationWrapper } from "@/components/notification-wrapper";
+import { Footer } from "@/components/ui/footer";
 import { preloadPermissions } from "@/lib/permissions";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
@@ -35,9 +36,12 @@ export default async function RootLayout({
         <SessionProvider>
           <NotificationWrapper>
             <AlertSchedulerInit />
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background flex flex-col">
               <Navigation />
-              <main className="container mx-auto px-4 py-6">{children}</main>
+              <main className="container mx-auto px-4 py-6 flex-grow">
+                {children}
+              </main>
+              <Footer />
             </div>
           </NotificationWrapper>
         </SessionProvider>
