@@ -190,13 +190,13 @@ function TrainDateInfo({ train }: { train: TrainInstance }) {
     ];
     const month = months[parseInt(dateParts[1]) - 1];
 
-    const today = new Date();
+    const now = getParisDate(new Date());
     const todayStr =
-      today.getFullYear() +
+      now.getFullYear() +
       "-" +
-      String(today.getMonth() + 1).padStart(2, "0") +
+      String(now.getMonth() + 1).padStart(2, "0") +
       "-" +
-      String(today.getDate()).padStart(2, "0");
+      String(now.getDate()).padStart(2, "0");
 
     setDateInfo({
       dayNum: day.toString(),
@@ -236,18 +236,8 @@ function TimeDisplay({ train }: { train: TrainInstance }) {
 
     // Calculer côté client pour éviter hydration mismatch
     const calculateTime = () => {
-      const now = new Date();
-
-      // Corriger le problème de timezone : la date UTC doit être interprétée comme date locale
-      // La base stocke '2025-06-27T22:00:00.000Z' pour "27 juin" mais JS l'interprète comme "28 juin" en France
-      let trainDate: Date;
-      if (train.date.includes("T") && train.date.includes("Z")) {
-        // Date UTC de la base - on veut juste la partie date, pas l'heure
-        const datePart = train.date.split("T")[0]; // '2025-06-27'
-        trainDate = new Date(datePart); // Parse comme date locale, sans conversion timezone
-      } else {
-        trainDate = new Date(train.date);
-      }
+      const now = getParisDate(new Date());
+      const trainDate = getParisDate(train.date);
 
       const [hours, minutes] = train.departureTime.split(":").map(Number);
       const departureDateTime = new Date(trainDate);
@@ -357,8 +347,8 @@ function TodayBadge({ train }: { train: TrainInstance }) {
 
   // Recalcule en local pour éviter les décalages
   const isToday = (() => {
-    const d = new Date(train.date);
-    const n = new Date();
+    const d = getParisDate(new Date(train.date));
+    const n = getParisDate(new Date());
     return (
       d.getFullYear() === n.getFullYear() &&
       d.getMonth() === n.getMonth() &&
@@ -412,8 +402,8 @@ function TrainRow({
     if (train) {
       // Recalcule en local pour éviter les décalages
       const isToday = (() => {
-        const d = new Date(train.date);
-        const n = new Date();
+        const d = getParisDate(new Date(train.date));
+        const n = getParisDate(new Date());
         return (
           d.getFullYear() === n.getFullYear() &&
           d.getMonth() === n.getMonth() &&
@@ -451,8 +441,8 @@ function TrainRow({
       {/* Badge AUJOURD'HUI flottant */}
       {train &&
         (() => {
-          const d = new Date(train.date);
-          const n = new Date();
+          const d = getParisDate(new Date(train.date));
+          const n = getParisDate(new Date());
           return (
             d.getFullYear() === n.getFullYear() &&
             d.getMonth() === n.getMonth() &&
@@ -558,6 +548,17 @@ function TrainRow({
       </div>
     </div>
   );
+}
+
+// Utilitaire pour obtenir une date en timezone Paris
+function getParisDate(date: string | Date) {
+  // Si déjà un objet Date, convertit en string ISO
+  const iso = typeof date === "string" ? date : date.toISOString();
+  // Force parsing en Europe/Paris
+  const parisString = new Date(iso).toLocaleString("en-US", {
+    timeZone: "Europe/Paris",
+  });
+  return new Date(parisString);
 }
 
 // Contenu principal du composant train
@@ -867,8 +868,8 @@ function TrainScheduleContent({
                   className={`relative border-l-4 hover:bg-gray-800/30 transition-colors ${
                     train &&
                     (() => {
-                      const d = new Date(train.date);
-                      const n = new Date();
+                      const d = getParisDate(new Date(train.date));
+                      const n = getParisDate(new Date());
                       return (
                         d.getFullYear() === n.getFullYear() &&
                         d.getMonth() === n.getMonth() &&
@@ -884,8 +885,8 @@ function TrainScheduleContent({
                   {/* Badge AUJOURD'HUI flottant */}
                   {train &&
                     (() => {
-                      const d = new Date(train.date);
-                      const n = new Date();
+                      const d = getParisDate(new Date(train.date));
+                      const n = getParisDate(new Date());
                       return (
                         d.getFullYear() === n.getFullYear() &&
                         d.getMonth() === n.getMonth() &&

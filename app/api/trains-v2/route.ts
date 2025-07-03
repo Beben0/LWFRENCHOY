@@ -4,6 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { TrainStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
+// Utilitaire pour obtenir une date en timezone Paris
+function getParisDate(date: string | Date) {
+  const iso = typeof date === "string" ? date : date.toISOString();
+  const parisString = new Date(iso).toLocaleString("en-US", {
+    timeZone: "Europe/Paris",
+  });
+  return new Date(parisString);
+}
+
 // GET - Récupérer les instances de trains (avec pagination et filtrage)
 export async function GET(request: NextRequest) {
   try {
@@ -20,13 +29,13 @@ export async function GET(request: NextRequest) {
     const includeArchived = url.searchParams.get("includeArchived") === "true";
     const status = url.searchParams.get("status") as TrainStatus | null;
 
-    const now = new Date();
+    const now = getParisDate(new Date());
 
     // Normaliser les bornes sur UTC pour éviter les problèmes de fuseau horaire (ex: UTC+2)
-    const startDate = new Date(now);
+    const startDate = getParisDate(new Date());
     startDate.setUTCHours(0, 0, 0, 0);
 
-    const endDate = new Date(startDate);
+    const endDate = getParisDate(new Date(startDate));
     endDate.setUTCDate(startDate.getUTCDate() + daysAhead);
     endDate.setUTCHours(23, 59, 59, 999);
 
@@ -84,17 +93,17 @@ export async function GET(request: NextRequest) {
 
     // Ajouter des métadonnées utiles
     const enrichedTrains = trainInstances.map((train) => {
-      const now = new Date();
-      const trainDate = new Date(train.date);
+      const now = getParisDate(new Date());
+      const trainDate = getParisDate(train.date);
       const [hours, minutes] = train.departureTime.split(":").map(Number);
-      const departureDateTime = new Date(trainDate);
+      const departureDateTime = getParisDate(new Date(trainDate));
       departureDateTime.setUTCHours(hours, minutes, 0, 0);
 
       const [realHours, realMinutes] = train.realDepartureTime
         .split(":")
         .map(Number);
 
-      const realDepartureDateTime = new Date(trainDate);
+      const realDepartureDateTime = getParisDate(new Date(trainDate));
       realDepartureDateTime.setUTCHours(realHours, realMinutes, 0, 0);
 
       // Si l'heure réelle est avant l'heure d'inscription (franchissement de minuit), on avance d'un jour
@@ -267,7 +276,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const trainDate = new Date(date);
+      const trainDate = getParisDate(new Date(date));
       trainDate.setHours(0, 0, 0, 0);
 
       // Vérifier qu'il n'y a pas déjà un train ce jour-là

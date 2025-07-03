@@ -46,6 +46,15 @@ const dayLabels: Record<string, string> = {
   sunday: "Dimanche",
 };
 
+// Utilitaire pour obtenir une date en timezone Paris
+function getParisDate(date: string | Date) {
+  const iso = typeof date === "string" ? date : date.toISOString();
+  const parisString = new Date(iso).toLocaleString("en-US", {
+    timeZone: "Europe/Paris",
+  });
+  return new Date(parisString);
+}
+
 export function NewTrainSchedule({
   trainSlots,
   members,
@@ -68,17 +77,17 @@ export function NewTrainSchedule({
   // Vérifier si la période d'inscription est encore ouverte
   const isRegistrationOpen = (departureTime: string) => {
     const [hours, minutes] = departureTime.split(":").map(Number);
-    const departureDateTime = new Date();
+    const departureDateTime = getParisDate(new Date());
     departureDateTime.setHours(hours + 4, minutes, 0, 0);
-    return new Date() < departureDateTime;
+    return getParisDate(new Date()) < departureDateTime;
   };
 
   // Temps restant pour s'inscrire
   const getTimeRemaining = (departureTime: string) => {
     const [hours, minutes] = departureTime.split(":").map(Number);
-    const departureDateTime = new Date();
+    const departureDateTime = getParisDate(new Date());
     departureDateTime.setHours(hours + 4, minutes, 0, 0);
-    const now = new Date();
+    const now = getParisDate(new Date());
     const diff = departureDateTime.getTime() - now.getTime();
 
     if (diff <= 0) return "Fermé";

@@ -101,6 +101,15 @@ interface FutureTrainScheduleProps {
   members: Member[];
 }
 
+// Utilitaire pour obtenir une date en timezone Paris
+function getParisDate(date: string | Date) {
+  const iso = typeof date === "string" ? date : date.toISOString();
+  const parisString = new Date(iso).toLocaleString("en-US", {
+    timeZone: "Europe/Paris",
+  });
+  return new Date(parisString);
+}
+
 export function FutureTrainSchedule({
   currentUserId,
   isAdmin = false,
@@ -307,8 +316,8 @@ export function FutureTrainSchedule({
 
           // Recalcule en local pour éviter les décalages de fuseau horaire (le backend envoie en UTC)
           const localIsToday = (() => {
-            const d = new Date(train.date);
-            const nowLocal = new Date();
+            const d = getParisDate(train.date);
+            const nowLocal = getParisDate(new Date());
             return (
               d.getFullYear() === nowLocal.getFullYear() &&
               d.getMonth() === nowLocal.getMonth() &&
@@ -332,10 +341,10 @@ export function FutureTrainSchedule({
                   <div className="flex items-center gap-3">
                     <div className="text-center">
                       <div className="text-2xl font-bold">
-                        {new Date(train.date).getDate()}
+                        {getParisDate(train.date).getDate()}
                       </div>
                       <div className="text-xs text-muted-foreground uppercase">
-                        {new Date(train.date).toLocaleDateString("fr-FR", {
+                        {getParisDate(train.date).toLocaleDateString("fr-FR", {
                           month: "short",
                         })}
                       </div>
@@ -344,10 +353,13 @@ export function FutureTrainSchedule({
                       <h3 className="text-lg font-semibold capitalize flex items-center gap-2">
                         {train.dayOfWeek}
                         <span className="text-sm text-muted-foreground font-normal">
-                          {new Date(train.date).toLocaleDateString("fr-FR", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
+                          {getParisDate(train.date).toLocaleDateString(
+                            "fr-FR",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                            }
+                          )}
                         </span>
                         {localIsToday && (
                           <Badge className="ml-2 bg-orange-500">

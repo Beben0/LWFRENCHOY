@@ -107,6 +107,15 @@ interface EnhancedTrainScheduleProps {
   members: Member[];
 }
 
+// Utilitaire pour obtenir une date en timezone Paris
+function getParisDate(date: string | Date) {
+  const iso = typeof date === "string" ? date : date.toISOString();
+  const parisString = new Date(iso).toLocaleString("en-US", {
+    timeZone: "Europe/Paris",
+  });
+  return new Date(parisString);
+}
+
 export function EnhancedTrainSchedule({
   currentUserId,
   isAdmin = false,
@@ -375,8 +384,8 @@ export function EnhancedTrainSchedule({
                         ${statusConfig?.color || "bg-muted/20 border-muted"}
                         ${
                           (() => {
-                            const d = new Date(train.date);
-                            const nowLocal = new Date();
+                            const d = getParisDate(train.date);
+                            const nowLocal = getParisDate(new Date());
                             return (
                               d.getFullYear() === nowLocal.getFullYear() &&
                               d.getMonth() === nowLocal.getMonth() &&
@@ -399,7 +408,9 @@ export function EnhancedTrainSchedule({
                         {/* Date et statut */}
                         <div className="flex items-center justify-between">
                           <div className="text-xs font-medium">
-                            {new Date(train.date).toLocaleDateString("fr-FR", {
+                            {getParisDate(
+                              new Date(train.date)
+                            ).toLocaleDateString("fr-FR", {
                               day: "2-digit",
                               month: "short",
                             })}
@@ -407,8 +418,8 @@ export function EnhancedTrainSchedule({
                           <div className="flex items-center gap-1">
                             <StatusIcon className="w-3 h-3" />
                             {(() => {
-                              const d = new Date(train.date);
-                              const n = new Date();
+                              const d = getParisDate(new Date(train.date));
+                              const n = getParisDate(new Date());
                               return (
                                 d.getFullYear() === n.getFullYear() &&
                                 d.getMonth() === n.getMonth() &&
@@ -518,8 +529,8 @@ export function EnhancedTrainSchedule({
             <CardHeader>
               <CardTitle>
                 Assigner conducteur - {selectedTrain.dayOfWeek}{" "}
-                {new Date(selectedTrain.date).getDate()}/
-                {new Date(selectedTrain.date).getMonth() + 1}
+                {getParisDate(new Date(selectedTrain.date)).getDate()}/
+                {getParisDate(new Date(selectedTrain.date)).getMonth() + 1}
               </CardTitle>
             </CardHeader>
             <CardContent>
