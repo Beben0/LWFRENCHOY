@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Translate } from "../ui/translate";
 import DroneCalculator from "./drone-calculator";
 import HeadquartersCalculator from "./headquarters-calculator";
-import ResourceCalculator from "./resource-calculator";
+// import ResourceCalculator from "./resource-calculator"; // Temporairement désactivé
 
 type CalculatorTab = "drones" | "headquarters" | "research" | "resources";
 
@@ -36,13 +36,14 @@ const CALCULATOR_TABS: CalculatorTabConfig[] = [
     icon: "🏢",
     color: "#10B981",
   },
-  {
-    id: "resources",
-    label: "Ressources",
-    description: "Calculateur de production et stockage",
-    icon: "⚡",
-    color: "#F59E0B",
-  },
+  // Temporairement caché - données à vérifier
+  // {
+  //   id: "resources",
+  //   label: "Ressources",
+  //   description: "Calculateur de production et stockage",
+  //   icon: "⚡",
+  //   color: "#F59E0B",
+  // },
 ];
 
 export function Calculator() {
@@ -60,8 +61,8 @@ export function Calculator() {
         return <DroneCalculator />;
       case "headquarters":
         return <HeadquartersCalculator />;
-      case "resources":
-        return <ResourceCalculator />;
+      // case "resources":
+      //   return <ResourceCalculator />;
       default:
         return <DroneCalculator />;
     }
