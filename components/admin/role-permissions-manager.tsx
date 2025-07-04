@@ -174,6 +174,7 @@ export function RolePermissionsManager() {
       "view_help",
       "view_vs",
       "view_desert_storm",
+      "view_calculator",
     ],
     "Gestion des Membres": ["create_member", "edit_member", "delete_member"],
     "Gestion des Trains": [
@@ -204,6 +205,11 @@ export function RolePermissionsManager() {
       "delete_desert_storm",
       "manage_desert_storm_participants",
       "edit_desert_storm_results",
+    ],
+    Calculateur: [
+      "use_calculator",
+      "manage_calculator_presets",
+      "export_calculator_results",
     ],
     Administration: [
       "manage_users",
@@ -367,6 +373,8 @@ function getPermissionDescription(permission: string): string {
       return "Accès au panel admin";
     case "view_help":
       return "Voir les articles d'aide";
+    case "view_calculator":
+      return "Voir le calculateur Last War";
 
     // VS
     case "view_vs":
@@ -433,6 +441,14 @@ function getPermissionDescription(permission: string): string {
       return "Publier des articles d'aide";
     case "manage_help_categories":
       return "Gérer les catégories d'aide";
+
+    // Calculateur
+    case "use_calculator":
+      return "Utiliser le calculateur";
+    case "manage_calculator_presets":
+      return "Gérer les présets du calculateur";
+    case "export_calculator_results":
+      return "Exporter les résultats du calculateur";
 
     // Administration
     case "manage_users":

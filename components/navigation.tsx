@@ -8,6 +8,7 @@ import { Translate } from "@/components/ui/translate";
 import {
   BarChart3,
   BookOpen,
+  Calculator,
   Calendar,
   LogIn,
   LogOut,
@@ -62,6 +63,12 @@ export function Navigation() {
       label: "Desert Storm",
       icon: Target,
       permission: "view_desert_storm" as const,
+    },
+    {
+      href: "/calculator",
+      label: "Calculateur",
+      icon: Calculator,
+      permission: "view_calculator" as const,
     },
     {
       href: "/events",

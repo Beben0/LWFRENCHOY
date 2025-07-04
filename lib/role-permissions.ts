@@ -15,6 +15,7 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "view_help",
     "view_vs",
     "view_desert_storm",
+    "view_calculator",
     "create_member",
     "edit_member",
     "delete_member",
@@ -34,6 +35,9 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "delete_desert_storm",
     "manage_desert_storm_participants",
     "edit_desert_storm_results",
+    "use_calculator",
+    "manage_calculator_presets",
+    "export_calculator_results",
     "manage_users",
     "manage_permissions",
     "export_data",
@@ -47,6 +51,8 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, Permission[]> = {
     "view_help",
     "view_vs",
     "view_desert_storm",
+    "view_calculator",
+    "use_calculator",
   ],
 };
 
@@ -60,6 +66,7 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_stats",
     "view_vs",
     "view_desert_storm",
+    "view_calculator",
     "create_member",
     "edit_member",
     "create_train_slot",
@@ -74,6 +81,9 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "edit_desert_storm",
     "manage_desert_storm_participants",
     "edit_desert_storm_results",
+    "use_calculator",
+    "manage_calculator_presets",
+    "export_calculator_results",
     "manage_alerts",
   ],
   R4: [
@@ -84,10 +94,13 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_stats",
     "view_vs",
     "view_desert_storm",
+    "view_calculator",
     "create_train_slot",
     "edit_train_slot",
     "edit_vs_results",
     "edit_desert_storm_results",
+    "use_calculator",
+    "manage_calculator_presets",
   ],
   MEMBER: [
     "view_dashboard",
@@ -97,6 +110,8 @@ const DEFAULT_ALLIANCE_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "view_stats",
     "view_vs",
     "view_desert_storm",
+    "view_calculator",
+    "use_calculator",
   ],
 };
 

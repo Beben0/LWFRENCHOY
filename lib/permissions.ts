@@ -13,6 +13,7 @@ export type Permission =
   | "view_help"
   | "view_vs"
   | "view_desert_storm"
+  | "view_calculator"
 
   // CRUD permissions
   | "create_member"
@@ -47,6 +48,11 @@ export type Permission =
   | "manage_desert_storm_participants"
   | "edit_desert_storm_results"
 
+  // Calculator permissions
+  | "use_calculator"
+  | "manage_calculator_presets"
+  | "export_calculator_results"
+
   // Admin permissions
   | "manage_users"
   | "manage_permissions"
@@ -73,6 +79,7 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_help",
     "view_vs",
     "view_desert_storm",
+    "view_calculator",
     "create_member",
     "edit_member",
     "delete_member",
@@ -98,6 +105,9 @@ const FALLBACK_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "delete_desert_storm",
     "manage_desert_storm_participants",
     "edit_desert_storm_results",
+    "use_calculator",
+    "manage_calculator_presets",
+    "export_calculator_results",
     "manage_users",
     "manage_permissions",
     "export_data",
