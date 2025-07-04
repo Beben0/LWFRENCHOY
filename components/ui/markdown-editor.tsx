@@ -1,14 +1,17 @@
 "use client";
 
-import "@uiw/react-markdown-preview/markdown.css";
-import "@uiw/react-md-editor/markdown-editor.css";
+import MarkdownIt from "markdown-it";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
-const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
+// Dynamic import to avoid SSR issues
+const MdEditor = dynamic(() => import("react-markdown-editor-lite"), {
   ssr: false,
 });
+
+// Import CSS
+import "react-markdown-editor-lite/lib/index.css";
 
 interface MarkdownEditorProps {
   value: string;
@@ -48,82 +51,80 @@ export function MarkdownEditor({
   const currentTheme = theme === "system" ? systemTheme : theme;
   const isDark = currentTheme === "dark";
 
+  // Initialize markdown parser
+  const mdParser = new MarkdownIt();
+
+  const handleEditorChange = ({ text }: { text: string }) => {
+    onChange(text);
+  };
+
   return (
-    <div className="markdown-editor-wrapper">
-      <MDEditor
+    <div
+      className="markdown-editor-wrapper"
+      style={
+        {
+          "--md-editor-bg": isDark ? "#1a1a1a" : "#ffffff",
+          "--md-editor-color": isDark ? "#ffffff" : "#000000",
+          "--md-editor-border": isDark ? "#374151" : "#d1d5db",
+        } as React.CSSProperties
+      }
+    >
+      <MdEditor
         value={value}
-        onChange={(val) => onChange(val || "")}
-        data-color-mode={isDark ? "dark" : "light"}
-        height={height}
-        textareaProps={{
-          placeholder,
-          style: {
-            fontSize: 14,
-            lineHeight: 1.5,
-            color: isDark ? "#fff" : "#111",
-            backgroundColor: isDark ? "#111" : "#fff",
-            border: "none",
-            outline: "none",
+        style={{ height: height }}
+        renderHTML={(text) => mdParser.render(text)}
+        onChange={handleEditorChange}
+        placeholder={placeholder}
+        config={{
+          view: {
+            menu: true,
+            md: true,
+            html: true,
+          },
+          canView: {
+            menu: true,
+            md: true,
+            html: true,
+            both: true,
+            fullScreen: true,
+            hideMenu: true,
           },
         }}
-        preview="live"
-        hideToolbar={false}
-        visibleDragbar={false}
       />
       <style jsx global>{`
-        /* Force readable colors on ALL markdown editor textareas */
-        .markdown-editor-wrapper textarea,
-        .markdown-editor-wrapper .w-md-editor-text-input,
-        .markdown-editor-wrapper .w-md-editor-text,
-        .markdown-editor-wrapper .w-md-editor-text-pre {
-          color: ${isDark ? "#ffffff" : "#000000"} !important;
-          background-color: ${isDark ? "#1a1a1a" : "#ffffff"} !important;
-          caret-color: ${isDark ? "#ffffff" : "#000000"} !important;
+        .markdown-editor-wrapper .rc-md-editor {
+          background-color: var(--md-editor-bg) !important;
+          border: 1px solid var(--md-editor-border) !important;
+          border-radius: 6px !important;
         }
 
-        .markdown-editor-wrapper .w-md-editor {
-          background-color: hsl(var(--background));
-          border: 1px solid hsl(var(--border));
-          border-radius: 0.375rem;
+        .markdown-editor-wrapper
+          .rc-md-editor
+          .editor-container
+          .sec-md
+          .input {
+          background-color: var(--md-editor-bg) !important;
+          color: var(--md-editor-color) !important;
+          font-size: 14px !important;
+          line-height: 1.5 !important;
         }
 
-        .markdown-editor-wrapper .w-md-editor-toolbar {
-          background-color: hsl(var(--muted));
-          border-bottom: 1px solid hsl(var(--border));
+        .markdown-editor-wrapper .rc-md-editor .editor-container .sec-html {
+          background-color: var(--md-editor-bg) !important;
+          color: var(--md-editor-color) !important;
         }
 
-        .markdown-editor-wrapper .w-md-editor-toolbar-divider {
-          background-color: hsl(var(--border));
+        .markdown-editor-wrapper .rc-md-editor .header-list {
+          background-color: ${isDark ? "#2d2d2d" : "#f5f5f5"} !important;
+          border-bottom: 1px solid var(--md-editor-border) !important;
         }
 
-        .markdown-editor-wrapper .w-md-editor-toolbar li button {
-          color: hsl(var(--foreground));
+        .markdown-editor-wrapper .rc-md-editor .header-list .header-item {
+          color: var(--md-editor-color) !important;
         }
 
-        .markdown-editor-wrapper .w-md-editor-toolbar li button:hover {
-          background-color: hsl(var(--accent));
-        }
-
-        .markdown-editor-wrapper .token.title {
-          color: hsl(var(--primary));
-        }
-
-        .markdown-editor-wrapper .token.bold {
-          color: ${isDark ? "#ffffff" : "#000000"};
-          font-weight: bold;
-        }
-
-        .markdown-editor-wrapper .token.code {
-          background-color: hsl(var(--muted));
-          color: ${isDark ? "#ffffff" : "#000000"};
-          padding: 0.125rem 0.25rem;
-          border-radius: 0.25rem;
-        }
-
-        /* Force preview colors too */
-        .markdown-editor-wrapper .w-md-editor-preview,
-        .markdown-editor-wrapper .w-md-editor-preview * {
-          color: ${isDark ? "#ffffff" : "#000000"} !important;
+        .markdown-editor-wrapper .rc-md-editor .header-list .header-item:hover {
+          background-color: ${isDark ? "#404040" : "#e5e5e5"} !important;
         }
       `}</style>
     </div>
