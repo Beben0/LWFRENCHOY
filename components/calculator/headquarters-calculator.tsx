@@ -53,48 +53,29 @@ function getUpgradePath({
     const qg = buildingData.find((b) => b.building === "HQ" && b.level === lvl);
     if (!qg) continue;
 
-    // 2. Trouver les prérequis pour ce niveau de QG
+    // 2. Trouver tous les prérequis pour ce niveau de QG (palier précédent)
     const prereqs = buildingData.filter(
       (b) =>
         b.requirement === true &&
-        b.groupLevel === lvl && // groupLevel correspond au niveau du QG cible
+        b.groupLevel === lvl - 1 &&
+        b.level === lvl - 1 &&
         b.building !== "HQ"
     );
 
-    // 3. Pour chaque type de bâtiment prérequis, ne prendre que le niveau max requis
-    const maxRequiredLevels: Record<string, number> = {};
+    // 3. Ajouter tous les prérequis nécessaires (pas déjà atteints)
     for (const req of prereqs) {
-      if (
-        !maxRequiredLevels[req.building] ||
-        maxRequiredLevels[req.building] < req.level
-      ) {
-        maxRequiredLevels[req.building] = req.level;
-      }
-    }
-
-    // 4. Ajouter seulement les prérequis nécessaires (pas déjà atteints)
-    for (const [building, requiredLevel] of Object.entries(maxRequiredLevels)) {
-      const currentBuildingLevel = prog[building] || 0;
-      if (currentBuildingLevel < requiredLevel) {
-        // Trouver l'entrée exacte pour ce niveau
-        const req = buildingData.find(
-          (b) =>
-            b.building === building &&
-            b.level === requiredLevel &&
-            b.requirement === true
-        );
-        if (req) {
-          const reqKey = `${building}-${requiredLevel}`;
-          if (!alreadyAdded.has(reqKey)) {
-            steps.push({ ...req, isQG: false, requirementFor: lvl });
-            alreadyAdded.add(reqKey);
-            prog[building] = requiredLevel;
-          }
+      const currentBuildingLevel = prog[req.building] || 0;
+      if (currentBuildingLevel < req.level) {
+        const reqKey = `${req.building}-${req.level}`;
+        if (!alreadyAdded.has(reqKey)) {
+          steps.push({ ...req, isQG: false, requirementFor: lvl });
+          alreadyAdded.add(reqKey);
+          prog[req.building] = req.level;
         }
       }
     }
 
-    // 5. Ensuite ajouter le QG lui-même
+    // 4. Ensuite ajouter le QG lui-même
     const qgKey = `HQ-${lvl}`;
     if (!alreadyAdded.has(qgKey)) {
       steps.push({ ...qg, isQG: true, requirementFor: null });
@@ -116,28 +97,10 @@ export default function HeadquartersCalculator() {
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
 
   // Créer une progression basée sur le niveau QG actuel
-  // On suppose que tous les bâtiments prérequis sont au niveau minimum requis pour le QG actuel
   const progression = useMemo(() => {
-    const prog: Progression = { HQ: currentLevel };
-
-    // Pour chaque niveau de QG jusqu'au niveau actuel,
-    // on met à jour la progression avec les prérequis nécessaires
-    for (let lvl = 1; lvl <= currentLevel; lvl++) {
-      const prereqs = buildingData.filter(
-        (b) =>
-          b.requirement === true && b.groupLevel === lvl && b.building !== "HQ"
-      );
-
-      for (const req of prereqs) {
-        // On garde le niveau le plus élevé requis pour chaque bâtiment
-        if (!prog[req.building] || prog[req.building] < req.level) {
-          prog[req.building] = req.level;
-        }
-      }
-    }
-
-    return prog;
-  }, [currentLevel, buildingData]);
+    // Progression vierge : seul le QG est au niveau actuel, tout le reste est à 0
+    return { HQ: currentLevel };
+  }, [currentLevel]);
 
   // Compute steps and totals
   const steps = useMemo(() => {

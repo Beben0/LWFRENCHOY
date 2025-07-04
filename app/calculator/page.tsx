@@ -1,26 +1,14 @@
-"use client";
-
 import { Calculator } from "@/components/calculator/calculator";
-import { hasPermission } from "@/lib/permissions";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function CalculatorPage() {
-  const { data: session } = useSession();
-  const router = useRouter();
+export default async function CalculatorPage() {
+  const session = await auth();
 
-  const canUseCalculator = hasPermission(session, "use_calculator");
-
-  useEffect(() => {
-    if (!canUseCalculator) {
-      router.push("/");
-      return;
-    }
-  }, [canUseCalculator, router]);
-
-  if (!canUseCalculator) {
-    return null;
+  const { hasPermissionAsync } = await import("@/lib/permissions");
+  const canView = await hasPermissionAsync(session, "view_calculator");
+  if (!canView) {
+    redirect("/auth/signin");
   }
 
   return <Calculator />;
