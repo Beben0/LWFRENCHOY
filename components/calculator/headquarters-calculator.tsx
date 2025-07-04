@@ -112,6 +112,8 @@ export default function HeadquartersCalculator() {
   const [targetLevel, setTargetLevel] = useState<number>(currentLevel + 1);
   const [speedBonus, setSpeedBonus] = useState<number>(0);
   const [resourceReduction, setResourceReduction] = useState<number>(0);
+  // Nouvel état pour les cases cochées
+  const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
 
   // Créer une progression basée sur le niveau QG actuel
   // On suppose que tous les bâtiments prérequis sont au niveau minimum requis pour le QG actuel
@@ -149,7 +151,10 @@ export default function HeadquartersCalculator() {
     return result.map((s) => ({ ...s, time: Math.round(s.time / 60) }));
   }, [currentLevel, targetLevel, progression, buildingData]);
 
-  const total = steps.reduce(
+  // Filtrer les steps non cochés pour le total
+  const filteredSteps = steps.filter((_, i) => !checkedSteps.has(i));
+
+  const total = filteredSteps.reduce(
     (acc, s) => {
       acc.food += s.food;
       acc.iron += s.iron;
@@ -344,6 +349,9 @@ export default function HeadquartersCalculator() {
                 <thead>
                   <tr className="bg-orange-100 dark:bg-orange-900">
                     <th className="p-2">
+                      <Translate>Fait</Translate>
+                    </th>
+                    <th className="p-2">
                       <Translate>Type</Translate>
                     </th>
                     <th className="p-2">
@@ -353,16 +361,31 @@ export default function HeadquartersCalculator() {
                       <Translate>Fer</Translate>
                     </th>
                     <th className="p-2">
+                      <Translate>Fer (réduit)</Translate>
+                    </th>
+                    <th className="p-2">
                       <Translate>Nourriture</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Nourriture (réduit)</Translate>
                     </th>
                     <th className="p-2">
                       <Translate>Or</Translate>
                     </th>
                     <th className="p-2">
+                      <Translate>Or (réduit)</Translate>
+                    </th>
+                    <th className="p-2">
                       <Translate>Pétrole</Translate>
                     </th>
                     <th className="p-2">
+                      <Translate>Pétrole (réduit)</Translate>
+                    </th>
+                    <th className="p-2">
                       <Translate>Temps</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Temps réduit</Translate>
                     </th>
                     <th className="p-2">
                       <Translate>(min)</Translate>
@@ -373,44 +396,86 @@ export default function HeadquartersCalculator() {
                   </tr>
                 </thead>
                 <tbody>
-                  {steps.map((s, i) => (
-                    <tr
-                      key={i}
-                      className={
-                        s.isQG ? "bg-orange-50 dark:bg-orange-900/30" : ""
-                      }
-                    >
-                      <td className="p-2 font-bold">
-                        {s.isQG ? (
-                          <Translate>QG</Translate>
-                        ) : (
-                          <Translate>{s.building}</Translate>
-                        )}
-                      </td>
-                      <td className="p-2">{s.level}</td>
-                      <td className="p-2">{s.iron.toLocaleString()}</td>
-                      <td className="p-2">{s.food.toLocaleString()}</td>
-                      <td className="p-2">{s.gold.toLocaleString()}</td>
-                      <td className="p-2">
-                        {s.oil ? (
-                          s.oil.toLocaleString()
-                        ) : (
-                          <Translate>-</Translate>
-                        )}
-                      </td>
-                      <td className="p-2">{formatTime(s.time)}</td>
-                      <td className="p-2">{s.time}</td>
-                      <td className="p-2">
-                        {typeof s.requirementFor === "number" ? (
-                          <>
-                            <Translate>QG</Translate> {s.requirementFor}
-                          </>
-                        ) : (
-                          <Translate>-</Translate>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {steps.map((s, i) => {
+                    const factor = 1 - resourceReduction / 100;
+                    const speed = 1 + speedBonus / 100;
+                    const ironReduced = Math.round(s.iron * factor);
+                    const foodReduced = Math.round(s.food * factor);
+                    const goldReduced = Math.round(s.gold * factor);
+                    const oilReduced = Math.round((s.oil || 0) * factor);
+                    const timeReduced = Math.round(s.time / speed);
+                    return (
+                      <tr
+                        key={i}
+                        className={
+                          s.isQG ? "bg-orange-50 dark:bg-orange-900/30" : ""
+                        }
+                      >
+                        <td className="p-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={checkedSteps.has(i)}
+                            onChange={() => {
+                              setCheckedSteps((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(i)) next.delete(i);
+                                else next.add(i);
+                                return next;
+                              });
+                            }}
+                          />
+                        </td>
+                        <td className="p-2 font-bold">
+                          {s.isQG ? (
+                            <Translate>QG</Translate>
+                          ) : (
+                            <Translate>{s.building}</Translate>
+                          )}
+                        </td>
+                        <td className="p-2">{s.level}</td>
+                        <td className="p-2">{s.iron.toLocaleString()}</td>
+                        <td className="p-2 text-green-600">
+                          {ironReduced.toLocaleString()}
+                        </td>
+                        <td className="p-2">{s.food.toLocaleString()}</td>
+                        <td className="p-2 text-green-600">
+                          {foodReduced.toLocaleString()}
+                        </td>
+                        <td className="p-2">{s.gold.toLocaleString()}</td>
+                        <td className="p-2 text-green-600">
+                          {goldReduced.toLocaleString()}
+                        </td>
+                        <td className="p-2">
+                          {s.oil ? (
+                            s.oil.toLocaleString()
+                          ) : (
+                            <Translate>-</Translate>
+                          )}
+                        </td>
+                        <td className="p-2 text-green-600">
+                          {s.oil ? (
+                            oilReduced.toLocaleString()
+                          ) : (
+                            <Translate>-</Translate>
+                          )}
+                        </td>
+                        <td className="p-2">{formatTime(s.time)}</td>
+                        <td className="p-2 text-green-600">
+                          {formatTime(timeReduced)}
+                        </td>
+                        <td className="p-2">{s.time}</td>
+                        <td className="p-2">
+                          {typeof s.requirementFor === "number" ? (
+                            <>
+                              <Translate>QG</Translate> {s.requirementFor}
+                            </>
+                          ) : (
+                            <Translate>-</Translate>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
