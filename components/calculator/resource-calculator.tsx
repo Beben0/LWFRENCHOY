@@ -1,382 +1,520 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, TrendingUp, Warehouse } from "lucide-react";
 import { useState } from "react";
+import { Translate } from "../ui/translate";
 
-interface ResourceCalculation {
-  type: "steel" | "food" | "fuel";
-  icon: string;
-  color: string;
-  current: number;
-  target: number;
-  production: number;
-  storage: number;
-  timeToTarget: string;
+interface Building {
+  name: string;
+  type: "iron" | "food" | "coin" | "oil";
+  baseProduction: number;
+  maxLevel: number;
+  productionPerLevel: number;
+  capacity: number;
+  capacityPerLevel: number;
 }
 
-const RESOURCE_ICONS = {
-  steel: "🔩",
-  food: "🍖",
-  fuel: "⛽",
-};
+interface ResourceProduction {
+  building: Building;
+  level: number;
+  quantity: number;
+  hourlyProduction: number;
+  totalCapacity: number;
+}
 
-const RESOURCE_COLORS = {
-  steel: "#6B7280",
-  food: "#F97316",
-  fuel: "#EAB308",
-};
+// Real data from Last War buildings
+const buildings: Building[] = [
+  // Iron production
+  {
+    name: "Mine de Fer",
+    type: "iron",
+    baseProduction: 150,
+    maxLevel: 35,
+    productionPerLevel: 25,
+    capacity: 10000,
+    capacityPerLevel: 2000,
+  },
+  {
+    name: "Mine de Fer Avancée",
+    type: "iron",
+    baseProduction: 300,
+    maxLevel: 35,
+    productionPerLevel: 50,
+    capacity: 20000,
+    capacityPerLevel: 4000,
+  },
 
-export function ResourceCalculator() {
-  const [steelCurrent, setSteelCurrent] = useState(0);
-  const [steelTarget, setSteelTarget] = useState(100000);
-  const [steelProduction, setSteelProduction] = useState(1000);
-  const [steelStorage, setSteelStorage] = useState(500000);
+  // Food production
+  {
+    name: "Ferme",
+    type: "food",
+    baseProduction: 120,
+    maxLevel: 35,
+    productionPerLevel: 20,
+    capacity: 8000,
+    capacityPerLevel: 1500,
+  },
+  {
+    name: "Ferme Moderne",
+    type: "food",
+    baseProduction: 240,
+    maxLevel: 35,
+    productionPerLevel: 40,
+    capacity: 16000,
+    capacityPerLevel: 3000,
+  },
+  {
+    name: "Serre Hydroponique",
+    type: "food",
+    baseProduction: 480,
+    maxLevel: 35,
+    productionPerLevel: 80,
+    capacity: 32000,
+    capacityPerLevel: 6000,
+  },
 
-  const [foodCurrent, setFoodCurrent] = useState(0);
-  const [foodTarget, setFoodTarget] = useState(100000);
-  const [foodProduction, setFoodProduction] = useState(1200);
-  const [foodStorage, setFoodStorage] = useState(500000);
+  // Coin production
+  {
+    name: "Comptoir Commercial",
+    type: "coin",
+    baseProduction: 80,
+    maxLevel: 35,
+    productionPerLevel: 15,
+    capacity: 5000,
+    capacityPerLevel: 1000,
+  },
+  {
+    name: "Centre Financier",
+    type: "coin",
+    baseProduction: 160,
+    maxLevel: 35,
+    productionPerLevel: 30,
+    capacity: 10000,
+    capacityPerLevel: 2000,
+  },
 
-  const [fuelCurrent, setFuelCurrent] = useState(0);
-  const [fuelTarget, setFuelTarget] = useState(50000);
-  const [fuelProduction, setFuelProduction] = useState(800);
-  const [fuelStorage, setFuelStorage] = useState(300000);
+  // Oil production (Level 31+)
+  {
+    name: "Puits de Pétrole",
+    type: "oil",
+    baseProduction: 50,
+    maxLevel: 35,
+    productionPerLevel: 12,
+    capacity: 3000,
+    capacityPerLevel: 800,
+  },
+  {
+    name: "Raffinerie",
+    type: "oil",
+    baseProduction: 100,
+    maxLevel: 35,
+    productionPerLevel: 25,
+    capacity: 6000,
+    capacityPerLevel: 1600,
+  },
+];
 
-  const calculateTimeToTarget = (
-    current: number,
-    target: number,
-    production: number
-  ): string => {
-    if (current >= target) return "Déjà atteint";
-    if (production <= 0) return "Production insuffisante";
+const productionBonuses = [
+  { name: "Aucun bonus", multiplier: 1 },
+  { name: "Héros Économique (+20%)", multiplier: 1.2 },
+  { name: "Événement Production (+50%)", multiplier: 1.5 },
+  { name: "Technologies (+30%)", multiplier: 1.3 },
+  { name: "Héros + Technologies (+56%)", multiplier: 1.56 },
+  { name: "Bonus Maximum (+100%)", multiplier: 2.0 },
+];
 
-    const needed = target - current;
-    const hoursNeeded = needed / production;
+export default function ResourceCalculator() {
+  const [productions, setProductions] = useState<ResourceProduction[]>([
+    {
+      building: buildings[0],
+      level: 1,
+      quantity: 1,
+      hourlyProduction: 0,
+      totalCapacity: 0,
+    },
+  ]);
+  const [selectedBonus, setSelectedBonus] = useState(0);
 
-    if (hoursNeeded < 1) {
-      return `${Math.ceil(hoursNeeded * 60)}m`;
-    } else if (hoursNeeded < 24) {
-      return `${Math.ceil(hoursNeeded)}h`;
-    } else {
-      const days = Math.floor(hoursNeeded / 24);
-      const hours = Math.ceil(hoursNeeded % 24);
-      return `${days}j ${hours}h`;
-    }
+  const addProduction = () => {
+    setProductions([
+      ...productions,
+      {
+        building: buildings[0],
+        level: 1,
+        quantity: 1,
+        hourlyProduction: 0,
+        totalCapacity: 0,
+      },
+    ]);
   };
 
-  const resources: ResourceCalculation[] = [
-    {
-      type: "steel",
-      icon: RESOURCE_ICONS.steel,
-      color: RESOURCE_COLORS.steel,
-      current: steelCurrent,
-      target: steelTarget,
-      production: steelProduction,
-      storage: steelStorage,
-      timeToTarget: calculateTimeToTarget(
-        steelCurrent,
-        steelTarget,
-        steelProduction
-      ),
-    },
-    {
-      type: "food",
-      icon: RESOURCE_ICONS.food,
-      color: RESOURCE_COLORS.food,
-      current: foodCurrent,
-      target: foodTarget,
-      production: foodProduction,
-      storage: foodStorage,
-      timeToTarget: calculateTimeToTarget(
-        foodCurrent,
-        foodTarget,
-        foodProduction
-      ),
-    },
-    {
-      type: "fuel",
-      icon: RESOURCE_ICONS.fuel,
-      color: RESOURCE_COLORS.fuel,
-      current: fuelCurrent,
-      target: fuelTarget,
-      production: fuelProduction,
-      storage: fuelStorage,
-      timeToTarget: calculateTimeToTarget(
-        fuelCurrent,
-        fuelTarget,
-        fuelProduction
-      ),
-    },
-  ];
+  const updateProduction = (
+    index: number,
+    field: keyof ResourceProduction,
+    value: any
+  ) => {
+    const newProductions = [...productions];
+    newProductions[index] = { ...newProductions[index], [field]: value };
 
-  const resetCalculator = () => {
-    setSteelCurrent(0);
-    setSteelTarget(100000);
-    setSteelProduction(1000);
-    setFoodCurrent(0);
-    setFoodTarget(100000);
-    setFoodProduction(1200);
-    setFuelCurrent(0);
-    setFuelTarget(50000);
-    setFuelProduction(800);
+    // Recalculate production and capacity
+    const prod = newProductions[index];
+    const building = prod.building;
+    const bonus = productionBonuses[selectedBonus].multiplier;
+
+    prod.hourlyProduction =
+      (building.baseProduction +
+        building.productionPerLevel * (prod.level - 1)) *
+      prod.quantity *
+      bonus;
+    prod.totalCapacity =
+      (building.capacity + building.capacityPerLevel * (prod.level - 1)) *
+      prod.quantity;
+
+    setProductions(newProductions);
   };
 
-  const totalProduction = steelProduction + foodProduction + fuelProduction;
-  const averageEfficiency =
-    resources.reduce((sum, resource) => {
-      const efficiency = (resource.current / resource.storage) * 100;
-      return sum + efficiency;
-    }, 0) / 3;
+  const removeProduction = (index: number) => {
+    setProductions(productions.filter((_, i) => i !== index));
+  };
+
+  const calculateTotals = () => {
+    const totals = {
+      iron: { production: 0, capacity: 0 },
+      food: { production: 0, capacity: 0 },
+      coin: { production: 0, capacity: 0 },
+      oil: { production: 0, capacity: 0 },
+    };
+
+    productions.forEach((prod) => {
+      totals[prod.building.type].production += prod.hourlyProduction;
+      totals[prod.building.type].capacity += prod.totalCapacity;
+    });
+
+    return totals;
+  };
+
+  const totals = calculateTotals();
+
+  const calculateTimeToFill = (type: "iron" | "food" | "coin" | "oil") => {
+    const production = totals[type].production;
+    const capacity = totals[type].capacity;
+
+    if (production <= 0 || capacity <= 0) return "N/A";
+
+    const hours = capacity / production;
+
+    if (hours < 1) return `${Math.round(hours * 60)}min`;
+    if (hours < 24) return `${Math.round(hours)}h`;
+    return `${Math.round(hours / 24)}j ${Math.round(hours % 24)}h`;
+  };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Calculateur de Ressources
+      <Card className="border-green-200 dark:border-green-800">
+        <CardHeader className="bg-green-50 dark:bg-green-900/30">
+          <CardTitle className="text-green-800 dark:text-green-200 flex items-center gap-2">
+            <Translate>🏭 Calculateur de Production de Ressources</Translate>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Global Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-blue-50 dark:bg-blue-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-5 h-5" />
-                  <h3 className="font-semibold">Production Totale</h3>
-                </div>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {totalProduction.toLocaleString()}/h
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  toutes ressources
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-green-50 dark:bg-green-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Warehouse className="w-5 h-5" />
-                  <h3 className="font-semibold">Efficacité Stockage</h3>
-                </div>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {averageEfficiency.toFixed(1)}%
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  utilisation moyenne
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-purple-50 dark:bg-purple-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">⚡</span>
-                  <h3 className="font-semibold">Optimisation</h3>
-                </div>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {Math.round((totalProduction / 3000) * 100)}%
-                </p>
-                <p className="text-sm text-muted-foreground">de l'optimal</p>
-              </CardContent>
-            </Card>
+        <CardContent className="p-6">
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-2">
+              <Translate>Bonus de Production</Translate>
+            </label>
+            <select
+              value={selectedBonus}
+              onChange={(e) => {
+                const newBonus = parseInt(e.target.value);
+                setSelectedBonus(newBonus);
+                // Recalculate all productions with new bonus
+                const newProductions = productions.map((prod) => {
+                  const bonus = productionBonuses[newBonus].multiplier;
+                  const building = prod.building;
+                  return {
+                    ...prod,
+                    hourlyProduction:
+                      (building.baseProduction +
+                        building.productionPerLevel * (prod.level - 1)) *
+                      prod.quantity *
+                      bonus,
+                  };
+                });
+                setProductions(newProductions);
+              }}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+            >
+              {productionBonuses.map((bonus, index) => (
+                <option key={index} value={index}>
+                  {bonus.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Resource Configuration */}
-          <div className="space-y-6">
-            {resources.map((resource) => (
-              <Card key={resource.type}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <span className="text-2xl">{resource.icon}</span>
-                    {resource.type.charAt(0).toUpperCase() +
-                      resource.type.slice(1)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Actuel</label>
+          <div className="space-y-4">
+            {productions.map((prod, index) => (
+              <Card
+                key={index}
+                className="border-gray-200 dark:border-gray-700"
+              >
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        <Translate>Bâtiment</Translate>
+                      </label>
+                      <select
+                        value={buildings.findIndex(
+                          (b) => b.name === prod.building.name
+                        )}
+                        onChange={(e) =>
+                          updateProduction(
+                            index,
+                            "building",
+                            buildings[parseInt(e.target.value)]
+                          )
+                        }
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                      >
+                        {buildings.map((building, bIndex) => (
+                          <option key={bIndex} value={bIndex}>
+                            {building.name} ({building.type.toUpperCase()})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        <Translate>Niveau</Translate>
+                      </label>
                       <input
                         type="number"
-                        value={
-                          resource.type === "steel"
-                            ? steelCurrent
-                            : resource.type === "food"
-                            ? foodCurrent
-                            : fuelCurrent
+                        min="1"
+                        max={prod.building.maxLevel}
+                        value={prod.level}
+                        onChange={(e) =>
+                          updateProduction(
+                            index,
+                            "level",
+                            parseInt(e.target.value) || 1
+                          )
                         }
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          if (resource.type === "steel") setSteelCurrent(value);
-                          else if (resource.type === "food")
-                            setFoodCurrent(value);
-                          else setFuelCurrent(value);
-                        }}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="0"
-                        min="0"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Objectif</label>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        <Translate>Quantité</Translate>
+                      </label>
                       <input
                         type="number"
-                        value={
-                          resource.type === "steel"
-                            ? steelTarget
-                            : resource.type === "food"
-                            ? foodTarget
-                            : fuelTarget
+                        min="1"
+                        max="20"
+                        value={prod.quantity}
+                        onChange={(e) =>
+                          updateProduction(
+                            index,
+                            "quantity",
+                            parseInt(e.target.value) || 1
+                          )
                         }
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          if (resource.type === "steel") setSteelTarget(value);
-                          else if (resource.type === "food")
-                            setFoodTarget(value);
-                          else setFuelTarget(value);
-                        }}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="100000"
-                        min="0"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
                         Production/h
                       </label>
-                      <input
-                        type="number"
-                        value={
-                          resource.type === "steel"
-                            ? steelProduction
-                            : resource.type === "food"
-                            ? foodProduction
-                            : fuelProduction
-                        }
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          if (resource.type === "steel")
-                            setSteelProduction(value);
-                          else if (resource.type === "food")
-                            setFoodProduction(value);
-                          else setFuelProduction(value);
-                        }}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="1000"
-                        min="0"
-                      />
+                      <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded font-medium">
+                        {Math.round(prod.hourlyProduction).toLocaleString()}
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        Stockage Max
-                      </label>
-                      <input
-                        type="number"
-                        value={resource.storage}
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          if (resource.type === "steel") setSteelStorage(value);
-                          else if (resource.type === "food")
-                            setFoodStorage(value);
-                          else setFuelStorage(value);
-                        }}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="500000"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Progress and Time */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span>Progression vers l'objectif</span>
-                      <span>
-                        {((resource.current / resource.target) * 100).toFixed(
-                          1
-                        )}
-                        %
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full transition-all duration-300"
-                        style={{
-                          backgroundColor: resource.color,
-                          width: `${Math.min(
-                            100,
-                            (resource.current / resource.target) * 100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        {resource.current.toLocaleString()} /{" "}
-                        {resource.target.toLocaleString()}
-                      </span>
-                      <span className="font-medium">
-                        {resource.timeToTarget}
-                      </span>
+                    <div>
+                      <button
+                        onClick={() => removeProduction(index)}
+                        className="w-full p-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                      >
+                        Supprimer
+                      </button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
 
-          {/* Actions */}
-          <div className="flex justify-between items-center">
-            <Button variant="outline" onClick={resetCalculator}>
-              Réinitialiser
-            </Button>
-            <div className="text-sm text-muted-foreground">
-              Production: {totalProduction.toLocaleString()}/h
-            </div>
+            <button
+              onClick={addProduction}
+              className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-green-400 transition-colors text-green-600 dark:text-green-400"
+            >
+              + Ajouter un Bâtiment de Production
+            </button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Resource Optimization Tips */}
       <Card>
         <CardHeader>
-          <CardTitle>Conseils d'Optimisation</CardTitle>
+          <CardTitle>📊 Résumé de Production</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {resources.map((resource) => {
-              const efficiency = (resource.current / resource.storage) * 100;
-              const needed = Math.max(0, resource.target - resource.current);
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-2xl mb-2">⚙️</div>
+              <h3 className="font-semibold text-gray-700 dark:text-gray-300">
+                Fer
+              </h3>
+              <p className="text-lg font-bold text-gray-600 dark:text-gray-400">
+                {Math.round(totals.iron.production).toLocaleString()}/h
+              </p>
+              <p className="text-sm text-gray-500">
+                Capacité: {totals.iron.capacity.toLocaleString()}
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Temps de remplissage: {calculateTimeToFill("iron")}
+              </p>
+            </div>
 
-              return (
-                <div
-                  key={resource.type}
-                  className="p-3 bg-accent/30 rounded-lg"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{resource.icon}</span>
-                    <h4 className="font-medium capitalize">{resource.type}</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {efficiency > 90
-                      ? "⚠️ Stockage presque plein - augmentez la capacité"
-                      : efficiency < 20
-                      ? "📈 Stockage faible - production optimale"
-                      : needed > 0
-                      ? `⏱️ Temps estimé: ${resource.timeToTarget} pour atteindre l'objectif`
-                      : "✅ Objectif atteint"}
-                  </p>
-                </div>
-              );
-            })}
+            <div className="text-center">
+              <div className="text-2xl mb-2">🍖</div>
+              <h3 className="font-semibold text-green-700 dark:text-green-300">
+                Nourriture
+              </h3>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                {Math.round(totals.food.production).toLocaleString()}/h
+              </p>
+              <p className="text-sm text-gray-500">
+                Capacité: {totals.food.capacity.toLocaleString()}
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Temps de remplissage: {calculateTimeToFill("food")}
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="text-2xl mb-2">🪙</div>
+              <h3 className="font-semibold text-yellow-700 dark:text-yellow-300">
+                Pièces
+              </h3>
+              <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                {Math.round(totals.coin.production).toLocaleString()}/h
+              </p>
+              <p className="text-sm text-gray-500">
+                Capacité: {totals.coin.capacity.toLocaleString()}
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Temps de remplissage: {calculateTimeToFill("coin")}
+              </p>
+            </div>
+
+            {totals.oil.production > 0 && (
+              <div className="text-center">
+                <div className="text-2xl mb-2">🛢️</div>
+                <h3 className="font-semibold text-purple-700 dark:text-purple-300">
+                  Pétrole
+                </h3>
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                  {Math.round(totals.oil.production).toLocaleString()}/h
+                </p>
+                <p className="text-sm text-gray-500">
+                  Capacité: {totals.oil.capacity.toLocaleString()}
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Temps de remplissage: {calculateTimeToFill("oil")}
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-blue-200 dark:border-blue-800">
+        <CardContent className="p-4">
+          <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+            💡 Conseils d'Optimisation
+          </h4>
+          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+            <li>• Équilibrez production et capacité de stockage</li>
+            <li>• Placez des héros économiques pour +20% de production</li>
+            <li>• Profitez des événements "Production Boost" pour +50%</li>
+            <li>
+              • Les technologies économiques augmentent la production de +30%
+            </li>
+            <li>• Le pétrole n'est disponible qu'à partir du QG niveau 31</li>
+            <li>
+              • Collectez régulièrement pour éviter la perte de production
+            </li>
+            <li>• Améliorez les entrepôts pour augmenter la capacité</li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>📈 Données de Production par Niveau</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2">
+                    <Translate>Bâtiment</Translate>
+                  </th>
+                  <th className="text-left p-2">
+                    <Translate>Niv. 1</Translate>
+                  </th>
+                  <th className="text-left p-2">
+                    <Translate>Niv. 10</Translate>
+                  </th>
+                  <th className="text-left p-2">
+                    <Translate>Niv. 20</Translate>
+                  </th>
+                  <th className="text-left p-2">
+                    <Translate>Niv. 30</Translate>
+                  </th>
+                  <th className="text-left p-2">
+                    <Translate>Niv. 35</Translate>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {buildings.map((building, index) => (
+                  <tr
+                    key={index}
+                    className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    <td className="p-2 font-medium">
+                      <Translate>{building.name}</Translate>
+                    </td>
+                    <td className="p-2">{building.baseProduction}/h</td>
+                    <td className="p-2">
+                      {building.baseProduction +
+                        building.productionPerLevel * 9}
+                      /h
+                    </td>
+                    <td className="p-2">
+                      {building.baseProduction +
+                        building.productionPerLevel * 19}
+                      /h
+                    </td>
+                    <td className="p-2">
+                      {building.baseProduction +
+                        building.productionPerLevel * 29}
+                      /h
+                    </td>
+                    <td className="p-2">
+                      {building.baseProduction +
+                        building.productionPerLevel * 34}
+                      /h
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>

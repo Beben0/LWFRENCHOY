@@ -1,337 +1,418 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Building, Clock, Zap } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Translate } from "../ui/translate";
+import qgData from "./__qgData.json";
 
-interface HQLevel {
+// Types
+export interface BuildingStep {
+  building: string;
   level: number;
-  steel: number;
   food: number;
-  fuel: number;
-  time: string;
-  power: number;
-  unlocks: string[];
+  iron: number;
+  gold: number;
+  oil?: number;
+  time: number; // in minutes
+  isChecked?: boolean;
+  requirement?: boolean;
+  additional?: boolean;
+  groupLevel?: number;
+  isQG?: boolean;
+  requirementFor?: number | null;
 }
 
-const HQ_DATA: HQLevel[] = [
-  {
-    level: 1,
-    steel: 0,
-    food: 0,
-    fuel: 0,
-    time: "0m",
-    power: 200,
-    unlocks: ["Base de départ"],
-  },
-  {
-    level: 2,
-    steel: 500,
-    food: 500,
-    fuel: 200,
-    time: "5m",
-    power: 500,
-    unlocks: ["Centre de Recherche"],
-  },
-  {
-    level: 3,
-    steel: 1200,
-    food: 1200,
-    fuel: 500,
-    time: "15m",
-    power: 900,
-    unlocks: ["Caserne", "Arsenal"],
-  },
-  {
-    level: 4,
-    steel: 2500,
-    food: 2500,
-    fuel: 1000,
-    time: "45m",
-    power: 1500,
-    unlocks: ["Hôpital de Campagne"],
-  },
-  {
-    level: 5,
-    steel: 5000,
-    food: 5000,
-    fuel: 2000,
-    time: "2h",
-    power: 2500,
-    unlocks: ["Tours de Guet", "Entrepôts"],
-  },
-  {
-    level: 6,
-    steel: 8500,
-    food: 8500,
-    fuel: 3500,
-    time: "4h",
-    power: 3800,
-    unlocks: ["Centre de Communication"],
-  },
-  {
-    level: 7,
-    steel: 15000,
-    food: 15000,
-    fuel: 6000,
-    time: "8h",
-    power: 5500,
-    unlocks: ["Laboratoire Avancé"],
-  },
-  {
-    level: 8,
-    steel: 25000,
-    food: 25000,
-    fuel: 10000,
-    time: "16h",
-    power: 7800,
-    unlocks: ["Base de Drones"],
-  },
-  {
-    level: 9,
-    steel: 40000,
-    food: 40000,
-    fuel: 16000,
-    time: "1j 8h",
-    power: 10800,
-    unlocks: ["Centre de Commandement"],
-  },
-  {
-    level: 10,
-    steel: 65000,
-    food: 65000,
-    fuel: 26000,
-    time: "2j",
-    power: 14500,
-    unlocks: ["Forge Militaire"],
-  },
-];
+export type Progression = Record<string, number>;
 
-export function HeadquartersCalculator() {
-  const [currentLevel, setCurrentLevel] = useState(1);
-  const [targetLevel, setTargetLevel] = useState(5);
-  const [currentSteel, setCurrentSteel] = useState(0);
-  const [currentFood, setCurrentFood] = useState(0);
-  const [currentFuel, setCurrentFuel] = useState(0);
+interface HeadquartersCalculatorProps {
+  progression?: Progression;
+  buildingData?: BuildingStep[];
+}
 
-  const calculateTotalResources = () => {
-    let totalSteel = 0,
-      totalFood = 0,
-      totalFuel = 0;
+// Helper: get all building names
+const allBuildings = (buildingData: BuildingStep[]) =>
+  Array.from(new Set(buildingData.map((b) => b.building)));
 
-    for (let i = currentLevel; i < targetLevel; i++) {
-      totalSteel += HQ_DATA[i].steel;
-      totalFood += HQ_DATA[i].food;
-      totalFuel += HQ_DATA[i].fuel;
+function getUpgradePath({
+  currentLevel,
+  targetLevel,
+  progression,
+  buildingData,
+}: {
+  currentLevel: number;
+  targetLevel: number;
+  progression: Progression;
+  buildingData: BuildingStep[];
+}): BuildingStep[] {
+  const steps: BuildingStep[] = [];
+  const prog: Progression = { ...progression };
+  const alreadyAdded = new Set<string>();
+
+  for (let lvl = currentLevel + 1; lvl <= targetLevel; lvl++) {
+    // 1. Trouver le QG pour ce niveau
+    const qg = buildingData.find((b) => b.building === "HQ" && b.level === lvl);
+    if (!qg) continue;
+
+    // 2. Trouver les prérequis pour ce niveau de QG
+    const prereqs = buildingData.filter(
+      (b) =>
+        b.requirement === true &&
+        b.groupLevel === lvl && // groupLevel correspond au niveau du QG cible
+        b.building !== "HQ"
+    );
+
+    // 3. Pour chaque type de bâtiment prérequis, ne prendre que le niveau max requis
+    const maxRequiredLevels: Record<string, number> = {};
+    for (const req of prereqs) {
+      if (
+        !maxRequiredLevels[req.building] ||
+        maxRequiredLevels[req.building] < req.level
+      ) {
+        maxRequiredLevels[req.building] = req.level;
+      }
     }
 
-    return {
-      steel: Math.max(0, totalSteel - currentSteel),
-      food: Math.max(0, totalFood - currentFood),
-      fuel: Math.max(0, totalFuel - currentFuel),
-    };
+    // 4. Ajouter seulement les prérequis nécessaires (pas déjà atteints)
+    for (const [building, requiredLevel] of Object.entries(maxRequiredLevels)) {
+      const currentBuildingLevel = prog[building] || 0;
+      if (currentBuildingLevel < requiredLevel) {
+        // Trouver l'entrée exacte pour ce niveau
+        const req = buildingData.find(
+          (b) =>
+            b.building === building &&
+            b.level === requiredLevel &&
+            b.requirement === true
+        );
+        if (req) {
+          const reqKey = `${building}-${requiredLevel}`;
+          if (!alreadyAdded.has(reqKey)) {
+            steps.push({ ...req, isQG: false, requirementFor: lvl });
+            alreadyAdded.add(reqKey);
+            prog[building] = requiredLevel;
+          }
+        }
+      }
+    }
+
+    // 5. Ensuite ajouter le QG lui-même
+    const qgKey = `HQ-${lvl}`;
+    if (!alreadyAdded.has(qgKey)) {
+      steps.push({ ...qg, isQG: true, requirementFor: null });
+      alreadyAdded.add(qgKey);
+      prog["HQ"] = lvl;
+    }
+  }
+
+  return steps;
+}
+
+export default function HeadquartersCalculator() {
+  const buildingData: BuildingStep[] = qgData.buildingData;
+  const [currentLevel, setCurrentLevel] = useState<number>(16); // Valeur par défaut
+  const [targetLevel, setTargetLevel] = useState<number>(currentLevel + 1);
+  const [speedBonus, setSpeedBonus] = useState<number>(0);
+  const [resourceReduction, setResourceReduction] = useState<number>(0);
+
+  // Créer une progression basée sur le niveau QG actuel
+  // On suppose que tous les bâtiments prérequis sont au niveau minimum requis pour le QG actuel
+  const progression = useMemo(() => {
+    const prog: Progression = { HQ: currentLevel };
+
+    // Pour chaque niveau de QG jusqu'au niveau actuel,
+    // on met à jour la progression avec les prérequis nécessaires
+    for (let lvl = 1; lvl <= currentLevel; lvl++) {
+      const prereqs = buildingData.filter(
+        (b) =>
+          b.requirement === true && b.groupLevel === lvl && b.building !== "HQ"
+      );
+
+      for (const req of prereqs) {
+        // On garde le niveau le plus élevé requis pour chaque bâtiment
+        if (!prog[req.building] || prog[req.building] < req.level) {
+          prog[req.building] = req.level;
+        }
+      }
+    }
+
+    return prog;
+  }, [currentLevel, buildingData]);
+
+  // Compute steps and totals
+  const steps = useMemo(() => {
+    const result = getUpgradePath({
+      currentLevel,
+      targetLevel,
+      progression,
+      buildingData,
+    });
+    // On convertit tous les temps en minutes
+    return result.map((s) => ({ ...s, time: Math.round(s.time / 60) }));
+  }, [currentLevel, targetLevel, progression, buildingData]);
+
+  const total = steps.reduce(
+    (acc, s) => {
+      acc.food += s.food;
+      acc.iron += s.iron;
+      acc.gold += s.gold;
+      acc.oil += s.oil || 0;
+      acc.time += s.time;
+      return acc;
+    },
+    { food: 0, iron: 0, gold: 0, oil: 0, time: 0 }
+  );
+
+  // Apply bonuses
+  const factor = 1 - resourceReduction / 100;
+  const speed = 1 + speedBonus / 100;
+  const totalReduced = {
+    food: Math.round(total.food * factor),
+    iron: Math.round(total.iron * factor),
+    gold: Math.round(total.gold * factor),
+    oil: Math.round(total.oil * factor),
+    time: Math.round(total.time / speed),
   };
 
-  const needed = calculateTotalResources();
-  const currentData = HQ_DATA[currentLevel - 1];
-  const targetData = HQ_DATA[targetLevel - 1];
-  const powerGain = targetData.power - currentData.power;
+  // Helper: format time (min) to d/h/m
+  function formatTime(mins: number) {
+    if (!mins) return "-";
+    const d = Math.floor(mins / 1440);
+    const h = Math.floor((mins % 1440) / 60);
+    const m = mins % 60;
+    return (
+      [d ? `${d}j` : null, h ? `${h}h` : null, m ? `${m}m` : null]
+        .filter(Boolean)
+        .join(" ") || "Instantané"
+    );
+  }
 
-  const resetCalculator = () => {
-    setCurrentLevel(1);
-    setTargetLevel(5);
-    setCurrentSteel(0);
-    setCurrentFood(0);
-    setCurrentFuel(0);
-  };
-
+  // UI
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="w-5 h-5" />
-            Calculateur de Quartier Général
+      <Card className="border-orange-200 dark:border-orange-800">
+        <CardHeader className="bg-orange-50 dark:bg-orange-900/30">
+          <CardTitle className="text-orange-800 dark:text-orange-200 flex items-center gap-2">
+            <Translate>🏢 Calculateur de Quartier Général</Translate>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Input Controls */}
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                <Translate>% Bonus Vitesse Construction</Translate>
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="900"
+                value={speedBonus}
+                onChange={(e) =>
+                  setSpeedBonus(
+                    Math.max(0, Math.min(900, parseInt(e.target.value) || 0))
+                  )
+                }
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                <Translate>% Réduction Coût Ressources</Translate>
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="90"
+                value={resourceReduction}
+                onChange={(e) =>
+                  setResourceReduction(
+                    Math.max(0, Math.min(90, parseInt(e.target.value) || 0))
+                  )
+                }
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="0"
+              />
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Niveau Actuel</label>
-                <select
-                  value={currentLevel}
-                  onChange={(e) => setCurrentLevel(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {HQ_DATA.slice(0, -1).map((hq) => (
-                    <option key={hq.level} value={hq.level}>
-                      QG Niveau {hq.level}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Niveau Cible</label>
-                <select
-                  value={targetLevel}
-                  onChange={(e) => setTargetLevel(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {HQ_DATA.slice(currentLevel).map((hq) => (
-                    <option key={hq.level} value={hq.level}>
-                      QG Niveau {hq.level}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                <Translate>Niveau QG Actuel</Translate>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="34"
+                value={currentLevel}
+                onChange={(e) => {
+                  let v = parseInt(e.target.value) || 1;
+                  if (v < 1) v = 1;
+                  if (v > 34) v = 34;
+                  setCurrentLevel(v);
+                  setTargetLevel((t) => (t <= v ? v + 1 : t));
+                }}
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              />
             </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Acier Actuel</label>
-                <input
-                  type="number"
-                  value={currentSteel}
-                  onChange={(e) => setCurrentSteel(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Nourriture Actuelle
-                </label>
-                <input
-                  type="number"
-                  value={currentFood}
-                  onChange={(e) => setCurrentFood(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Carburant Actuel</label>
-                <input
-                  type="number"
-                  value={currentFuel}
-                  onChange={(e) => setCurrentFuel(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                <Translate>Niveau QG Cible</Translate>
+              </label>
+              <input
+                type="number"
+                min={currentLevel + 1}
+                max="35"
+                value={targetLevel}
+                onChange={(e) => {
+                  let v = parseInt(e.target.value) || 2;
+                  if (v <= currentLevel) v = currentLevel + 1;
+                  if (v > 35) v = 35;
+                  setTargetLevel(v);
+                }}
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              />
             </div>
           </div>
 
-          {/* Resource Requirements */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-gray-50 dark:bg-gray-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">🔩</span>
-                  <h3 className="font-semibold">Acier Nécessaire</h3>
-                </div>
-                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                  {needed.steel.toLocaleString()}
+          <div className="mt-6 p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
+            <h3 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">
+              <Translate>Ressources Totales Requises</Translate>
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <Translate>⚙️ Fer</Translate>
                 </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-orange-50 dark:bg-orange-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">🍖</span>
-                  <h3 className="font-semibold">Nourriture Nécessaire</h3>
-                </div>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                  {needed.food.toLocaleString()}
+                <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                  {totalReduced.iron.toLocaleString()}{" "}
+                  <span className="text-xs text-green-600">
+                    <Translate>(réduit)</Translate>
+                  </span>
                 </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-yellow-50 dark:bg-yellow-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">⛽</span>
-                  <h3 className="font-semibold">Carburant Nécessaire</h3>
-                </div>
-                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                  {needed.fuel.toLocaleString()}
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <Translate>🍖 Nourriture</Translate>
                 </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Additional Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-green-50 dark:bg-green-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-5 h-5" />
-                  <h3 className="font-semibold">Gain de Puissance</h3>
-                </div>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  +{powerGain.toLocaleString()}
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                  {totalReduced.food.toLocaleString()}{" "}
+                  <span className="text-xs text-green-600">
+                    <Translate>(réduit)</Translate>
+                  </span>
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {currentData.power.toLocaleString()} →{" "}
-                  {targetData.power.toLocaleString()}
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <Translate>🪙 Or</Translate>
                 </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-blue-50 dark:bg-blue-950/30">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-5 h-5" />
-                  <h3 className="font-semibold">Temps de Construction</h3>
-                </div>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {targetData.time}
+                <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
+                  {totalReduced.gold.toLocaleString()}{" "}
+                  <span className="text-xs text-green-600">
+                    <Translate>(réduit)</Translate>
+                  </span>
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  pour le niveau {targetLevel}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Unlocks */}
-          {targetData.unlocks.length > 0 && (
-            <Card className="bg-purple-50 dark:bg-purple-950/30">
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-2">
-                  Débloqué au niveau {targetLevel}:
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {targetData.unlocks.map((unlock, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-md text-sm"
-                    >
-                      {unlock}
+              </div>
+              {totalReduced.oil > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <Translate>🛢️ Pétrole</Translate>
+                  </p>
+                  <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                    {totalReduced.oil.toLocaleString()}{" "}
+                    <span className="text-xs text-green-600">
+                      <Translate>(réduit)</Translate>
                     </span>
-                  ))}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </div>
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <Translate>Temps total :</Translate>{" "}
+              <b>{formatTime(total.time)}</b> (
+              <span className="text-green-600">
+                {formatTime(totalReduced.time)} <Translate>réduit</Translate>
+              </span>
+              )
+            </div>
+          </div>
 
-          <div className="flex justify-between items-center">
-            <Button variant="outline" onClick={resetCalculator}>
-              Réinitialiser
-            </Button>
-            <div className="text-sm text-muted-foreground">
-              Progression: Niveau {currentLevel}{" "}
-              <ArrowRight className="w-4 h-4 inline mx-1" /> {targetLevel}
+          <div className="mt-6">
+            <h4 className="font-semibold text-orange-700 dark:text-orange-200 mb-2">
+              <Translate>Étapes détaillées</Translate>
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs md:text-sm border">
+                <thead>
+                  <tr className="bg-orange-100 dark:bg-orange-900">
+                    <th className="p-2">
+                      <Translate>Type</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Niveau</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Fer</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Nourriture</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Or</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Pétrole</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Temps</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>(min)</Translate>
+                    </th>
+                    <th className="p-2">
+                      <Translate>Prérequis pour</Translate>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {steps.map((s, i) => (
+                    <tr
+                      key={i}
+                      className={
+                        s.isQG ? "bg-orange-50 dark:bg-orange-900/30" : ""
+                      }
+                    >
+                      <td className="p-2 font-bold">
+                        {s.isQG ? (
+                          <Translate>QG</Translate>
+                        ) : (
+                          <Translate>{s.building}</Translate>
+                        )}
+                      </td>
+                      <td className="p-2">{s.level}</td>
+                      <td className="p-2">{s.iron.toLocaleString()}</td>
+                      <td className="p-2">{s.food.toLocaleString()}</td>
+                      <td className="p-2">{s.gold.toLocaleString()}</td>
+                      <td className="p-2">
+                        {s.oil ? (
+                          s.oil.toLocaleString()
+                        ) : (
+                          <Translate>-</Translate>
+                        )}
+                      </td>
+                      <td className="p-2">{formatTime(s.time)}</td>
+                      <td className="p-2">{s.time}</td>
+                      <td className="p-2">
+                        {typeof s.requirementFor === "number" ? (
+                          <>
+                            <Translate>QG</Translate> {s.requirementFor}
+                          </>
+                        ) : (
+                          <Translate>-</Translate>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </CardContent>
