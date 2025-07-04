@@ -60,6 +60,10 @@ export function MarkdownEditor({
           style: {
             fontSize: 14,
             lineHeight: 1.5,
+            color: isDark ? "#fff" : "#111",
+            backgroundColor: isDark ? "#111" : "#fff",
+            border: "none",
+            outline: "none",
           },
         }}
         preview="live"
@@ -67,29 +71,20 @@ export function MarkdownEditor({
         visibleDragbar={false}
       />
       <style jsx global>{`
+        /* Force readable colors on ALL markdown editor textareas */
+        .markdown-editor-wrapper textarea,
+        .markdown-editor-wrapper .w-md-editor-text-input,
+        .markdown-editor-wrapper .w-md-editor-text,
+        .markdown-editor-wrapper .w-md-editor-text-pre {
+          color: ${isDark ? "#ffffff" : "#000000"} !important;
+          background-color: ${isDark ? "#1a1a1a" : "#ffffff"} !important;
+          caret-color: ${isDark ? "#ffffff" : "#000000"} !important;
+        }
+
         .markdown-editor-wrapper .w-md-editor {
           background-color: hsl(var(--background));
           border: 1px solid hsl(var(--border));
           border-radius: 0.375rem;
-        }
-
-        .markdown-editor-wrapper .w-md-editor-text-pre,
-        .markdown-editor-wrapper .w-md-editor-text-input,
-        .markdown-editor-wrapper .w-md-editor-text {
-          background-color: hsl(var(--background)) !important;
-          color: hsl(var(--foreground)) !important;
-          font-size: 14px !important;
-          line-height: 1.5 !important;
-        }
-
-        .markdown-editor-wrapper .w-md-editor-text-input {
-          caret-color: hsl(var(--foreground)) !important;
-        }
-
-        .markdown-editor-wrapper
-          .w-md-editor.w-md-editor-focus
-          .w-md-editor-text-input {
-          color: hsl(var(--foreground)) !important;
         }
 
         .markdown-editor-wrapper .w-md-editor-toolbar {
@@ -114,15 +109,21 @@ export function MarkdownEditor({
         }
 
         .markdown-editor-wrapper .token.bold {
-          color: hsl(var(--foreground));
+          color: ${isDark ? "#ffffff" : "#000000"};
           font-weight: bold;
         }
 
         .markdown-editor-wrapper .token.code {
           background-color: hsl(var(--muted));
-          color: hsl(var(--foreground));
+          color: ${isDark ? "#ffffff" : "#000000"};
           padding: 0.125rem 0.25rem;
           border-radius: 0.25rem;
+        }
+
+        /* Force preview colors too */
+        .markdown-editor-wrapper .w-md-editor-preview,
+        .markdown-editor-wrapper .w-md-editor-preview * {
+          color: ${isDark ? "#ffffff" : "#000000"} !important;
         }
       `}</style>
     </div>
