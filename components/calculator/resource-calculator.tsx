@@ -460,7 +460,7 @@ export default function ResourceCalculator() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
+                <tr className="border-b dark:border-gray-600">
                   <th className="text-left p-2">
                     <Translate>Bâtiment</Translate>
                   </th>
@@ -485,7 +485,7 @@ export default function ResourceCalculator() {
                 {buildings.map((building, index) => (
                   <tr
                     key={index}
-                    className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="border-b dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
                     <td className="p-2 font-medium">
                       <Translate>{building.name}</Translate>

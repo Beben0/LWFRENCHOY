@@ -252,7 +252,7 @@ export default function HeadquartersCalculator() {
                 </p>
                 <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
                   {totalReduced.iron.toLocaleString()}{" "}
-                  <span className="text-xs text-green-600">
+                  <span className="text-xs text-green-600 dark:text-green-400">
                     <Translate>(réduit)</Translate>
                   </span>
                 </p>
@@ -263,7 +263,7 @@ export default function HeadquartersCalculator() {
                 </p>
                 <p className="text-xl font-bold text-green-600 dark:text-green-400">
                   {totalReduced.food.toLocaleString()}{" "}
-                  <span className="text-xs text-green-600">
+                  <span className="text-xs text-green-600 dark:text-green-400">
                     <Translate>(réduit)</Translate>
                   </span>
                 </p>
@@ -274,7 +274,7 @@ export default function HeadquartersCalculator() {
                 </p>
                 <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
                   {totalReduced.gold.toLocaleString()}{" "}
-                  <span className="text-xs text-green-600">
+                  <span className="text-xs text-green-600 dark:text-green-400">
                     <Translate>(réduit)</Translate>
                   </span>
                 </p>
@@ -286,7 +286,7 @@ export default function HeadquartersCalculator() {
                   </p>
                   <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
                     {totalReduced.oil.toLocaleString()}{" "}
-                    <span className="text-xs text-green-600">
+                    <span className="text-xs text-green-600 dark:text-green-400">
                       <Translate>(réduit)</Translate>
                     </span>
                   </p>
@@ -296,7 +296,7 @@ export default function HeadquartersCalculator() {
             <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               <Translate>Temps total :</Translate>{" "}
               <b>{formatTime(total.time)}</b> (
-              <span className="text-green-600">
+              <span className="text-green-600 dark:text-green-400">
                 {formatTime(totalReduced.time)} <Translate>réduit</Translate>
               </span>
               )
@@ -308,7 +308,7 @@ export default function HeadquartersCalculator() {
               <Translate>Étapes détaillées</Translate>
             </h4>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm border">
+              <table className="w-full text-xs md:text-sm border dark:border-gray-600">
                 <thead>
                   <tr className="bg-orange-100 dark:bg-orange-900">
                     <th className="p-2">
@@ -397,15 +397,15 @@ export default function HeadquartersCalculator() {
                         </td>
                         <td className="p-2">{s.level}</td>
                         <td className="p-2">{s.iron.toLocaleString()}</td>
-                        <td className="p-2 text-green-600">
+                        <td className="p-2 text-green-600 dark:text-green-400">
                           {ironReduced.toLocaleString()}
                         </td>
                         <td className="p-2">{s.food.toLocaleString()}</td>
-                        <td className="p-2 text-green-600">
+                        <td className="p-2 text-green-600 dark:text-green-400">
                           {foodReduced.toLocaleString()}
                         </td>
                         <td className="p-2">{s.gold.toLocaleString()}</td>
-                        <td className="p-2 text-green-600">
+                        <td className="p-2 text-green-600 dark:text-green-400">
                           {goldReduced.toLocaleString()}
                         </td>
                         <td className="p-2">
@@ -415,7 +415,7 @@ export default function HeadquartersCalculator() {
                             <Translate>-</Translate>
                           )}
                         </td>
-                        <td className="p-2 text-green-600">
+                        <td className="p-2 text-green-600 dark:text-green-400">
                           {s.oil ? (
                             oilReduced.toLocaleString()
                           ) : (
@@ -423,7 +423,7 @@ export default function HeadquartersCalculator() {
                           )}
                         </td>
                         <td className="p-2">{formatTime(s.time)}</td>
-                        <td className="p-2 text-green-600">
+                        <td className="p-2 text-green-600 dark:text-green-400">
                           {formatTime(timeReduced)}
                         </td>
                         <td className="p-2">{s.time}</td>

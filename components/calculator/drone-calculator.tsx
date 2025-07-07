@@ -447,7 +447,7 @@ export default function DroneCalculator() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
+                <tr className="border-b dark:border-gray-600">
                   <th className="text-left p-2">
                     <Translate>Niveau</Translate>
                   </th>
@@ -466,7 +466,7 @@ export default function DroneCalculator() {
                 {droneLevels.map((level) => (
                   <tr
                     key={level.level}
-                    className={`border-b hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                    className={`border-b dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 ${
                       level.level === currentLevel
                         ? "bg-blue-100 dark:bg-blue-900/50"
                         : ""
