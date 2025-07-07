@@ -370,7 +370,7 @@ export default function ResourceCalculator() {
               <p className="text-lg font-bold text-gray-600 dark:text-gray-400">
                 {Math.round(totals.iron.production).toLocaleString()}/h
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Capacité: {totals.iron.capacity.toLocaleString()}
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400">
@@ -386,7 +386,7 @@ export default function ResourceCalculator() {
               <p className="text-lg font-bold text-green-600 dark:text-green-400">
                 {Math.round(totals.food.production).toLocaleString()}/h
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Capacité: {totals.food.capacity.toLocaleString()}
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400">
@@ -402,7 +402,7 @@ export default function ResourceCalculator() {
               <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
                 {Math.round(totals.coin.production).toLocaleString()}/h
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Capacité: {totals.coin.capacity.toLocaleString()}
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400">
@@ -419,7 +419,7 @@ export default function ResourceCalculator() {
                 <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
                   {Math.round(totals.oil.production).toLocaleString()}/h
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Capacité: {totals.oil.capacity.toLocaleString()}
                 </p>
                 <p className="text-xs text-blue-600 dark:text-blue-400">

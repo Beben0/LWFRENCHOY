@@ -503,24 +503,32 @@ export default function ResearchCalculator() {
 
                     <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                       <div>
-                        <span className="text-gray-500">Niveaux:</span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Niveaux:
+                        </span>
                         <span className="font-medium ml-1">{tech.levels}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Intel total:</span>
-                        <span className="font-medium ml-1 text-blue-600">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Intel total:
+                        </span>
+                        <span className="font-medium ml-1 text-blue-600 dark:text-blue-400">
                           {tech.totalIntel.toLocaleString()}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Par niveau:</span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Par niveau:
+                        </span>
                         <span className="font-medium ml-1">
                           {tech.intelPerLevel.toLocaleString()}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Puissance:</span>
-                        <span className="font-medium ml-1 text-green-600">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Puissance:
+                        </span>
+                        <span className="font-medium ml-1 text-green-600 dark:text-green-400">
                           +{tech.powerGain.toLocaleString()}
                         </span>
                       </div>
