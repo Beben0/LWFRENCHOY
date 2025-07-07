@@ -165,7 +165,7 @@ export default function HeadquartersCalculator() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 <Translate>% Bonus Vitesse Construction</Translate>
               </label>
               <input
@@ -183,7 +183,7 @@ export default function HeadquartersCalculator() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 <Translate>% Réduction Coût Ressources</Translate>
               </label>
               <input
@@ -203,7 +203,7 @@ export default function HeadquartersCalculator() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 <Translate>Niveau QG Actuel</Translate>
               </label>
               <input
@@ -222,7 +222,7 @@ export default function HeadquartersCalculator() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 <Translate>Niveau QG Cible</Translate>
               </label>
               <input
@@ -295,7 +295,7 @@ export default function HeadquartersCalculator() {
             </div>
             <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               <Translate>Temps total :</Translate>{" "}
-              <b>{formatTime(total.time)}</b> (
+              <b className="text-foreground">{formatTime(total.time)}</b> (
               <span className="text-green-600 dark:text-green-400">
                 {formatTime(totalReduced.time)} <Translate>réduit</Translate>
               </span>
@@ -310,7 +310,7 @@ export default function HeadquartersCalculator() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs md:text-sm border dark:border-gray-600">
                 <thead>
-                  <tr className="bg-orange-100 dark:bg-orange-900">
+                  <tr className="bg-orange-100 dark:bg-orange-900 text-orange-900 dark:text-orange-100">
                     <th className="p-2">
                       <Translate>Fait</Translate>
                     </th>
@@ -388,7 +388,7 @@ export default function HeadquartersCalculator() {
                             }}
                           />
                         </td>
-                        <td className="p-2 font-bold">
+                        <td className="p-2 font-bold text-foreground">
                           {s.isQG ? (
                             <Translate>QG</Translate>
                           ) : (
