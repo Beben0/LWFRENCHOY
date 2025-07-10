@@ -285,7 +285,7 @@ export default function ResourceCalculator() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         <Translate>Niveau</Translate>
                       </label>
                       <input
@@ -300,12 +300,12 @@ export default function ResourceCalculator() {
                             parseInt(e.target.value) || 1
                           )
                         }
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         <Translate>Quantité</Translate>
                       </label>
                       <input
@@ -320,7 +320,7 @@ export default function ResourceCalculator() {
                             parseInt(e.target.value) || 1
                           )
                         }
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                       />
                     </div>
 

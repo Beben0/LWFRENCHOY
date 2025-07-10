@@ -351,7 +351,7 @@ export default function DroneCalculator() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 <Translate>Niveau Actuel</Translate>
               </label>
               <input
@@ -360,11 +360,11 @@ export default function DroneCalculator() {
                 max="179"
                 value={currentLevel}
                 onChange={handleCurrentLevelChange}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 <Translate>Niveau Cible</Translate>
               </label>
               <input
@@ -374,7 +374,7 @@ export default function DroneCalculator() {
                 value={targetLevelInput}
                 onChange={handleTargetLevelInput}
                 onBlur={handleTargetLevelBlur}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
             </div>
           </div>

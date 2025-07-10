@@ -403,7 +403,7 @@ export default function ResearchCalculator() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Rechercher
               </label>
               <input
@@ -411,7 +411,7 @@ export default function ResearchCalculator() {
                 placeholder="Nom ou description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
             </div>
           </div>

@@ -178,7 +178,7 @@ export default function HeadquartersCalculator() {
                     Math.max(0, Math.min(900, parseInt(e.target.value) || 0))
                   )
                 }
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 placeholder="0"
               />
             </div>
@@ -196,7 +196,7 @@ export default function HeadquartersCalculator() {
                     Math.max(0, Math.min(90, parseInt(e.target.value) || 0))
                   )
                 }
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 placeholder="0"
               />
             </div>
@@ -218,7 +218,7 @@ export default function HeadquartersCalculator() {
                   setCurrentLevel(v);
                   setTargetLevel((t) => (t <= v ? v + 1 : t));
                 }}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
             </div>
             <div>
@@ -236,7 +236,7 @@ export default function HeadquartersCalculator() {
                   if (v > 35) v = 35;
                   setTargetLevel(v);
                 }}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
             </div>
           </div>
